@@ -1,455 +1,247 @@
-# COMPLYGEM AI
+<div align="center">
 
+# ⚖️ COMPLYGEM AI (कम्प्लाईजेम)
 ### AI-Powered Integrated Bid Compliance Verification Platform for GeM Procurement
 
-> An intelligent enterprise platform assisting procurement officers in verifying bidder eligibility, extracting tender requirements, cross-referencing authoritative data gateways, identifying compliance risks, and generating explainable, evidence-backed assessments.
+<p align="center">
+  <img src="./frontend/public/complygem_hero_banner.png" alt="ComplyGeM AI Executive 3D Platform" width="100%" style="border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+</p>
 
-[![Stack](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20Tailwind-blue)](#technology-stack)
-[![Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Node.js-green)](#technology-stack)
-[![Database](https://img.shields.io/badge/Database-PostgreSQL%2018%20%7C%20SQLAlchemy%202.x-indigo)](#database-design)
-[![Security](https://img.shields.io/badge/Auth-Firebase%20%7C%20Custom%20Claims%20%7C%20App%20Check-orange)](#security)
-[![AI/ML](https://img.shields.io/badge/AI%2FML-Gemini%201.5%20Pro%20%7C%20FAISS%20%7C%20Tesseract-purple)](#aiml-components)
+[![React](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%205%20%7C%20Tailwind-blue?style=for-the-badge&logo=react)](https://react.dev/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.10+-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2018%20%7C%20SQLAlchemy%202.x-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![Firebase](https://img.shields.io/badge/Auth-Firebase%20Security%20%7C%20RBAC-FFCA28?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
+[![Gemini](https://img.shields.io/badge/AI%2FLLM-Gemini%201.5%20Pro%20%7C%20FAISS%20Vector-8E44AD?style=for-the-badge&logo=google)](https://ai.google.dev/)
 
----
+<p align="center">
+  <strong>An enterprise-grade, explainable compliance verification platform that automates tender clause extraction, validates bidder evidence across authoritative government gateways (GST, PAN, Udyam, MCA), and delivers auditable human-in-the-loop decision dossiers.</strong>
+</p>
 
-## 📋 Table of Contents
-1. [Project Overview](#1-project-overview)
-2. [Problem Statement](#2-problem-statement)
-3. [Proposed Solution](#3-proposed-solution)
-4. [Objectives](#4-objectives)
-5. [Key Features](#5-key-features)
-6. [System Workflow](#6-system-workflow)
-7. [System Architecture](#7-system-architecture)
-8. [Technology Stack](#8-technology-stack)
-9. [AI / ML Components](#9-aiml-components)
-10. [Authentication & Role Architecture](#10-authentication--role-architecture)
-11. [Security by Design](#11-security-by-design)
-12. [Database Design](#12-database-design)
-13. [External Data Gateways & Integration Levels](#13-external-data-gateways--integration-levels)
-14. [Repository Structure](#14-repository-structure)
-15. [Installation & Setup](#15-installation--setup)
-16. [Environment Variables](#16-environment-variables)
-17. [Running the Application](#17-running-the-application)
-18. [Sample Verification Walkthrough](#18-sample-verification-walkthrough)
-19. [Compliance Assessment Matrix](#19-compliance-assessment-matrix)
-20. [API Documentation](#20-api-documentation)
-21. [Testing & Verification](#21-testing--verification)
-22. [Limitations & Assumptions](#22-limitations--assumptions)
-23. [Future Scope](#23-future-scope)
-24. [License](#24-license)
+</div>
 
 ---
 
-## 1. Project Overview
+## 🔒 Security & Architecture [NEW]
 
-Government procurement through the **Government e-Marketplace (GeM)** mandates that procurement officers thoroughly verify bidder eligibility and statutory compliance. This requires scrutinizing disparate physical and digital documents—including **GST registrations, PAN and tax filings, MCA corporate data, Udyam MSME status, OEM authorizations, financial statements, and debarment registries**.
+To meet the stringent data integrity and governance standards required for public sector procurement, ComplyGeM AI implements a hardened multi-tier architecture:
 
-Manual examination across multiple portal silos is labor-intensive, error-prone, and vulnerable to missed inconsistencies or fraudulent submissions.
-
-**COMPLYGEM AI** provides an integrated, transparent, and auditable verification workbench. The platform automatically extracts requirement criteria from tender specifications, extracts structured entities from bidder-submitted documents via dual-pass OCR/NLP, cross-references authoritative government sources, computes deterministic compliance metrics, and presents an explainable decision dossier with exact page citations for human-in-the-loop review.
-
----
-
-## 2. Problem Statement
-
-### SIH26100
-**AI-Powered Integrated Bid Compliance Verification Platform for GeM Procurement**
-
-### The Core Challenge
-The operational hurdle in procurement verification is not simply parsing text from PDFs. The primary challenge lies in:
-1. **Clause-to-Evidence Grounding**: Automatically mapping complex tender eligibility criteria (e.g. *average 3-year turnover >= ₹5 Cr*, *valid OEM coverage*, *MSME category limitations*) against heterogeneous bidder PDFs.
-2. **Authoritative Cross-Referencing**: Validating whether extracted claims match authoritative statutory databases (GSTN, Income Tax, Udyam, MCA21).
-3. **Deterministic Reasoning & Explainability**: Preventing arbitrary LLM hallucinations by grounding every compliance flag in exact document excerpts and statutory rules.
-4. **Human Accountability**: Maintaining a strict separation where AI provides evidence-backed recommendations, leaving the final binding decision to authorized procurement officers.
+* **🛡️ Zero-Trust Identity & Custom Claims**: Role assignment is managed strictly server-side using Firebase Admin Custom Claims (`PROCUREMENT_OFFICER`, `REVIEWER`, `BIDDER`, `ADMIN`). Public self-registration as an Administrator is strictly blocked.
+* **🏛️ Two-Tier Government Approval Gate**: Accounts registering for Government privileges (*Procurement Officer* or *Reviewer*) are initialized in `PENDING` status and require administrative review before gaining access to procurement files.
+* **🗄️ Relational System of Record (PostgreSQL 18)**: All 16 core business entities (Tenders, Requirements, Bids, Evidence, Reviews, and Audit Trails) are maintained in PostgreSQL 18 with foreign-key constraints, indexed search, and `JSONB` parameterization via **SQLAlchemy 2.0+** and **Psycopg 3**.
+* **📜 Immutable Audit Ledger**: Every file upload, OCR extraction, verification query, and reviewer override is cryptographically logged in an append-only audit trail (`/audit_logs`).
+* **🧊 Executive 3D Glassmorphism UI**: Built with a restrained 3D glass aesthetic (`backdrop-filter: blur(20px)`, `#070B14` charcoal dark canvas, floating document dossiers, and tactile perspective panels).
 
 ---
 
-## 3. Proposed Solution
+## 📌 Problem Statement
 
-COMPLYGEM AI unifies document intelligence, statutory data verification, semantic vector search, deterministic compliance rules, and role-based workflows:
+### **SIH26100 — AI-Powered Integrated Bid Compliance Verification Platform for GeM Procurement**
+
+In public procurement on the **Government e-Marketplace (GeM)**, procurement officers must verify complex bidder eligibility criteria against heterogeneous submitted PDFs. Today, this process suffers from systemic bottlenecks:
 
 ```
-Tender Document (PDF)
-        │
-        ▼
-Requirement Extraction (NLP / LLM)
-        │
-Bidder Submissions (PDFs/Images)
-        │
-        ▼
-Dual-Pass OCR & Entity Parsing (PyMuPDF + Tesseract)
-        │
-        ▼
-Government Gateway Connectors (GST, PAN, Udyam, MCA)
-        │
-        ▼
-Semantic Evidence Matching (FAISS Vector Store + RAG)
-        │
-        ▼
-Deterministic Compliance Engine & Risk Scoring
-        │
-        ▼
-Role-Specific Dashboard (Officer / Reviewer / Bidder / Admin)
-        │
-        ▼
-Human-in-the-Loop Review & Decision Dossier
-        │
-        ▼
-Immutable System Audit Trail + PDF Compliance Report
+Tender Specifications (50+ Pages)
+               │
+               ▼
+Bidder Submissions (GST, Balances, OEM Certs, PAN)
+               │
+               ▼
+Manual Scrutiny Across Disparate Portals (GSTN, ITD, Udyam, MCA21)
+               │
+               ▼
+High Risk of Overlooked Discrepancies & Fraudulent Submissions
 ```
 
----
-
-## 4. Objectives
-
-- **Accelerate Verification**: Reduce bid compliance verification time from days to minutes.
-- **Eliminate Manual Oversight**: Automatically identify missing documents, expired certificates, turnover deficits, and portal mismatches.
-- **Explainable AI (XAI)**: Ground every compliance flag with direct document citations, source pages, and text excerpts.
-- **Strict Role-Based Security**: Provide tailored, isolated views for Procurement Officers, Reviewers, Bidders, and Administrators.
-- **Enterprise-Grade Auditability**: Cryptographically log all user actions, document uploads, AI findings, and human overrides in an immutable audit ledger.
+1. **Information Silos**: Verifying a single bidder requires logging into separate, disconnected government portals (GSTN, Income Tax, Udyam MSME, MCA21).
+2. **Turnover & Clause Mismatches**: Unintentional or fraudulent discrepancies (e.g. audited 3-year turnover deficits or expired OEM authorization) are frequently missed during manual scans.
+3. **Black-Box AI Hallucinations**: Generic AI models often produce unsupported claims without referencing specific document pages or clauses.
+4. **Lack of Auditability**: Manual evaluations lack a tamper-proof digital log of who approved what, when, and based on which document excerpt.
 
 ---
 
-## 5. Key Features
+## 🚀 The Solution: ComplyGeM AI
 
-### 📄 Document Intelligence
-- Native text extraction for digital PDFs via **PyMuPDF**.
-- Optical Character Recognition (OCR) via **Tesseract** for scanned certificates and stamps.
-- Structured entity extraction output stored in PostgreSQL `JSONB` format.
+**ComplyGeM AI** unifies document intelligence, statutory data verification, semantic vector search, deterministic compliance rules, and role-based workflows into a unified, transparent compliance dashboard.
 
-### 🧠 Requirement Extraction
-- Automated clause extraction categorizing criteria into **Financial, Tax, MSME, OEM, Experience, and Legal**.
-- Automatic distinction between **Mandatory** and **Optional/Relaxed** conditions.
+<p align="center">
+  <img src="./frontend/public/complygem_login_card.png" alt="ComplyGeM 3D Elevated Interface" width="500px" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);" />
+</p>
 
-### 🏛️ Multi-Source Verification
-- Modular connectors for **GSTN, Income Tax (PAN), MSME Udyam, MCA21, EPFO/ESIC, and CVC Debarment**.
-- Explicit operational mode tagging (**Live**, **Sandbox/Demo**, **Manual Review Required**).
+### 🧠 Core Breakthroughs
 
-### ⚖️ Deterministic Compliance Engine
-- Strict numeric and rule-based evaluation (e.g. comparing reported turnover vs. tender threshold).
-- Overall compliance score (0–100%) and multi-level risk classification (**LOW**, **MEDIUM**, **HIGH**, **CRITICAL**).
+1. **Dual-Pass Extraction (Digital + OCR)**:
+   - **Digital Layer**: Direct text and table stream extraction via `PyMuPDF` for crystal-clear native PDFs.
+   - **Scanned Layer**: Automatic optical character recognition via `Tesseract OCR` for stamped certificates, CA signatures, and scanned balance sheets.
 
-### 🔍 Human-in-the-Loop Oversight
-- Dedicated Reviewer workbench with interactive actions: `✔ Accept Finding`, `✖ Mark as Incorrect`, `↩ Request Re-verification`, and `💬 Add Remarks`.
+2. **Ground-Truth Requirement Extraction (Gemini 1.5 Pro)**:
+   - Identifies financial thresholds, turnover requirements, mandatory tax registrations, and OEM partnerships directly from tender specifications.
 
-### 🛡️ Enterprise Security
-- Firebase Authentication with email verification, strict RFC email validation, and strong password enforcement.
-- Server-side RBAC with Custom Claims (No self-registered Administrators).
-- Immutable audit log preventing data tampering.
+3. **Dense Vector Matching & RAG (FAISS 768-dim)**:
+   - Maps bidder document clauses directly to tender conditions using dense embeddings (`models/text-embedding-004`).
+
+4. **Multi-Gateway Cross-Referencing**:
+   - Cross-checks entity identity, turnover, registration date, and debarment status against official registry parameters.
+
+5. **Explainable AI (XAI) Citations**:
+   - Every compliance finding references the exact document name, page number, and highlighted excerpt for 100% human-in-the-loop auditability.
 
 ---
 
-## 6. System Workflow
+## 🛠️ Complete Workflow & Features
+
+ComplyGeM AI is structured around **4 dedicated user personas**:
 
 ```
-                        ┌───────────────────────────────┐
-                        │      TENDER SPECIFICATION     │
-                        └───────────────┬───────────────┘
+                          ┌───────────────────────────┐
+                          │       ADMINISTRATOR       │
+                          │ (User Mgmt, RBAC, Audits) │
+                          └─────────────┬─────────────┘
+                                        │
+                ┌───────────────────────┴───────────────────────┐
+                │                                               │
+                ▼                                               ▼
+┌───────────────────────────────┐               ┌───────────────────────────────┐
+│     PROCUREMENT OFFICER       │               │      REVIEWER / EVALUATOR     │
+│ (Creates Tenders, Verifies)   │               │ (Inspects Flags, Citations)   │
+└───────────────┬───────────────┘               └───────────────┬───────────────┘
+                │                                               │
+                └───────────────────────┬───────────────────────┘
                                         │
                                         ▼
                         ┌───────────────────────────────┐
-                        │ AI REQUIREMENT EXTRACTION     │
-                        │ (Financial, GST, OEM, Udyam)  │
-                        └───────────────┬───────────────┘
-                                        │
-┌───────────────────────────────┐       │
-│      BIDDER SUBMISSIONS       │       │
-│ (GST, Balance Sheet, OEM)     │       │
-└───────────────┬───────────────┘       │
-                │                       │
-                ▼                       │
-┌───────────────────────────────┐       │
-│   DUAL-PASS OCR & PARSING     │       │
-│  (PyMuPDF + Tesseract Engine) │       │
-└───────────────┬───────────────┘       │
-                │                       │
-                ▼                       │
-┌───────────────────────────────┐       │
-│ GOVERNMENT DATA GATEWAYS      │       │
-│ (GSTN, PAN, Udyam, Debarment) │       │
-└───────────────┬───────────────┘       │
-                │                       │
-                ▼                       │
-┌───────────────────────────────┐       │
-│ FAISS VECTOR SIMILARITY & RAG │◄──────┘
-│ (768-dim Embedding Matching)  │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│ DETERMINISTIC COMPLIANCE RULE │
-│ (Score, Inconsistencies, Risk)│
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│ HUMAN-IN-THE-LOOP REVIEW      │
-│ (Officer / Reviewer Decision) │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│ AUDIT LOG + COMPLIANCE REPORT │
-└───────────────────────────────┘
+                        │       BIDDER (Supplier)       │
+                        │ (Submits Bids, Tracks Status) │
+                        └───────────────────────────────┘
+```
+
+### 1. 🏛️ For Procurement Officers
+* **Tender Creation & Ingestion**: Upload tender PDFs; AI parses eligibility criteria, financial minimums, and mandatory certificates.
+* **Comprehensive Compliance Dossier**: View overall bid compliance percentage (0–100%), highlighted risk indicators, and statutory verification status.
+* **Instant Discrepancy Alerts**: Visual alerts for turnover deficits, expired OEM validity, or inactive GSTIN numbers.
+* **One-Click Audit Reports**: Export formal, executive-ready PDF compliance reports.
+
+### 2. 🔍 For Reviewers / Evaluators
+* **Human-in-the-Loop Review Center**: Dedicated queue of flagged cases requiring human evaluation.
+* **Evidence Citation Viewer**: Side-by-side view of extracted tender criteria alongside bidder document text snippets and source page numbers.
+* **Actionable Overrides**: One-click actions to `✔ Accept Finding`, `✖ Mark as Incorrect`, or `↩ Request Re-verification`.
+
+### 3. 🏢 For Bidders / Suppliers
+* **Supplier Discovery Portal**: Search and view active tenders matching organization capability.
+* **Encrypted Document Submission**: Upload encrypted technical and financial bid documents.
+* **Live Compliance Feedback**: Real-time progress indicators showing document receipt and verification stages.
+
+### 4. 🛡️ For System Administrators
+* **Government User Approval Queue**: Authorize or decline accounts requesting *Procurement Officer* and *Reviewer* privileges.
+* **System Health Monitor**: Live telemetry for OCR, LLM, Database connection pool, and Vector Store.
+* **Immutable Audit Trail**: Filter and export complete system action histories.
+
+---
+
+## 🏛️ Authoritative Data Gateways
+
+To guarantee regulatory compliance, external sources are classified into operational tiers:
+
+| Gateway | Source Authority | Integration Tier | Verification Scope |
+| :--- | :--- | :---: | :--- |
+| **GST Portal** | GSTN Database | 🟢 **Live / Sandbox** | Active GSTIN status, legal entity name, return filing regularity |
+| **Income Tax** | CBDT / ITD | 🟢 **Live / Sandbox** | PAN validity, entity status, name match |
+| **MSME Udyam** | Ministry of MSME | 🟢 **Live / Sandbox** | Enterprise category (Micro/Small/Medium), turnover threshold caps |
+| **MCA21** | Ministry of Corporate Affairs | 🟡 **Sandbox / Demo** | CIN validity, active directors, incorporation date |
+| **EPFO / ESIC** | Ministry of Labour | 🟡 **Sandbox / Demo** | Active establishment code, labour welfare compliance |
+| **Debarment Registry** | GeM / Central Vigilance | 🟡 **Sandbox / Demo** | Blacklist & debarment registry verification |
+
+---
+
+## 🗄️ Database Architecture (PostgreSQL 18)
+
+The relational schema comprises **16 tables** managed through SQLAlchemy 2.0+ models:
+
+```
+organizations ─────────► users (firebase_uid, role, status)
+     │
+     └──► tenders ─────► tender_requirements (clauses, categories)
+            │
+            └──► bids ──► bid_documents ──► document_extractions (JSONB)
+                   │
+                   ├──► government_verifications (JSONB)
+                   │
+                   └──► compliance_checks
+                          ├──► evidence (page, excerpt, confidence)
+                          └──► review_decisions (override, notes)
 ```
 
 ---
 
-## 7. System Architecture
+## 💻 Running the App Locally
 
-```
-                       React / Vite Frontend
-                     (Executive 3D Dashboard)
-                                │
-                                ▼
-                     Firebase Authentication
-               (Custom Claims: role, status, UID)
-                                │
-                                ▼
-                     FastAPI Backend Engine
-              (Token Verification & Business Logic)
-         ┌──────────────────────┼──────────────────────┐
-         ▼                      ▼                      ▼
-   PostgreSQL 18         Firebase Storage       Government APIs
- (System of Record)    (PDFs & Certificates)    (GST, PAN, Udyam)
-         │
- ┌───────┴───────┐
- ▼               ▼
-FAISS Store    Gemini 1.5 Pro
-(Vector Index) (Reasoning Engine)
-```
+Follow these instructions to run the full stack locally on your development machine:
 
----
+### 1. Prerequisites
+* **Node.js**: v18.0 or higher
+* **Python**: v3.10 or higher
+* **PostgreSQL**: v16, v17, or v18 running locally or on cloud (e.g. Supabase/Neon)
+* **Git**: Installed and configured
 
-## 8. Technology Stack
-
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Frontend UI** | React 18, Vite 5, Tailwind CSS | High-performance SPA with 3D glassmorphism |
-| **Authentication** | Firebase Authentication | Identity management, custom claims, session restoration |
-| **Backend API** | FastAPI (Python 3.10+) | High-throughput asynchronous REST microservice |
-| **Relational DB** | PostgreSQL 18 | Relational system of record for all structured procurement data |
-| **ORM & Driver** | SQLAlchemy 2.0+, Psycopg 3 (`psycopg[binary]`) | Type-safe ORM with connection pooling |
-| **DB Migrations** | Alembic | Version-controlled database schema migrations |
-| **Object Storage** | Firebase Storage / Local Filesystem | Storage for raw tender and bidder PDF documents |
-| **Document OCR** | PyMuPDF (fitz), Tesseract OCR | Digital and scanned document text extraction |
-| **LLM & Reasoning**| Google Gemini 1.5 Pro | Semantic requirement extraction and reasoning |
-| **Embeddings** | `models/text-embedding-004` (768-dim) | Dense vector representations of requirements and clauses |
-| **Vector Search** | FAISS (`faiss-cpu`) | Fast nearest-neighbor similarity search for RAG |
-
----
-
-## 9. AI/ML Components
-
-### 1. Dual-Pass Document Extraction
-- **Pass 1 (Digital Vector Text)**: Uses `PyMuPDF` to instantly extract text layers, embedded fonts, and coordinate bounding boxes.
-- **Pass 2 (Optical Character Recognition)**: Uses `pytesseract` to extract text from scanned stamp certificates and scanned balance sheets.
-
-### 2. Semantic Embedding & FAISS Vector Index
-- Requirements and document chunks are converted into 768-dimensional dense vectors.
-- Stored in a local **FAISS L2 Flat Index**, enabling sub-millisecond retrieval of the most relevant document clauses matching a specific tender condition.
-
-### 3. Retrieval-Augmented Generation (RAG)
-- Before evaluating compliance, the RAG engine queries the vector index with the tender requirement.
-- Relevant document snippets are injected into a structured prompt along with GFR 2017 procurement guidelines, ensuring the LLM reasons solely on retrieved facts.
-
-### 4. Deterministic Compliance Analysis
-- AI output is validated by a rule engine that verifies numbers (turnover, dates, percentage shares) deterministically to prevent false compliance scores.
-
----
-
-## 10. Authentication & Role Architecture
-
-The platform enforces **4 distinct user personas**:
-
-```
-                       ADMINISTRATOR
-                             │
-             ┌───────────────┴───────────────┐
-             │                               │
-     PROCUREMENT OFFICER           REVIEWER / EVALUATOR
-             │                               │
-             └───────────────┬───────────────┘
-                             │
-                      BIDDER (Supplier)
-```
-
-| Persona | Primary Functionality | Access Scope |
-| :--- | :--- | :--- |
-| 🏛️ **Procurement Officer** | Creates tenders, uploads specifications, initiates compliance checks, views scorecards, and generates audit reports. | Full tender management & report access. |
-| 🔍 **Reviewer / Evaluator** | Human-in-the-loop verification. Inspects AI-flagged inconsistencies, examines evidence, accepts/overrides findings. | Assigned tenders, review queue, audit logs. |
-| 🏢 **Bidder (Supplier)** | Registers organization, discovers eligible tenders, submits documents, tracks verification status. | **Strictly isolated**: Views only own submissions. |
-| 🛡️ **Administrator** | System governance. Approves government account requests, configures RBAC matrix, monitors system health. | **Invitation-Only**: Cannot self-register. |
-
----
-
-## 11. Security by Design
-
-- **No Self-Registered Administrators**: Public registration rejects `ADMIN` requests (`403 ROLE_NOT_ALLOWED`). Admin accounts are provisioned exclusively via authorized invitations.
-- **Government Approval Gate**: Accounts requesting *Procurement Officer* or *Reviewer* roles are initialized in `PENDING` status and restricted until an Administrator approves them.
-- **Strict RFC Email & Phone Validation**: Inputs are validated against rigorous regex patterns and sanitized server-side.
-- **Zero Frontend Secrets**: Database credentials, LLM keys, and service account keys reside exclusively in backend environment variables.
-- **Immutable Audit Trail**: Audit records in `/audit_logs` are write-once/append-only; update and delete operations are prohibited.
-
----
-
-## 12. Database Design
-
-PostgreSQL 18 maintains **16 relational tables** with foreign keys, indexes, and `JSONB` storage:
-
-```
-ORGANIZATIONS
-  ├── USERS (linked via unique firebase_uid)
-  └── TENDERS
-        ├── TENDER_REQUIREMENTS
-        └── BIDS
-              ├── BID_DOCUMENTS ──► DOCUMENT_EXTRACTIONS (JSONB)
-              ├── GOVERNMENT_VERIFICATIONS (JSONB)
-              ├── COMPLIANCE_CHECKS
-              │     ├── EVIDENCE (Page numbers, excerpts)
-              │     └── REVIEW_DECISIONS (Approved / Overridden)
-              ├── REVIEW_ASSIGNMENTS
-              └── COMPLIANCE_REPORTS
-```
-
-### Table Index Summary:
-1. `organizations` — Ministries, PSUs, MSMEs, Startups, OEMs.
-2. `users` — Application profiles with `firebase_uid`, roles, and status.
-3. `tenders` — GeM tender specifications, categories, and deadlines.
-4. `tender_requirements` — AI-extracted eligibility criteria.
-5. `bids` — Bidder submissions and risk levels.
-6. `bid_documents` — Storage paths and MIME metadata.
-7. `document_extractions` — OCR text and structured `JSONB` entities.
-8. `government_verifications` — Statutory portal responses (`JSONB`).
-9. `compliance_checks` — Requirement-to-bid compliance evaluation.
-10. `evidence` — Citations, page numbers, and text excerpts.
-11. `review_assignments` — Reviewer case allocations.
-12. `review_decisions` — Human-in-the-loop decisions.
-13. `compliance_reports` — Summary scores and risk assessments.
-14. `ai_processing_jobs` — Async OCR/NLP/LLM tracking.
-15. `audit_logs` — Immutable audit trail of all sensitive operations.
-16. `notifications` — Role-based system alerts.
-
----
-
-## 13. External Data Gateways & Integration Levels
-
-To maintain procurement integrity, data sources are classified into operational tiers:
-
-| Gateway | Source Entity | Integration Tier | Verification Parameter |
-| :--- | :--- | :--- | :--- |
-| **GST Portal** | GSTN Database | **Sandbox / Live** | Active status, legal trade name, filing regularity |
-| **PAN / Income Tax** | IT Department | **Sandbox / Live** | Entity name match, valid status |
-| **MSME Udyam** | Ministry of MSME | **Sandbox / Live** | Enterprise category (Micro/Small/Medium), turnover cap |
-| **MCA21** | Ministry of Corporate Affairs | **Sandbox / Demo** | CIN validity, active directors, incorporation date |
-| **EPFO / ESIC** | Ministry of Labour | **Sandbox / Demo** | Active establishment code, remittance regularity |
-| **Debarment Registry**| Central Vigilance / GeM | **Sandbox / Demo** | Blacklist status check |
-
-> ⚠️ *Note: Where official government production APIs require departmental clearances, the system operates in verified Sandbox/Demo mode and explicitly marks records as `DEMO_VERIFIED`.*
-
----
-
-## 14. Repository Structure
-
-```
-ComplyGeM-SIH2026/
-├── frontend/                     # React + Vite + Tailwind Frontend
-│   ├── src/
-│   │   ├── components/           # Sidebar, Navbars, 3D Panels
-│   │   ├── contexts/             # AuthContext (Firebase + Demo Switcher)
-│   │   ├── pages/                # Role Dashboards, Landing, Login, Register, Tenders
-│   │   ├── services/             # Axios API client
-│   │   └── config/firebase.js    # Client Firebase setup
-│   └── package.json
-│
-├── backend/                      # Node.js Express Middleware & Prisma Layer
-│   ├── src/
-│   │   ├── middleware/           # auth.js (RBAC, validators, rate limiters)
-│   │   ├── routes/               # auth, tenders, bidders, compliance, audit, admin
-│   │   ├── services/             # complianceEngine, riskEngine, firebaseAuthService
-│   │   └── prisma/schema.prisma  # Prisma schema definition
-│   └── package.json
-│
-├── ai-service/                   # Python FastAPI Intelligence & PostgreSQL Layer
-│   ├── app/
-│   │   ├── auth/                 # firebase_auth.py (FastAPI token verifier)
-│   │   ├── database/             # session.py, models.py (16 tables), seed_data.py
-│   │   ├── llm/                  # gemini_client.py (Google Gemini API)
-│   │   ├── parser/               # pdf_parser.py (PyMuPDF + Tesseract)
-│   │   ├── vector_store/         # faiss_store.py (FAISS 768-dim index)
-│   │   ├── routes/               # requirements, documents, analysis, rag, health
-│   │   └── main.py               # FastAPI application entry point
-│   ├── alembic/                  # Alembic migration environment
-│   ├── alembic.ini
-│   └── requirements.txt
-│
-├── firebase.json                 # Firebase Hosting, Firestore, & Storage configuration
-├── firestore.rules               # Production-grade Firestore RBAC rules
-├── storage.rules                 # Strict Firebase Storage security rules
-└── README.md
-```
-
----
-
-## 15. Installation & Setup
-
-### Prerequisites
-- **Node.js**: v18.0 or higher
-- **Python**: v3.10 or higher
-- **PostgreSQL**: v16, v17, or v18
-- **Tesseract OCR**: (Optional for scanned document OCR)
-
-### 1. Clone the Repository
+### 2. Clone the Repository
 ```bash
 git clone https://github.com/suhas9090/SIH-2026.git
 cd SIH-2026
 ```
 
-### 2. Setup AI Service (FastAPI + PostgreSQL)
+### 3. Step 1: Start the AI Service (FastAPI + PostgreSQL)
 ```bash
 cd ai-service
 python -m venv venv
-# On Windows:
+
+# Windows:
 .\venv\Scripts\activate
-# On Linux/macOS:
+# Linux / macOS:
 source venv/bin/activate
 
 pip install -r requirements.txt
+python -m uvicorn app.main:app --reload --port 8000
 ```
+* Interactive API Documentation will be live at: **`http://localhost:8000/docs`**
 
-### 3. Setup Frontend (React + Vite)
+### 4. Step 2: Start the Backend Gateway (Node.js Express)
+Open a second terminal tab:
 ```bash
-cd ../frontend
+cd backend
 npm install
+npm run dev
 ```
+* Backend running at: **`http://localhost:5000`**
 
-### 4. Setup Backend (Node.js Express)
+### 5. Step 3: Start the Frontend UI (React + Vite)
+Open a third terminal tab:
 ```bash
-cd ../backend
+cd frontend
 npm install
+npm run dev
 ```
+* Web Application will be live at: **`http://localhost:5173`**
 
 ---
 
-## 16. Environment Variables
+## ⚙️ Environment Variables
 
-Create `.env` files in each respective directory using the provided `.env.example` templates:
+Create `.env` files in each tier using the provided templates:
 
 ### `frontend/.env`
 ```env
-VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_API_KEY=AIzaSyDsqsvn8QbCmxVDQL0xihEBcm7Y-Xy3__s
 VITE_FIREBASE_AUTH_DOMAIN=compylgem-sih-2026.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=compylgem-sih-2026
 VITE_FIREBASE_STORAGE_BUCKET=compylgem-sih-2026.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_id
-VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MESSAGING_SENDER_ID=548628508289
+VITE_FIREBASE_APP_ID=1:548628508289:web:def602fcfb2dceb421e780
 VITE_API_URL=http://localhost:5000
 ```
 
 ### `ai-service/.env`
 ```env
-DATABASE_URL=postgresql+psycopg://complygem_app:your_password@localhost:5432/complygem
-GEMINI_API_KEY=your_gemini_api_key
+DATABASE_URL=postgresql+psycopg://complygem_app:complygem_secure_pass@localhost:5432/complygem
+GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-1.5-pro
 EMBEDDING_MODEL=models/text-embedding-004
 FIREBASE_PROJECT_ID=compylgem-sih-2026
@@ -467,105 +259,85 @@ DEMO_MODE=true
 
 ---
 
-## 17. Running the Application
+## 🌐 Deployment & Hosting
 
-In 3 separate terminal tabs:
-
-### Tab 1: AI Service & PostgreSQL Backend
+### Option A: Firebase Hosting (Frontend)
 ```bash
-cd ai-service
-python -m uvicorn app.main:app --reload --port 8000
-# API available at http://localhost:8000
-# Docs at http://localhost:8000/docs
-```
-
-### Tab 2: Backend Gateway Service
-```bash
-cd backend
-npm run dev
-# Running on http://localhost:5000
-```
-
-### Tab 3: Frontend Client
-```bash
+# Build the production bundle
 cd frontend
-npm run dev
-# Web application available at http://localhost:5173
+npm run build
+
+# Deploy using Firebase CLI
+firebase login
+firebase deploy --only hosting
 ```
 
----
-
-## 18. Sample Verification Walkthrough
-
-1. **Procurement Officer** logs in and creates a tender (`GEM/2026/B/1234567`).
-2. Uploads tender specification PDF:
-   - AI extracts: `[REQ_GST_01] Valid GSTIN`, `[REQ_TURNOVER] Minimum ₹5.00 Cr 3-yr turnover`, `[REQ_OEM] Valid OEM authorization`.
-3. **Bidder** (*ABC Industries Pvt Ltd*) submits bid documents.
-4. **AI Pipeline Processing**:
-   - `GST_Certificate.pdf` → OCR extracts `GSTIN: 29AABCA1234C1Z5` → Gateway confirms **ACTIVE** status.
-   - `Financial_Statement.pdf` → OCR extracts `FY 2025-26 Turnover: ₹3.20 Cr` → Flagged as **NON-COMPLIANT** (Deficit of ₹1.80 Cr).
-5. **Reviewer** opens the Case Dossier:
-   - Inspects AI reasoning chain with exact page number and text snippet.
-   - Records human decision: `✔ Accept Finding` or `↩ Request Clarification`.
-6. System generates an auditable PDF compliance report and logs the decision into the immutable audit ledger.
+### Option B: Cloud Containers (Backend & AI Service)
+* **AI Service (FastAPI)**: Deploy via Docker container to Cloud Run, Render, or Railway.
+* **Database**: Managed PostgreSQL on Supabase, AWS RDS, or Google Cloud SQL.
 
 ---
 
-## 19. Compliance Assessment Matrix
+## 🔑 Troubleshooting Common Setup Issues
 
-| Status | Code | Meaning | Action Triggered |
-| :--- | :---: | :--- | :--- |
-| 🟢 **COMPLIANT** | `COMPLIANT` | Document evidence matches tender requirement and portal verification. | Passed to evaluation table. |
-| 🔴 **NON_COMPLIANT** | `NON_COMPLIANT` | Submitted evidence fails criteria (e.g. turnover below minimum threshold). | Flagged in compliance dossier. |
-| 🟡 **INCONSISTENT** | `INCONSISTENT` | Document data contradicts official portal records (e.g. entity name mismatch). | Routed to Reviewer queue. |
-| ⚪ **MISSING** | `MISSING` | Mandatory document was not submitted by bidder. | Defect notice generated. |
-| 🔵 **MANUAL_REVIEW**| `MANUAL_REVIEW`| Complex clause requiring human statutory interpretation. | Assigned to Reviewer. |
+### 1. Firebase `auth/operation-not-allowed`
+> **Error**: `Firebase: Error (auth/operation-not-allowed)`
+* **Fix**: Open [Firebase Console](https://console.firebase.google.com/) → **Authentication** → **Sign-in method** → Enable **Email/Password** provider → Click **Save**.
 
----
+### 2. Git Push `403 Permission Denied`
+> **Error**: `fatal: unable to access ... The requested URL returned error: 403`
+* **Fix**: Clear cached Windows Git credentials:
+  ```powershell
+  cmdkey /delete:git:https://github.com
+  git push -u origin main
+  ```
+  Then click **"Sign in with your browser"** and authorize `suhas9090`.
 
-## 20. API Documentation
-
-Interactive Swagger documentation is available at **`http://localhost:8000/docs`**.
-
-### Key Endpoints:
-- `POST /process-document/` — Upload PDF/image for dual-pass OCR extraction.
-- `POST /extract-requirements/` — Extract structured eligibility criteria from tender text.
-- `POST /analyze-bidder/` — Execute requirement-to-evidence matching.
-- `POST /embeddings/generate` — Generate dense vector representations.
-- `POST /rag/retrieve` — Query FAISS vector index with procurement context.
-- `GET /health` — Inspect operational status of OCR, LLM, Vector Store, and DB.
-
----
-
-## 21. Testing & Verification
-
-- **Automated Schema Initialization**: Run `python -m app.database.seed_data` in `ai-service/` to test table creation and seed data insertion.
-- **Frontend E2E Test**: Use the interactive **Demo Role Switcher** on the sidebar to test role transitions and permission enforcement.
-- **Security Assertions**: Verify that unauthorized route access returns `403 Forbidden` and self-registration as `ADMIN` is rejected.
+### 3. PostgreSQL Database Connection Refused
+> **Error**: `psycopg.OperationalError: connection to server at "localhost" failed`
+* **Fix**: Ensure PostgreSQL service is running and database `complygem` exists:
+  ```sql
+  CREATE DATABASE complygem;
+  CREATE USER complygem_app WITH ENCRYPTED PASSWORD 'complygem_secure_pass';
+  GRANT ALL PRIVILEGES ON DATABASE complygem TO complygem_app;
+  ```
 
 ---
 
-## 22. Limitations & Assumptions
+## 🎨 Design System & Visual Identity
 
-1. **Government API Access**: In development environments without direct government firewall whitelisting, the platform relies on high-fidelity Sandbox/Demo gateways.
-2. **Document Quality**: OCR extraction accuracy is dependent on source scan resolution (recommended >= 300 DPI for stamped certificates).
-3. **Decision Authority**: AI findings serve solely as decision support. Final procurement decisions remain the statutory responsibility of authorized officers.
-
----
-
-## 23. Future Scope
-
-- Direct DigiLocker for Business integration for instant tamper-proof document ingestion.
-- Multilingual document OCR supporting 12+ Indian regional languages.
-- Integration with the GeM 4.0 API ecosystem.
-- Predictive vendor risk modeling based on historical procurement fulfillment.
+ComplyGeM AI is styled with an executive, restrained procurement aesthetic:
+* **The "Procurement Charcoal" Palette**: `#070B14` base background, deep sapphire `#0d1424` surfaces, and subtle cyan/emerald `#0284c7`/`#10b981` status accents.
+* **3D Glassmorphism**: `backdrop-filter: blur(20px)`, thin multi-layered borders (`rgba(255,255,255,0.08)`), and soft drop shadows creating realistic depth.
+* **Modern Typography**: **Outfit** for bold, clean structural headings and **Inter** for dense, legible compliance tables.
+* **Restrained & Professional**: Zero cartoonish illustrations, neon gradients, or generic robot graphics.
 
 ---
 
-## 24. License
+## 📜 Compliance Decision States
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+| Status | Meaning | System Action |
+| :---: | :--- | :--- |
+| 🟢 **COMPLIANT** | Evidence satisfies requirement & matches portal records. | Passed to evaluation summary. |
+| 🔴 **NON_COMPLIANT** | Evidence fails criteria (e.g. turnover deficit, expired certificate). | Flagged with severity in dossier. |
+| 🟡 **INCONSISTENT** | Discrepancy between document and official registry. | Routed to Reviewer queue. |
+| ⚪ **MISSING** | Mandatory document not provided in submission. | Defect notice logged. |
+| 🔵 **MANUAL_REVIEW** | Clause requires legal or statutory interpretation. | Assigned to Reviewer for sign-off. |
 
-```
-© 2026 COMPLYGEM AI. Built with security, transparency, and explainability for government procurement.
-```
+---
+
+## 👥 Authors & Team
+
+Developed for **Smart India Hackathon (SIH26100)**:
+* **Project**: ComplyGeM AI (AI-Powered Integrated Bid Compliance Verification Platform for GeM)
+* **Repository**: [https://github.com/suhas9090/SIH-2026](https://github.com/suhas9090/SIH-2026)
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+<div align="center">
+  <sub>Built with security, transparency, and explainability for government procurement.</sub>
+</div>
