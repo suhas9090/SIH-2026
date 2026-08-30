@@ -1,0 +1,230 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────
+    // HELPER FUNCTIONS (Central Authorization Logic)
+    // ─────────────────────────────────────────────────────────────
+    
+    // Check if user is authenticated via Firebase Auth
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the document (UID match)
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Get user's custom claim role (source of truth)
+    function getClaimRole() {
+      return request.auth.token.role;
+    }
+
+    // Check user role from custom claims
+    function hasRole(role) {
+      return isAuthenticated() && getClaimRole() == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isProcurementOfficer() {
+      return hasRole('procurement_officer');
+    }
+
+    function isReviewer() {
+      return hasRole('reviewer');
+    }
+
+    function isBidder() {
+      return hasRole('bidder');
+    }
+
+    // Check if user account status is approved (from user doc or claim)
+    function isApprovedUser() {
+      return isAuthenticated() && (
+        request.auth.token.status == 'approved' ||
+        getClaimRole() == 'bidder' ||
+        isAdmin()
+      );
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 1. /users/{uid} — User Profiles
+    // ─────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      // User can read own profile; Admins & Officers can read profiles for evaluation
+      allow read: if isAuthenticated() && (isOwner(uid) || isAdmin() || isProcurementOfficer() || isReviewer());
+      
+      // Public registration can create initial profile with 'pending' status (or 'active' if bidder)
+      allow create: if isAuthenticated() && isOwner(uid) && 
+        request.resource.data.uid == uid &&
+        request.resource.data.role != 'admin' && // Prevent client self-declaring Admin
+        (request.resource.data.status == 'pending' || request.resource.data.role == 'bidder');
+      
+      // Users can update their basic contact info, but cannot elevate their role or approve themselves
+      allow update: if isAuthenticated() && (
+        (isOwner(uid) && 
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'approvedBy', 'approvalRemarks']))
+        || isAdmin()
+      );
+
+      // Only Admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. /organizations/{organizationId}
+    // ─────────────────────────────────────────────────────────────
+    match /organizations/{organizationId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && (isOwner(resource.data.ownerUid) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. /tenders/{tenderId} & Subcollections
+    // ─────────────────────────────────────────────────────────────
+    match /tenders/{tenderId} {
+      // Any authenticated user can view published tenders
+      allow read: if isAuthenticated();
+      
+      // Only Procurement Officers and Admins can create or update tenders
+      allow create: if isAuthenticated() && (isProcurementOfficer() || isAdmin()) &&
+        request.resource.data.createdBy == request.auth.uid;
+      
+      allow update: if isAuthenticated() && (
+        (isProcurementOfficer() && resource.data.createdBy == request.auth.uid) ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+
+      // Tender Requirements subcollection
+      match /requirements/{requirementId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && (
+          (isProcurementOfficer() && get(/databases/$(database)/documents/tenders/$(tenderId)).data.createdBy == request.auth.uid) ||
+          isAdmin()
+        );
+      }
+
+      // Tender Bids subcollection
+      match /bids/{bidId} {
+        // Bidders can only read their own bid; Officers, Reviewers, and Admins can read bids on their tender
+        allow read: if isAuthenticated() && (
+          resource.data.bidderUid == request.auth.uid ||
+          isProcurementOfficer() ||
+          isReviewer() ||
+          isAdmin()
+        );
+
+        // Bidders can create bids on active tenders
+        allow create: if isAuthenticated() && isBidder() &&
+          request.resource.data.bidderUid == request.auth.uid;
+
+        // Bidders can update their own bid before submission closes; Officers can update status
+        allow update: if isAuthenticated() && (
+          (resource.data.bidderUid == request.auth.uid && resource.data.status == 'DRAFT') ||
+          isProcurementOfficer() ||
+          isReviewer() ||
+          isAdmin()
+        );
+
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 4. /bids/{bidId}/documents/{documentId}
+    // ─────────────────────────────────────────────────────────────
+    match /bids/{bidId}/documents/{documentId} {
+      // Document metadata access: owner bidder, or evaluating officer/reviewer/admin
+      allow read: if isAuthenticated() && (
+        resource.data.uploadedBy == request.auth.uid ||
+        isProcurementOfficer() ||
+        isReviewer() ||
+        isAdmin()
+      );
+
+      allow create: if isAuthenticated() && (isBidder() || isAdmin()) &&
+        request.resource.data.uploadedBy == request.auth.uid;
+
+      allow update: if isAuthenticated() && (
+        resource.data.uploadedBy == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow delete: if isAuthenticated() && (
+        (resource.data.uploadedBy == request.auth.uid && resource.data.status == 'PENDING') ||
+        isAdmin()
+      );
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 5. /verificationResults/{resultId}
+    // ─────────────────────────────────────────────────────────────
+    match /verificationResults/{resultId} {
+      // Government API results & OCR evidence: read by evaluating staff & the respective bidder
+      allow read: if isAuthenticated() && (
+        resource.data.bidderUid == request.auth.uid ||
+        isProcurementOfficer() ||
+        isReviewer() ||
+        isAdmin()
+      );
+
+      // Writes restricted to trusted backend / Cloud Functions / Admin SDK
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 6. /complianceReports/{reportId}
+    // ─────────────────────────────────────────────────────────────
+    match /complianceReports/{reportId} {
+      allow read: if isAuthenticated() && (
+        resource.data.bidderUid == request.auth.uid ||
+        isProcurementOfficer() ||
+        isReviewer() ||
+        isAdmin()
+      );
+
+      // Generated by backend services & officers
+      allow create, update: if isAuthenticated() && (isProcurementOfficer() || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 7. /auditLogs/{logId} — Immutable Audit Trail
+    // ─────────────────────────────────────────────────────────────
+    match /auditLogs/{logId} {
+      // Only Admins, Procurement Officers, and Reviewers can view audit logs
+      allow read: if isAuthenticated() && (isAdmin() || isProcurementOfficer() || isReviewer());
+      
+      // Audit logs are append-only; ordinary clients can NEVER modify or delete
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // STRICT IMMUTABILITY
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 8. /notifications/{notificationId}
+    // ─────────────────────────────────────────────────────────────
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.recipientUid == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 9. /knowledgeBase/{documentId} — Procurement Rules (GFR, GeM)
+    // ─────────────────────────────────────────────────────────────
+    match /knowledgeBase/{documentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

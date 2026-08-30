@@ -1,0 +1,84 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─────────────────────────────────────────────────────────────
+    // HELPER FUNCTIONS
+    // ─────────────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getClaimRole() {
+      return request.auth.token.role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getClaimRole() == 'admin';
+    }
+
+    function isProcurementOfficer() {
+      return isAuthenticated() && getClaimRole() == 'procurement_officer';
+    }
+
+    function isReviewer() {
+      return isAuthenticated() && getClaimRole() == 'reviewer';
+    }
+
+    function isBidder() {
+      return isAuthenticated() && getClaimRole() == 'bidder';
+    }
+
+    function isValidDocType() {
+      return request.resource.contentType.matches('application/pdf')
+          || request.resource.contentType.matches('image/jpeg')
+          || request.resource.contentType.matches('image/png')
+          || request.resource.contentType.matches('image/tiff');
+    }
+
+    function isValidFileSize() {
+      return request.resource.size < 50 * 1024 * 1024; // Max 50MB
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 1. Tender Documents: /tenders/{tenderId}/documents/{documentId}
+    // ─────────────────────────────────────────────────────────────
+    match /tenders/{tenderId}/documents/{documentId} {
+      // Any authenticated user (bidders, officers, reviewers, admins) can view published tender specs
+      allow read: if isAuthenticated();
+
+      // Only Procurement Officers and Admins can upload tender documents
+      allow create, update: if isAuthenticated() 
+        && (isProcurementOfficer() || isAdmin())
+        && isValidDocType()
+        && isValidFileSize();
+
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. Bidder Documents: /bids/{bidId}/documents/{documentId}
+    // ─────────────────────────────────────────────────────────────
+    match /bids/{bidId}/documents/{documentId} {
+      // Read access: authorized evaluating staff (Officer, Reviewer, Admin) OR the uploading Bidder
+      allow read: if isAuthenticated() && (
+        isProcurementOfficer() ||
+        isReviewer() ||
+        isAdmin() ||
+        (isBidder() && request.auth.uid == request.resource.metadata.uploadedBy)
+      );
+
+      // Upload access: Bidders uploading their own bid documents, or Admin
+      allow create, update: if isAuthenticated() && (
+        (isBidder() && request.auth.uid == request.resource.metadata.uploadedBy) ||
+        isAdmin()
+      ) && isValidDocType() && isValidFileSize();
+
+      allow delete: if isAuthenticated() && (
+        (isBidder() && request.auth.uid == resource.metadata.uploadedBy) ||
+        isAdmin()
+      );
+    }
+  }
+}
