@@ -58,12 +58,12 @@ export default function LoginPage() {
   const [password,     setPassword]     = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
   const [showPass,     setShowPass]     = useState(false);
+  const [rememberMe,   setRememberMe]   = useState(true);
 
   const [loginStep, setLoginStep] = useState('credentials'); // 'credentials' | 'mfa' | 'blocked'
   const [blockedReason, setBlockedReason] = useState(null);
   const [otpValue, setOtpValue] = useState('');
   const [loading, setLoading]   = useState(false);
-
   const [demoLoading, setDemoLoading] = useState(false);
 
   const isEmailValid = validateEmail(email);
@@ -166,211 +166,225 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh', background: 'var(--gradient-hero)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 24, position: 'relative', overflow: 'hidden',
-    }}>
-      {/* Glow */}
+    <div
+      style={{
+        minHeight: '100vh', background: 'var(--bg-dark)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24, position: 'relative', overflow: 'hidden',
+      }}
+    >
+      {/* Ambient Lighting */}
       <div style={{
-        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: 600, height: 600, borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(30,64,175,0.15) 0%, transparent 70%)',
+        position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)',
+        width: 750, height: 750, borderRadius: '50%',
+        background: 'radial-gradient(ellipse, rgba(30, 64, 175, 0.16) 0%, rgba(6, 182, 212, 0.04) 45%, transparent 75%)',
         pointerEvents: 'none',
       }} />
 
-      <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }}>
+      <div
+        className="perspective-container"
+        style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 10 }}
+      >
+        {/* ── Elevated 3D Glass Login Card ── */}
+        <div
+          className="glass-panel-3d"
+          style={{
+            padding: '36px 32px',
+            boxShadow: '0 30px 70px -15px rgba(0, 0, 0, 0.85), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12)',
+            position: 'relative',
+            zIndex: 20,
+          }}
+        >
+          {/* Logo Header */}
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 12, margin: '0 auto 12px',
+              background: 'linear-gradient(135deg, #1e40af 0%, #0284c7 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.2rem', color: '#ffffff',
+              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+            }}>
+              ◈
+            </div>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: '#f0f4ff', letterSpacing: '-0.02em', marginBottom: 4 }}>
+              COMPLYGEM <span style={{ color: '#0284c7' }}>AI</span>
+            </h1>
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+              Sign in to your procurement account
+            </p>
+          </div>
 
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            width: 52, height: 52, borderRadius: 13, margin: '0 auto 14px',
-            background: 'linear-gradient(135deg, #1e40af, #0891b2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem',
-          }} className="animate-pulse-glow">⚖</div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.8rem', color: '#f0f4ff', marginBottom: 6 }}>
-            ComplyGeM AI
-          </h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Bid Compliance Verification Platform</p>
+          {/* ── Credentials step ── */}
+          {loginStep === 'credentials' && (
+            <div>
+              <form onSubmit={handleLogin} noValidate>
+                {/* Email */}
+                <div style={{ marginBottom: 16 }}>
+                  <label className="label" htmlFor="login-email">Official Email</label>
+                  <input
+                    id="login-email"
+                    name="email"
+                    className="input"
+                    type="email"
+                    placeholder="officer@ministry.gov.in"
+                    value={email}
+                    onChange={e => {
+                      setEmailTouched(true);
+                      setEmail(e.target.value);
+                    }}
+                    onBlur={() => setEmailTouched(true)}
+                    autoComplete="email"
+                    style={{
+                      borderColor: emailTouched && email && !isEmailValid ? '#ef4444' : isEmailValid ? '#10b981' : undefined
+                    }}
+                  />
+                  {emailTouched && email && !isEmailValid && (
+                    <div style={{ fontSize: '0.72rem', color: '#ef4444', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span>⚠</span> Please enter a valid email format
+                    </div>
+                  )}
+                </div>
+
+                {/* Password */}
+                <div style={{ marginBottom: 12 }}>
+                  <label className="label" htmlFor="login-password">Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id="login-password"
+                      name="password"
+                      className="input"
+                      type={showPass ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      style={{ paddingRight: 44 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPass(s => !s)}
+                      style={{
+                        position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '1rem',
+                      }}
+                    >
+                      {showPass ? '🙈' : '👁'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Remember me & Forgot password */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.8rem', color: '#94a3b8' }}>
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={e => setRememberMe(e.target.checked)}
+                      style={{ accentColor: '#3b82f6', width: 15, height: 15 }}
+                    />
+                    Remember me
+                  </label>
+                  <span
+                    style={{ fontSize: '0.8rem', color: '#3b82f6', cursor: 'pointer', fontWeight: 500 }}
+                    onClick={() => toast('Password reset link sent to your registered email.')}
+                  >
+                    Forgot password?
+                  </span>
+                </div>
+
+                <button type="submit" className="btn-primary" disabled={loading}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '0.95rem' }}>
+                  {loading ? '⟳ Signing in...' : 'Sign In'}
+                </button>
+              </form>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                <span style={{ color: '#4a6080', fontSize: '0.72rem', fontWeight: 600 }}>OR</span>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+              </div>
+
+              {/* Demo Login Button */}
+              <button
+                onClick={handleDemoLogin} disabled={demoLoading}
+                className="btn-secondary"
+                style={{ width: '100%', justifyContent: 'center', padding: '11px', fontSize: '0.85rem' }}
+              >
+                {demoLoading ? '⟳ Loading...' : '🎮 Explore in Demo Mode (Sandbox)'}
+              </button>
+
+              <p style={{ textAlign: 'center', marginTop: 24, fontSize: '0.85rem', color: '#64748b' }}>
+                Don't have an account?{' '}
+                <Link to="/register" style={{ color: '#3b82f6', fontWeight: 600 }}>Create account</Link>
+              </p>
+            </div>
+          )}
+
+          {/* ── MFA step ── */}
+          {loginStep === 'mfa' && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🔐</div>
+              <h2 style={{ fontWeight: 700, fontSize: '1.1rem', color: '#f0f4ff', marginBottom: 8 }}>
+                Two-Factor Authentication
+              </h2>
+              <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: 4 }}>
+                Enter the 6-digit verification code sent to
+              </p>
+              <p style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.875rem', marginBottom: 8 }}>
+                {email}
+              </p>
+
+              <form onSubmit={handleMFA}>
+                <OTPInput value={otpValue} onChange={setOtpValue} />
+
+                <button type="submit" className="btn-primary" disabled={loading || otpValue.length !== 6}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
+                  {loading ? '⟳ Verifying...' : '✓ Verify Code'}
+                </button>
+              </form>
+
+              <button
+                className="btn-ghost"
+                style={{ marginTop: 14, fontSize: '0.8rem', color: '#64748b', width: '100%', justifyContent: 'center' }}
+                onClick={() => { setLoginStep('credentials'); setOtpValue(''); }}
+              >
+                ← Use a different account
+              </button>
+            </div>
+          )}
+
+          {/* ── Blocked / approval / locked state ── */}
+          {loginStep === 'blocked' && blockedReason && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: 14 }}>{blockedReason.icon}</div>
+              <h2 style={{
+                fontWeight: 800, fontSize: '1.1rem', marginBottom: 12,
+                color: blockedReason.color,
+              }}>
+                {blockedReason.title}
+              </h2>
+              <p style={{ color: '#94a3b8', fontSize: '0.875rem', lineHeight: 1.7, marginBottom: 20 }}>
+                {blockedReason.message}
+              </p>
+
+              {blockedReason.action && (
+                <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }}
+                  onClick={blockedReason.action.fn}>
+                  {blockedReason.action.label}
+                </button>
+              )}
+
+              <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => { setLoginStep('credentials'); setBlockedReason(null); }}>
+                ← Try Again
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* ── Credentials step ── */}
-        {loginStep === 'credentials' && (
-          <div className="card" style={{ padding: 32 }}>
-            <h2 style={{ fontWeight: 700, fontSize: '1.1rem', color: '#f0f4ff', marginBottom: 24, textAlign: 'center' }}>
-              Sign In to Your Account
-            </h2>
-
-            <form onSubmit={handleLogin} noValidate>
-              {/* Email */}
-              <div style={{ marginBottom: 14 }}>
-                <label className="label">Official Email</label>
-                <input
-                  className={`input ${emailTouched && email && !isEmailValid ? 'border-red-500' : ''}`}
-                  type="email"
-                  placeholder="officer@ministry.gov.in"
-                  value={email}
-                  onChange={e => {
-                    setEmailTouched(true);
-                    setEmail(e.target.value);
-                  }}
-                  onBlur={() => setEmailTouched(true)}
-                  autoComplete="email"
-                  style={{
-                    borderColor: emailTouched && email && !isEmailValid ? '#ef4444' : isEmailValid ? '#10b981' : undefined
-                  }}
-                />
-                {emailTouched && email && !isEmailValid && (
-                  <div style={{ fontSize: '0.72rem', color: '#ef4444', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span>⚠</span> Please enter a valid email (e.g. name@domain.com)
-                  </div>
-                )}
-                {isEmailValid && (
-                  <div style={{ fontSize: '0.72rem', color: '#10b981', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span>✓</span> Valid email address
-                  </div>
-                )}
-              </div>
-
-              {/* Password */}
-              <div style={{ marginBottom: 8 }}>
-                <label className="label">Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    className="input" type={showPass ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password} onChange={e => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    style={{ paddingRight: 44 }}
-                  />
-                  <button type="button" onClick={() => setShowPass(s => !s)} style={{
-                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '1rem',
-                  }}>
-                    {showPass ? '🙈' : '👁'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Forgot password */}
-              <div style={{ textAlign: 'right', marginBottom: 20 }}>
-                <span
-                  style={{ fontSize: '0.8rem', color: '#3b82f6', cursor: 'pointer' }}
-                  onClick={() => toast('Password reset: Enter your email to receive a reset link.')}
-                >
-                  Forgot password?
-                </span>
-              </div>
-
-              <button type="submit" className="btn-primary" disabled={loading}
-                style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '0.95rem' }}>
-                {loading ? '⟳ Signing in...' : '→ Sign In'}
-              </button>
-            </form>
-
-            {/* MFA info note */}
-            <div style={{
-              marginTop: 16, padding: '10px 12px',
-              background: 'rgba(30,64,175,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8,
-              fontSize: '0.75rem', color: '#64748b', display: 'flex', alignItems: 'flex-start', gap: 8,
-            }}>
-              <span style={{ flexShrink: 0 }}>🔐</span>
-              <span>Privileged accounts (Procurement Officers, Reviewers, Admins) will be prompted for multi-factor authentication after password verification.</span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
-              <div className="divider" style={{ flex: 1, margin: 0 }} />
-              <span style={{ color: '#4a6080', fontSize: '0.75rem' }}>OR</span>
-              <div className="divider" style={{ flex: 1, margin: 0 }} />
-            </div>
-
-            {/* Demo Login */}
-            <button
-              onClick={handleDemoLogin} disabled={demoLoading}
-              className="btn-secondary"
-              style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '0.875rem' }}
-            >
-              {demoLoading ? '⟳ Loading...' : '🎮 Try Demo Mode — No Firebase Required'}
-            </button>
-
-            <div className="mock-banner" style={{ marginTop: 12 }}>
-              <span>⚠</span> Demo mode uses sandbox data — not real government information
-            </div>
-
-            <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.875rem', color: '#64748b' }}>
-              No account?{' '}
-              <Link to="/register" style={{ color: '#3b82f6', fontWeight: 600 }}>Register here</Link>
-            </p>
-          </div>
-        )}
-
-        {/* ── MFA step ── */}
-        {loginStep === 'mfa' && (
-          <div className="card" style={{ padding: 32, textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🔐</div>
-            <h2 style={{ fontWeight: 700, fontSize: '1.1rem', color: '#f0f4ff', marginBottom: 8 }}>
-              Two-Factor Authentication
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: 4 }}>
-              Enter the 6-digit code from your authenticator app or the OTP sent to
-            </p>
-            <p style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.875rem', marginBottom: 8 }}>
-              {email}
-            </p>
-
-            <form onSubmit={handleMFA}>
-              <OTPInput value={otpValue} onChange={setOtpValue} />
-
-              <button type="submit" className="btn-primary" disabled={loading || otpValue.length !== 6}
-                style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
-                {loading ? '⟳ Verifying...' : '✓ Verify Code'}
-              </button>
-            </form>
-
-            <button
-              className="btn-ghost"
-              style={{ marginTop: 14, fontSize: '0.8rem', color: '#64748b', width: '100%', justifyContent: 'center' }}
-              onClick={() => { setLoginStep('credentials'); setOtpValue(''); }}
-            >
-              ← Use a different account
-            </button>
-
-            <p style={{ marginTop: 12, fontSize: '0.75rem', color: '#4a6080' }}>
-              Code expires in 5 minutes. <span style={{ color: '#3b82f6', cursor: 'pointer' }}>Resend code</span>
-            </p>
-          </div>
-        )}
-
-        {/* ── Blocked / approval / locked state ── */}
-        {loginStep === 'blocked' && blockedReason && (
-          <div className="card" style={{ padding: 32, textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: 14 }}>{blockedReason.icon}</div>
-            <h2 style={{
-              fontWeight: 800, fontSize: '1.1rem', marginBottom: 12,
-              color: blockedReason.color,
-            }}>
-              {blockedReason.title}
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', lineHeight: 1.7, marginBottom: 20 }}>
-              {blockedReason.message}
-            </p>
-
-            {blockedReason.action && (
-              <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }}
-                onClick={blockedReason.action.fn}>
-                {blockedReason.action.label}
-              </button>
-            )}
-
-            <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => { setLoginStep('credentials'); setBlockedReason(null); }}>
-              ← Try Again
-            </button>
-          </div>
-        )}
-
-        <p style={{ textAlign: 'center', marginTop: 14, fontSize: '0.75rem' }}>
-          <Link to="/" style={{ color: '#4a6080' }}>← Back to Home</Link>
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.78rem' }}>
+          <Link to="/" style={{ color: '#4a6080', textDecoration: 'none' }}>← Back to Overview</Link>
         </p>
       </div>
     </div>
