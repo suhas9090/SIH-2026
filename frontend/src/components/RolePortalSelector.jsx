@@ -1,7 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, DEMO_PROFILES } from '../contexts/AuthContext';
-import toast from 'react-hot-toast';
 
 export const PORTAL_ROLES = [
   {
@@ -17,6 +15,8 @@ export const PORTAL_ROLES = [
     btnHover: '#1d4ed8',
     btnText: 'Officer Login',
     path: '/procurement/dashboard',
+    defaultEmail: 'officer@complygem.gov.in',
+    demoName: 'Rajesh Kumar (Procurement Officer)',
     officerInfo: 'Ministry of Labour & Employment'
   },
   {
@@ -32,6 +32,8 @@ export const PORTAL_ROLES = [
     btnHover: '#047857',
     btnText: 'Bidder Login',
     path: '/bidder/dashboard',
+    defaultEmail: 'vendor@abcindustries.com',
+    demoName: 'Vikram Mehta (Bidder / Supplier)',
     officerInfo: 'ABC Industries Pvt Ltd'
   },
   {
@@ -47,6 +49,8 @@ export const PORTAL_ROLES = [
     btnHover: '#0e7490',
     btnText: 'Auditor Login',
     path: '/auditor/dashboard',
+    defaultEmail: 'auditor@complygem.gov.in',
+    demoName: 'Justice S. Narayan (Auditor)',
     officerInfo: 'CAG / NIC Oversight'
   },
   {
@@ -62,22 +66,20 @@ export const PORTAL_ROLES = [
     btnHover: '#b91c1c',
     btnText: 'Admin Login',
     path: '/admin/dashboard',
+    defaultEmail: 'admin@complygem.gov.in',
+    demoName: 'System Administrator',
     officerInfo: 'ComplyGeM Central Authority'
   }
 ];
 
-export default function RolePortalSelector({ onSelectPreset }) {
-  const { switchDemoRole } = useAuth();
+export default function RolePortalSelector({ onSelectPortal }) {
   const navigate = useNavigate();
 
-  const handlePortalAccess = (portal) => {
-    const prof = DEMO_PROFILES[portal.roleKey];
-    if (prof) {
-      switchDemoRole(portal.roleKey);
-      toast.success(`Accessing ${portal.title} as ${prof.name}`);
-      navigate(portal.path);
+  const handlePortalClick = (portal) => {
+    if (onSelectPortal) {
+      onSelectPortal(portal);
     } else {
-      navigate('/login');
+      navigate(`/login?portal=${portal.roleKey}`);
     }
   };
 
@@ -173,11 +175,11 @@ export default function RolePortalSelector({ onSelectPreset }) {
               </p>
             </div>
 
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* Action Button: Opens Sign-In Page */}
+            <div>
               <button
                 type="button"
-                onClick={() => handlePortalAccess(portal)}
+                onClick={() => handlePortalClick(portal)}
                 style={{
                   width: '100%',
                   padding: '11px 16px',
@@ -206,28 +208,6 @@ export default function RolePortalSelector({ onSelectPreset }) {
               >
                 <span>➜</span> {portal.btnText}
               </button>
-
-              {onSelectPreset && (
-                <button
-                  type="button"
-                  onClick={() => onSelectPreset(portal.roleKey)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#64748b',
-                    fontSize: '0.72rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    padding: '4px',
-                    textDecoration: 'underline',
-                    textUnderlineOffset: '3px',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#94a3b8'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; }}
-                >
-                  Fill credentials in form
-                </button>
-              )}
             </div>
           </div>
         ))}
