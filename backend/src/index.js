@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 
 const authRoutes = require('./routes/auth');
@@ -15,6 +16,8 @@ const complianceRoutes = require('./routes/compliance');
 const reportRoutes = require('./routes/reports');
 const auditRoutes = require('./routes/audit');
 const adminRoutes = require('./routes/admin');
+const mockVerificationRoutes = require('./routes/mockVerificationRoutes');
+const govtDataRoutes = require('./routes/govtData');
 
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/requestLogger');
@@ -42,6 +45,10 @@ app.use('/api/', limiter);
 // Body parsing
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Static file serving for uploaded documents
+// Files served at /uploads/* — access controlled by routes
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Logging
 app.use(morgan('combined'));
@@ -73,10 +80,13 @@ app.use('/api/tenders', tenderRoutes);
 app.use('/api/bidders', bidderRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/verify', verificationRoutes);
+app.use('/api/verification', mockVerificationRoutes);
+app.use('/api/mock', mockVerificationRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/govt-data', govtDataRoutes);
 
 // 404 handler
 app.use((req, res) => {

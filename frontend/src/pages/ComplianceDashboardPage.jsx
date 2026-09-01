@@ -1,379 +1,899 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/Sidebar';
 import { complianceAPI, bidderAPI, reportAPI } from '../services/api';
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import EvidenceViewer from '../components/EvidenceViewer';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import toast from 'react-hot-toast';
 
-// Demo data for hackathon demonstration
-const DEMO_DATA = {
-  bidder: {
-    id: 'b1', organizationName: 'ABC Industries Pvt Ltd', gstin: '29AABCA1234C1Z5',
-    pan: 'AABCA1234C', udyamNo: 'UDYAM-KA-01-0000001',
-    tender: { referenceNo: 'TND-2026-001', title: 'Supply of Industrial Safety Equipment' }
-  },
-  report: { overallScore: 72, riskLevel: 'MEDIUM', compliantCount: 4, nonCompliantCount: 1, missingCount: 1, inconsistentCount: 0, pendingCount: 0, reviewCount: 1, summary: 'Bidder shows moderate compliance. Annual turnover below required threshold. OEM authorization requires human review.', recommendations: 'Request updated financial statements from bidder. Verify OEM authorization with manufacturer.' },
-  items: [
-    { id: 'c1', requirement: { category: 'REGISTRATION', title: 'Valid GST Registration', mandatory: true, description: 'Bidder must possess a valid GST registration certificate.', minValue: null }, status: 'COMPLIANT', evidenceSummary: 'GSTIN: 29AABCA1234C1Z5', ruleApplied: 'GST registration is Active.', aiExplanation: 'The bidder has submitted a valid GST certificate with GSTIN 29AABCA1234C1Z5. Government verification confirms the registration is ACTIVE as of the verification date.', confidence: 1.0, evidencePage: 2 },
-    { id: 'c2', requirement: { category: 'TAX', title: 'Valid PAN', mandatory: true, description: 'Bidder must have a valid Permanent Account Number (PAN).', minValue: null }, status: 'COMPLIANT', evidenceSummary: 'PAN: AABCA1234C', ruleApplied: 'PAN verified and active.', aiExplanation: 'PAN AABCA1234C has been verified with the Income Tax portal. Entity type confirmed as Company.', confidence: 1.0, evidencePage: 3 },
-    { id: 'c3', requirement: { category: 'MSME_UDYAM', title: 'Udyam/MSME Registration', mandatory: false, description: 'Bidder must be registered under Udyam portal.' }, status: 'COMPLIANT', evidenceSummary: 'Udyam: UDYAM-KA-01-0000001, Category: Small', ruleApplied: 'Udyam verified. Category: Small', aiExplanation: 'Udyam registration verified. Enterprise category is Small, which qualifies for MSME purchase preference under MSME Policy 2012.', confidence: 1.0, ragReference: 'MSME Policy 2012: MSME enterprises are eligible for purchase preference.' },
-    { id: 'c4', requirement: { category: 'FINANCIAL', title: 'Minimum Annual Turnover ≥ ₹5 Cr', mandatory: true, description: 'Minimum average annual turnover of INR 5 crore over preceding 3 financial years.', minValue: 50000000 }, status: 'NON_COMPLIANT', evidenceSummary: 'Found: ₹3.20 Cr INR (FY 2025-26)', ruleApplied: 'Actual: ₹3.20 Cr < Required: ₹5.00 Cr', aiExplanation: 'The financial statement for FY 2025-26 shows annual turnover of ₹3.2 crore. This is below the required minimum of ₹5 crore. The requirement is NOT met.', confidence: 0.92, evidencePage: 4, ragReference: 'GeM Procurement Rules: Financial eligibility requires audited financial statements.' },
-    { id: 'c5', requirement: { category: 'OEM', title: 'OEM Authorization Certificate', mandatory: true, description: 'Bidder must submit a valid OEM authorization certificate from the manufacturer.' }, status: 'REQUIRES_HUMAN_REVIEW', evidenceSummary: 'Letter from XYZ Corp found', ruleApplied: 'Partial evidence found. Similarity score: 0.68. Human review recommended.', aiExplanation: 'A letter from XYZ Corporation was found that may constitute OEM authorization. However, the document does not explicitly state the products covered or the validity period. Human review is required.', confidence: 0.65, evidencePage: 7, ragReference: 'GeM Guidelines: OEM authorization must specify products, territory, and validity period.' },
-    { id: 'c6', requirement: { category: 'EXPERIENCE', title: 'Minimum 3 Years Experience', mandatory: true, description: 'Minimum 3 years experience in supply of similar products.' }, status: 'COMPLIANT', evidenceSummary: 'Experience certificate — 5 years (2020-2025)', ruleApplied: 'Actual: 5 years >= Required: 3 years', aiExplanation: 'Experience certificate confirms 5 years of supply experience from 2020 to 2025, exceeding the minimum requirement of 3 years.', confidence: 0.88, evidencePage: 8 },
-    { id: 'c7', requirement: { category: 'BLACKLISTING', title: 'Non-Blacklisting Declaration', mandatory: true, description: 'Bidder must not be blacklisted or debarred by any government entity.' }, status: 'COMPLIANT', evidenceSummary: 'Checked: GeM Blacklist, CVC Debarment List, Ministry Debarment List', ruleApplied: 'No adverse record found.', aiExplanation: 'Blacklist verification performed against GeM blacklist, CVC debarment list, and ministry debarment lists. No adverse record found.', confidence: 0.7, ragReference: 'CVC Guidelines: Blacklisted companies cannot participate in government procurement.' },
-  ],
-  verifications: [
-    { source: 'GST_PORTAL', status: 'MOCK_VERIFIED', isMockData: true, verifiedData: { gstin: '29AABCA1234C1Z5', status: 'ACTIVE', legalName: 'ABC Industries Pvt Ltd', state: 'Karnataka' } },
-    { source: 'PAN_INCOME_TAX', status: 'MOCK_VERIFIED', isMockData: true, verifiedData: { pan: 'AABCA1234C', entityType: 'Company', filingStatus: 'COMPLIANT' } },
-    { source: 'UDYAM_PORTAL', status: 'MOCK_VERIFIED', isMockData: true, verifiedData: { udyamNo: 'UDYAM-KA-01-0000001', category: 'Small', status: 'ACTIVE' } },
-    { source: 'BLACKLIST_REGISTRY', status: 'MOCK_VERIFIED', isMockData: true, verifiedData: { isBlacklisted: false, result: 'NO_ADVERSE_RECORD' } },
-  ]
-};
-
 const STATUS_CFG = {
-  COMPLIANT: { label: '✓ Compliant', cls: 'badge-compliant', color: '#10b981' },
-  NON_COMPLIANT: { label: '✗ Non-Compliant', cls: 'badge-non-compliant', color: '#ef4444' },
-  MISSING: { label: '⚠ Missing', cls: 'badge-missing', color: '#f59e0b' },
-  INCONSISTENT: { label: '≠ Inconsistent', cls: 'badge-inconsistent', color: '#a855f7' },
-  PENDING_VERIFICATION: { label: '⟳ Pending', cls: 'badge-pending', color: '#3b82f6' },
-  REQUIRES_HUMAN_REVIEW: { label: '👁 Review', cls: 'badge-review', color: '#fb923c' },
+  COMPLIANT:             { label: '✓ Compliant',     cls: 'badge-compliant',     color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+  NON_COMPLIANT:         { label: '✗ Non-Compliant', cls: 'badge-non-compliant', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+  MISSING:               { label: '⚠ Missing Doc',   cls: 'badge-missing',       color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+  MISSING_EVIDENCE:      { label: '⚠ No Evidence',   cls: 'badge-missing',       color: '#fb923c', bg: 'rgba(251,146,60,0.1)' },
+  INCONSISTENT:          { label: '≠ Inconsistent',  cls: 'badge-inconsistent',  color: '#c084fc', bg: 'rgba(192,132,252,0.1)' },
+  NEEDS_REVIEW:          { label: '👁 Needs Review', cls: 'badge-review',        color: '#fcd34d', bg: 'rgba(252,211,77,0.1)' },
+  REQUIRES_HUMAN_REVIEW: { label: '👁 Review Req.',  cls: 'badge-review',        color: '#fcd34d', bg: 'rgba(252,211,77,0.1)' },
+  UNVERIFIED:            { label: '○ Unverified',    cls: 'badge-pending',       color: '#9ca3af', bg: 'rgba(156,163,175,0.1)' },
+  PENDING_VERIFICATION:  { label: '⟳ Pending',       cls: 'badge-pending',       color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
 };
 
-const CAT_COLOR = { FINANCIAL: '#3b82f6', REGISTRATION: '#10b981', TAX: '#06b6d4', MSME_UDYAM: '#8b5cf6', OEM: '#f59e0b', EXPERIENCE: '#ec4899', BLACKLISTING: '#ef4444', OTHER: '#64748b' };
+const CAT_COLOR = {
+  FINANCIAL: '#3b82f6',
+  REGISTRATION: '#10b981',
+  TAX: '#06b6d4',
+  MSME_UDYAM: '#8b5cf6',
+  OEM: '#f59e0b',
+  EXPERIENCE: '#ec4899',
+  BLACKLISTING: '#ef4444',
+  OTHER: '#64748b',
+};
+
+const RISK_CFG = {
+  LOW:      { color: '#10b981', label: 'LOW RISK',      bg: 'rgba(16,185,129,0.12)', border: '#10b981' },
+  MEDIUM:   { color: '#f59e0b', label: 'MEDIUM RISK',   bg: 'rgba(245,158,11,0.12)', border: '#f59e0b' },
+  HIGH:     { color: '#ef4444', label: 'HIGH RISK',     bg: 'rgba(239,68,68,0.12)',  border: '#ef4444' },
+  CRITICAL: { color: '#dc2626', label: 'CRITICAL RISK', bg: 'rgba(220,38,38,0.18)',  border: '#dc2626' },
+};
 
 export default function ComplianceDashboardPage() {
   const { bidderId } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState(DEMO_DATA);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [reviewAction, setReviewAction] = useState('');
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  // EvidenceViewer modal state
+  const [viewingEvidenceItem, setViewingEvidenceItem] = useState(null);
+
+  // Review modal state
+  const [reviewingItem, setReviewingItem] = useState(null);
+  const [reviewAction, setReviewAction] = useState('APPROVED');
   const [reviewRemarks, setReviewRemarks] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [overrideStatus, setOverrideStatus] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const [compRes, bidderRes] = await Promise.all([
-          complianceAPI.getBidderCompliance(bidderId),
-          bidderAPI.get(bidderId)
-        ]);
-        setData({ ...compRes.data, bidder: bidderRes.data });
-      } catch { /* use demo */ }
-    };
-    fetch();
-  }, [bidderId]);
+  // Active tab inside the page
+  const [activeTab, setActiveTab] = useState('requirements'); // 'requirements' | 'risk' | 'verifications'
 
-  const { report, items, verifications, bidder } = data;
-
-  const pieData = report ? [
-    { name: 'Compliant', value: report.compliantCount, color: '#10b981' },
-    { name: 'Non-Compliant', value: report.nonCompliantCount, color: '#ef4444' },
-    { name: 'Missing', value: report.missingCount, color: '#f59e0b' },
-    { name: 'Review', value: report.reviewCount, color: '#fb923c' },
-    { name: 'Pending', value: report.pendingCount, color: '#3b82f6' },
-  ].filter(d => d.value > 0) : [];
-
-  const handleReview = async () => {
-    if (!selectedItem || !reviewAction) return toast.error('Select an action.');
+  const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      await complianceAPI.reviewItem(selectedItem.id, { action: reviewAction, remarks: reviewRemarks });
-      toast.success('Review submitted successfully.');
-      setSelectedItem(null);
-    } catch {
-      toast.error('Failed to submit review.');
+      const [compRes, bidderRes] = await Promise.all([
+        complianceAPI.getBidderCompliance(bidderId),
+        bidderAPI.get(bidderId).catch(() => ({ data: null })),
+      ]);
+
+      const mergedData = {
+        ...compRes.data,
+        bidder: compRes.data.bidder || bidderRes.data || { organizationName: 'Bidder' },
+      };
+      setData(mergedData);
+    } catch (err) {
+      console.error('Failed to load compliance data:', err);
+      setError('Unable to load compliance data from server. Please verify your connection.');
     } finally {
       setLoading(false);
     }
+  }, [bidderId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleGenerateReport = async () => {
+    setGeneratingReport(true);
+    try {
+      await reportAPI.generate(bidderId);
+      toast.success('Compliance report generated & updated!');
+      await fetchData();
+    } catch (err) {
+      toast.error('Failed to generate report: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setGeneratingReport(false);
+    }
   };
 
-  const RISK_CFG = {
-    LOW: { color: '#10b981', label: 'LOW RISK', bg: 'rgba(16,185,129,0.1)' },
-    MEDIUM: { color: '#f59e0b', label: 'MEDIUM RISK', bg: 'rgba(245,158,11,0.1)' },
-    HIGH: { color: '#ef4444', label: 'HIGH RISK', bg: 'rgba(239,68,68,0.1)' },
-    CRITICAL: { color: '#dc2626', label: 'CRITICAL RISK', bg: 'rgba(220,38,38,0.1)' },
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      const response = await reportAPI.download(bidderId);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `ComplyGeM_Report_${bidderId}_${Date.now()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF report downloaded!');
+    } catch (err) {
+      toast.error('Failed to download PDF: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
-  const riskCfg = RISK_CFG[report?.riskLevel] || RISK_CFG.MEDIUM;
+
+  const handleOpenReview = (item, e) => {
+    e?.stopPropagation();
+    setReviewingItem(item);
+    setReviewAction('APPROVED');
+    setReviewRemarks('');
+    setOverrideStatus('');
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewingItem || !reviewAction) {
+      return toast.error('Please select a review action.');
+    }
+    setSubmittingReview(true);
+    try {
+      await complianceAPI.reviewItem(reviewingItem.id, {
+        action: reviewAction,
+        remarks: reviewRemarks,
+        overrideStatus: overrideStatus || undefined,
+      });
+      toast.success('Human review decision recorded!');
+      setReviewingItem(null);
+      await fetchData();
+    } catch (err) {
+      toast.error('Failed to submit review: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div style={{ padding: '60px 32px', textAlign: 'center', color: '#94a3b8' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: 16 }}>⚙️</div>
+          <h2 style={{ color: '#f0f4ff', fontWeight: 700 }}>Loading Compliance Intelligence...</h2>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Evaluating deterministic rules and RAG evidence...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout>
+        <div style={{ padding: '40px 32px' }}>
+          <div style={{
+            background: 'rgba(239,68,68,0.08)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 14,
+            padding: 32,
+            textAlign: 'center',
+            maxWidth: 600,
+            margin: '0 auto',
+          }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>⚠️</div>
+            <h2 style={{ color: '#f87171', fontWeight: 800, marginBottom: 8 }}>Compliance Data Unavailable</h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: 20 }}>{error}</p>
+            <button className="btn-primary" onClick={fetchData}>
+              ⟳ Retry Loading
+            </button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const { report, items = [], verifications = [], bidder = {}, riskAnalysis } = data || {};
+  const effectiveRisk = riskAnalysis || report || {};
+  const riskCfg = RISK_CFG[effectiveRisk.riskLevel] || RISK_CFG.MEDIUM;
+
+  const pieData = [
+    { name: 'Compliant',     value: effectiveRisk.compliantCount || 0,     color: '#10b981' },
+    { name: 'Non-Compliant', value: effectiveRisk.nonCompliantCount || 0,  color: '#ef4444' },
+    { name: 'Missing',       value: effectiveRisk.missingCount || 0,       color: '#f59e0b' },
+    { name: 'Review Needed', value: effectiveRisk.reviewCount || 0,        color: '#fb923c' },
+    { name: 'Inconsistent',  value: effectiveRisk.inconsistentCount || 0,  color: '#c084fc' },
+    { name: 'Unverified',    value: effectiveRisk.unverifiedCount || 0,    color: '#9ca3af' },
+  ].filter(d => d.value > 0);
 
   return (
     <AppLayout>
+      {/* ── Page Header ──────────────────────────────────────────────────────── */}
       <div className="page-header">
         <div>
-          <div style={{ fontSize: '0.75rem', color: '#4a6080', marginBottom: 4 }}>
-            {bidder?.tender?.referenceNo} — Compliance Dashboard
+          <div style={{ fontSize: '0.75rem', color: '#4a6080', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>{bidder?.tender?.referenceNo || 'TENDER'}</span>
+            <span>·</span>
+            <span>{bidder?.tender?.organization || 'GeM Procurement'}</span>
           </div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.3rem', color: '#f0f4ff', marginBottom: 4 }}>
-            {bidder?.organizationName || 'Bidder'}
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff', marginBottom: 4 }}>
+            {bidder?.organizationName || 'Bidder Verification'}
           </h1>
-          <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{bidder?.tender?.title}</div>
+          <div style={{ color: '#64748b', fontSize: '0.8rem' }}>
+            {bidder?.tender?.title || 'Tender Compliance Verification'}
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div className="mock-banner">⚠ SANDBOX — Demo data</div>
-          <button className="btn-secondary" onClick={() => navigate(-1)}>← Back</button>
-          <button className="btn-primary" onClick={() => { toast.success('Report generated!'); navigate(`/reports`); }}>
-            📊 Generate Report
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button className="btn-secondary" onClick={() => navigate(-1)}>
+            ← Back
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+          >
+            {downloadingPdf ? '⟳ Generating PDF...' : '📥 Download PDF'}
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleGenerateReport}
+            disabled={generatingReport}
+          >
+            {generatingReport ? '⟳ Calculating...' : '📊 Recalculate Report'}
           </button>
         </div>
       </div>
 
-      <div style={{ padding: '28px 32px' }}>
-        {/* Top Summary Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
+      <div style={{ padding: '24px 32px' }}>
+        {/* ── Top Summary Grid ───────────────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginBottom: 20 }}>
           {[
-            { label: 'Compliant', val: report?.compliantCount, color: '#10b981' },
-            { label: 'Non-Compliant', val: report?.nonCompliantCount, color: '#ef4444' },
-            { label: 'Missing', val: report?.missingCount, color: '#f59e0b' },
-            { label: 'Inconsistent', val: report?.inconsistentCount, color: '#a855f7' },
-            { label: 'Pending', val: report?.pendingCount, color: '#3b82f6' },
-            { label: 'Review', val: report?.reviewCount, color: '#fb923c' },
-          ].map(s => (
-            <div key={s.label} style={{
-              background: `${s.color}10`, border: `1px solid ${s.color}30`, borderRadius: 12,
-              padding: '14px 16px', textAlign: 'center'
-            }}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: s.color }}>{s.val ?? 0}</div>
-              <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, marginTop: 2 }}>{s.label}</div>
+            { label: 'Compliant',     val: effectiveRisk.compliantCount,     color: '#10b981' },
+            { label: 'Non-Compliant', val: effectiveRisk.nonCompliantCount,  color: '#ef4444' },
+            { label: 'Missing Docs',  val: effectiveRisk.missingCount,       color: '#f59e0b' },
+            { label: 'Inconsistent',  val: effectiveRisk.inconsistentCount,  color: '#c084fc' },
+            { label: 'Needs Review',  val: effectiveRisk.reviewCount,        color: '#fb923c' },
+            { label: 'Pending',       val: effectiveRisk.pendingCount,       color: '#3b82f6' },
+          ].map((s) => (
+            <div
+              key={s.label}
+              style={{
+                background: `${s.color}0D`,
+                border: `1px solid ${s.color}33`,
+                borderRadius: 12,
+                padding: '12px 16px',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.6rem', color: s.color, lineHeight: 1.1 }}>
+                {s.val ?? 0}
+              </div>
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginTop: 4 }}>
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, marginBottom: 24 }}>
-          {/* Score Panel */}
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+        {/* ── Main 2-Column: Score & Registry Verifications ────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 20, marginBottom: 24 }}>
+          {/* Score & Risk Card */}
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: '100%', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.08em' }}>
+                DETERMINISTIC COMPLIANCE SCORE
+              </span>
+            </div>
+
             {/* Score Ring */}
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, letterSpacing: '0.08em' }}>COMPLIANCE SCORE</span>
-              </div>
-              <div style={{ position: 'relative', width: 160, height: 160 }}>
-                <svg width="160" height="160" viewBox="0 0 160 160">
-                  <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg-border)" strokeWidth="12"/>
-                  <circle cx="80" cy="80" r="68" fill="none"
-                    stroke={report?.overallScore >= 75 ? '#10b981' : report?.overallScore >= 50 ? '#f59e0b' : '#ef4444'}
-                    strokeWidth="12"
-                    strokeDasharray={`${((report?.overallScore || 0) / 100) * 2 * Math.PI * 68} ${2 * Math.PI * 68}`}
-                    strokeLinecap="round" transform="rotate(-90 80 80)" style={{ transition: 'stroke-dasharray 1s ease' }}
-                  />
-                </svg>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2.5rem', color: '#f0f4ff', lineHeight: 1 }}>
-                    {report?.overallScore || 0}
-                  </span>
-                  <span style={{ fontSize: '0.875rem', color: '#64748b' }}>/ 100</span>
-                </div>
+            <div style={{ position: 'relative', width: 150, height: 150 }}>
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <circle cx="75" cy="75" r="62" fill="none" stroke="var(--bg-border)" strokeWidth="12" />
+                <circle
+                  cx="75"
+                  cy="75"
+                  r="62"
+                  fill="none"
+                  stroke={riskCfg.border}
+                  strokeWidth="12"
+                  strokeDasharray={`${((effectiveRisk.overallScore || 0) / 100) * 2 * Math.PI * 62} ${2 * Math.PI * 62}`}
+                  strokeLinecap="round"
+                  transform="rotate(-90 75 75)"
+                  style={{ transition: 'stroke-dasharray 1s ease' }}
+                />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2.4rem', color: '#f0f4ff', lineHeight: 1 }}>
+                  {Math.round(effectiveRisk.overallScore || 0)}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>/ 100</span>
               </div>
             </div>
 
-            {/* Risk Level */}
-            <div style={{
-              padding: '10px 20px', borderRadius: 10, background: riskCfg.bg,
-              border: `1px solid ${riskCfg.color}40`, textAlign: 'center', width: '100%'
-            }}>
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: riskCfg.color }}>{riskCfg.label}</div>
+            {/* Risk Badge */}
+            <div
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                background: riskCfg.bg,
+                border: `1px solid ${riskCfg.border}50`,
+                textAlign: 'center',
+                width: '100%',
+              }}
+            >
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: riskCfg.color }}>
+                {riskCfg.label}
+              </div>
             </div>
 
-            {/* Pie Chart */}
+            {/* Pie Breakdown */}
             {pieData.length > 0 && (
-              <ResponsiveContainer width="100%" height={150}>
-                <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value">
-                    {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 8, fontSize: '0.75rem' }}
-                    formatter={(val, name) => [val, name]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ width: '100%', height: 120 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={34} outerRadius={52} paddingAngle={3} dataKey="value">
+                      {pieData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--bg-border)',
+                        borderRadius: 8,
+                        fontSize: '0.75rem',
+                      }}
+                      formatter={(val, name) => [`${val} items`, name]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             )}
 
-            {/* AI Summary */}
-            <div style={{ background: 'rgba(59, 130, 246, 0.06)', border: '1px solid rgba(59, 130, 246, 0.15)', borderRadius: 10, padding: 14, width: '100%' }}>
-              <div style={{ fontSize: '0.7rem', color: '#3b82f6', fontWeight: 700, marginBottom: 6 }}>🧠 AI SUMMARY</div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.6 }}>{report?.summary}</div>
+            {/* AI Narrative Note */}
+            <div
+              style={{
+                background: 'rgba(59, 130, 246, 0.06)',
+                border: '1px solid rgba(59, 130, 246, 0.18)',
+                borderRadius: 10,
+                padding: 12,
+                width: '100%',
+              }}
+            >
+              <div style={{ fontSize: '0.7rem', color: '#60a5fa', fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span>🧠</span> AI COMPLIANCE INTERPRETATION
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                {effectiveRisk.summary || 'Deterministic evaluation complete. Review individual requirement items below.'}
+              </div>
             </div>
           </div>
 
-          {/* Government Verifications */}
-          <div className="card">
-            <span className="section-title" style={{ display: 'block', marginBottom: 16 }}>Government Data Verification</span>
-            <div className="mock-banner" style={{ marginBottom: 16 }}>
-              ⚠ All verifications below are SANDBOX/DEMO data — not real government portal responses
+          {/* Government Verifications & Provenance */}
+          <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span className="section-title">Authorized Government Registries</span>
+              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                {verifications.length} Verifications Run
+              </span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {verifications?.map(v => (
-                <div key={v.source} style={{
-                  border: '1px solid var(--bg-border)', borderRadius: 10, padding: 14,
-                  borderLeft: `3px solid ${v.status === 'MOCK_VERIFIED' ? '#10b981' : v.status === 'FAILED' ? '#ef4444' : '#3b82f6'}`
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#f0f4ff' }}>{v.source.replace(/_/g, ' ')}</span>
-                    {v.isMockData && <span className="badge badge-mock">MOCK</span>}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+              {verifications.map((v) => {
+                const isVerified = v.status === 'VERIFIED' || v.status === 'MOCK_VERIFIED';
+                const isFailed = v.status === 'FAILED';
+                const badgeColor = isVerified ? '#10b981' : isFailed ? '#ef4444' : '#f59e0b';
+
+                return (
+                  <div
+                    key={v.source}
+                    style={{
+                      border: '1px solid var(--bg-border)',
+                      borderRadius: 10,
+                      padding: 12,
+                      background: 'rgba(255,255,255,0.01)',
+                      borderLeft: `3px solid ${badgeColor}`,
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#f0f4ff' }}>
+                        {v.source.replace(/_/g, ' ')}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          background: v.isMockData ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
+                          color: v.isMockData ? '#fbbf24' : '#4ade80',
+                          border: `1px solid ${v.isMockData ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}`,
+                        }}
+                      >
+                        {v.isMockData ? 'MOCK DATA' : 'LIVE API'}
+                      </span>
+                    </div>
+
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        color: badgeColor,
+                        marginBottom: 6,
+                      }}
+                    >
+                      ● {v.status.replace(/_/g, ' ')}
+                    </span>
+
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                      {v.verifiedData ? (
+                        Object.entries(v.verifiedData)
+                          .slice(0, 3)
+                          .filter(([k]) => k !== 'note')
+                          .map(([k, val]) => (
+                            <div key={k} style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <span style={{ color: '#4a6080' }}>{k}: </span>
+                              <span style={{ color: '#cbd5e1' }}>{String(val)}</span>
+                            </div>
+                          ))
+                      ) : (
+                        <span style={{ color: '#4a6080', fontStyle: 'italic' }}>No data returned</span>
+                      )}
+                    </div>
                   </div>
-                  <span className={`badge ${v.status === 'MOCK_VERIFIED' ? 'badge-compliant' : 'badge-pending'}`} style={{ fontSize: '0.7rem' }}>
-                    {v.status.replace(/_/g, ' ')}
-                  </span>
-                  <div style={{ marginTop: 8 }}>
-                    {v.verifiedData && Object.entries(v.verifiedData).slice(0, 3).filter(([k]) => k !== 'note').map(([k, val]) => (
-                      <div key={k} style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>
-                        <span style={{ color: '#4a6080' }}>{k}: </span>
-                        <span style={{ color: '#94a3b8', fontFamily: typeof val === 'boolean' ? undefined : 'monospace' }}>
-                          {typeof val === 'boolean' ? (val ? '✓ Yes' : '✗ No') : String(val)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                );
+              })}
+              {verifications.length === 0 && (
+                <div style={{ color: '#4a6080', fontStyle: 'italic', fontSize: '0.8rem', padding: 12 }}>
+                  No government verifications recorded yet.
                 </div>
-              ))}
+              )}
+            </div>
+
+            {/* Navigation Tabs */}
+            <div style={{ display: 'flex', gap: 10, marginTop: 20, borderBottom: '1px solid var(--bg-border)', paddingBottom: 10 }}>
+              <button
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: activeTab === 'requirements' ? '#1e3a5f' : 'transparent',
+                  color: activeTab === 'requirements' ? '#60a5fa' : '#64748b',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+                onClick={() => setActiveTab('requirements')}
+              >
+                📋 Requirements ({items.length})
+              </button>
+              <button
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: activeTab === 'risk' ? '#1e3a5f' : 'transparent',
+                  color: activeTab === 'risk' ? '#60a5fa' : '#64748b',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+                onClick={() => setActiveTab('risk')}
+              >
+                ⚖️ Risk Breakdown & Formula ({(effectiveRisk.riskFlags || []).length} Flags)
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Compliance Items Table */}
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--bg-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="section-title">Compliance Requirements Analysis</span>
-            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{items?.length || 0} requirements evaluated</span>
-          </div>
+        {/* ── Tab Content 1: Requirements Table ─────────────────────────────── */}
+        {activeTab === 'requirements' && (
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--bg-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span className="section-title">Tender Requirement Compliance Matrix</span>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 2 }}>
+                  Click any row to open the complete Evidence Viewer with provenance & AI explanation.
+                </p>
+              </div>
+              <span style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: 600 }}>
+                💡 Click row for Evidence
+              </span>
+            </div>
 
-          <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Requirement</th>
-                  <th>Mandatory</th>
-                  <th>Evidence Found</th>
-                  <th>Rule Applied</th>
-                  <th>Status</th>
-                  <th>Confidence</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items?.map(item => {
-                  const cfg = STATUS_CFG[item.status] || {};
-                  return (
-                    <tr key={item.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedItem(item)}>
-                      <td>
-                        <span style={{
-                          padding: '2px 8px', borderRadius: 6, fontSize: '0.65rem', fontWeight: 700,
-                          background: `${CAT_COLOR[item.requirement?.category] || '#64748b'}20`,
-                          color: CAT_COLOR[item.requirement?.category] || '#64748b'
-                        }}>{item.requirement?.category?.replace(/_/g, ' ')}</span>
-                      </td>
-                      <td style={{ fontWeight: 600, maxWidth: 200 }}>
-                        {item.requirement?.title}
-                        {item.ragReference && <div style={{ fontSize: '0.7rem', color: '#3b82f6', marginTop: 2 }}>📚 RAG reference available</div>}
-                      </td>
-                      <td>
-                        {item.requirement?.mandatory
-                          ? <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700 }}>MANDATORY</span>
-                          : <span style={{ color: '#64748b', fontSize: '0.75rem' }}>Optional</span>}
-                      </td>
-                      <td style={{ maxWidth: 180, color: '#94a3b8', fontSize: '0.8rem' }}>
-                        {item.evidenceSummary || <span style={{ color: '#4a6080', fontStyle: 'italic' }}>None found</span>}
-                        {item.evidencePage && <span style={{ color: '#64748b', fontSize: '0.7rem' }}> (p.{item.evidencePage})</span>}
-                      </td>
-                      <td style={{ maxWidth: 200, color: '#64748b', fontSize: '0.78rem' }}>{item.ruleApplied}</td>
-                      <td>
-                        <span className={`badge ${cfg.cls}`}>{cfg.label}</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <div className="progress-bar" style={{ width: 60 }}>
-                            <div className="progress-fill" style={{ width: `${(item.confidence || 0) * 100}%`, background: item.confidence >= 0.8 ? '#10b981' : item.confidence >= 0.6 ? '#f59e0b' : '#ef4444' }} />
+            <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Requirement</th>
+                    <th>Mandatory</th>
+                    <th>Evidence Found</th>
+                    <th>Rule Applied</th>
+                    <th>Status</th>
+                    <th>Confidence</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => {
+                    const cfg = STATUS_CFG[item.status] || STATUS_CFG.PENDING_VERIFICATION;
+                    const req = item.requirement || {};
+                    const hasReviews = item.reviews && item.reviews.length > 0;
+
+                    return (
+                      <tr
+                        key={item.id}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setViewingEvidenceItem(item)}
+                      >
+                        <td>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: 6,
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              background: `${CAT_COLOR[req.category] || '#64748b'}20`,
+                              color: CAT_COLOR[req.category] || '#64748b',
+                            }}
+                          >
+                            {(req.category || 'OTHER').replace(/_/g, ' ')}
+                          </span>
+                        </td>
+
+                        <td style={{ fontWeight: 600, maxWidth: 200 }}>
+                          <div>{req.title}</div>
+                          {hasReviews && (
+                            <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 700 }}>
+                              ✓ Human Reviewed ({item.reviews.length})
+                            </span>
+                          )}
+                        </td>
+
+                        <td>
+                          {req.mandatory !== false ? (
+                            <span style={{ color: '#ef4444', fontSize: '0.72rem', fontWeight: 800 }}>
+                              MANDATORY
+                            </span>
+                          ) : (
+                            <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Optional</span>
+                          )}
+                        </td>
+
+                        <td style={{ maxWidth: 200, color: '#94a3b8', fontSize: '0.78rem' }}>
+                          {item.evidenceSummary ? (
+                            <div>
+                              <span>{item.evidenceSummary}</span>
+                              {item.evidencePage && (
+                                <span style={{ color: '#64748b', fontSize: '0.7rem' }}> (p.{item.evidencePage})</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ color: '#4a6080', fontStyle: 'italic' }}>None found</span>
+                          )}
+                        </td>
+
+                        <td style={{ maxWidth: 200, color: '#94a3b8', fontSize: '0.78rem' }}>
+                          {item.ruleApplied || 'Rule check pending.'}
+                        </td>
+
+                        <td>
+                          <span className={`badge ${cfg.cls}`}>
+                            {cfg.label}
+                          </span>
+                        </td>
+
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div className="progress-bar" style={{ width: 50 }}>
+                              <div
+                                className="progress-fill"
+                                style={{
+                                  width: `${Math.round((item.confidence || 0.8) * 100)}%`,
+                                  background: (item.confidence || 0.8) >= 0.8 ? '#10b981' : '#f59e0b',
+                                }}
+                              />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                              {Math.round((item.confidence || 0.8) * 100)}%
+                            </span>
                           </div>
-                          <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{Math.round((item.confidence || 0) * 100)}%</span>
-                        </div>
-                      </td>
-                      <td>
-                        <button
-                          className="btn-ghost"
-                          style={{ fontSize: '0.75rem', padding: '4px 10px', color: '#3b82f6' }}
-                          onClick={e => { e.stopPropagation(); setSelectedItem(item); }}
-                        >
-                          View →
-                        </button>
+                        </td>
+
+                        <td>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              className="btn-ghost"
+                              style={{ fontSize: '0.72rem', padding: '3px 8px', color: '#3b82f6' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewingEvidenceItem(item);
+                              }}
+                            >
+                              Evidence →
+                            </button>
+                            <button
+                              className="btn-ghost"
+                              style={{ fontSize: '0.72rem', padding: '3px 8px', color: '#fb923c' }}
+                              onClick={(e) => handleOpenReview(item, e)}
+                            >
+                              Review 👤
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {items.length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: 'center', padding: 32, color: '#4a6080' }}>
+                        No compliance items found. Please run verification.
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Explainability Modal */}
-      {selectedItem && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setSelectedItem(null)}>
-          <div className="card" style={{ maxWidth: 700, width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: 32 }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-              <div>
-                <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 700, background: `${CAT_COLOR[selectedItem.requirement?.category]}20`, color: CAT_COLOR[selectedItem.requirement?.category] }}>
-                  {selectedItem.requirement?.category?.replace(/_/g, ' ')}
-                </span>
-                <h2 style={{ fontWeight: 800, fontSize: '1.1rem', color: '#f0f4ff', marginTop: 8, marginBottom: 4 }}>{selectedItem.requirement?.title}</h2>
-                <p style={{ color: '#64748b', fontSize: '0.8rem' }}>{selectedItem.requirement?.description}</p>
+        {/* ── Tab Content 2: Risk Breakdown & Formula ───────────────────────── */}
+        {activeTab === 'risk' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Risk Formula Breakdown Card */}
+            <div className="card">
+              <div style={{ marginBottom: 16 }}>
+                <span className="section-title">Deterministic Risk Formula Breakdown</span>
+                <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 4 }}>
+                  Overall score is computed from 3 weighted factor categories. Every point is explainable.
+                </p>
               </div>
-              <button className="btn-ghost" onClick={() => setSelectedItem(null)} style={{ fontSize: '1.2rem' }}>✕</button>
-            </div>
 
-            {/* Status */}
-            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-              <span className={`badge ${STATUS_CFG[selectedItem.status]?.cls}`} style={{ fontSize: '0.875rem', padding: '6px 16px' }}>
-                {STATUS_CFG[selectedItem.status]?.label}
-              </span>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
-                Confidence: <span style={{ color: '#f0f4ff', fontWeight: 700 }}>{Math.round((selectedItem.confidence || 0) * 100)}%</span>
-              </span>
-            </div>
-
-            {/* Explainability sections */}
-            {[
-              { title: '📄 Evidence Found', content: selectedItem.evidenceSummary, sub: selectedItem.evidencePage ? `Source: Document Page ${selectedItem.evidencePage}` : null, color: '#3b82f6' },
-              { title: '⚖ Compliance Rule Applied', content: selectedItem.ruleApplied, color: '#f59e0b' },
-              { title: '🧠 AI Interpretation (Gemini)', content: selectedItem.aiExplanation, color: '#8b5cf6' },
-              { title: '📚 RAG Reference (Procurement Guidelines)', content: selectedItem.ragReference, color: '#06b6d4' },
-            ].filter(s => s.content).map(section => (
-              <div key={section.title} style={{ marginBottom: 16, padding: 14, background: `${section.color}08`, border: `1px solid ${section.color}20`, borderRadius: 10 }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: section.color, marginBottom: 8 }}>{section.title}</div>
-                <div style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.7 }}>{section.content}</div>
-                {section.sub && <div style={{ fontSize: '0.72rem', color: '#4a6080', marginTop: 6 }}>{section.sub}</div>}
-              </div>
-            ))}
-
-            {/* Human Review Panel */}
-            {(selectedItem.status === 'REQUIRES_HUMAN_REVIEW' || selectedItem.status === 'INCONSISTENT') && (
-              <div style={{ padding: 16, background: 'rgba(251, 146, 60, 0.08)', border: '1px solid rgba(251, 146, 60, 0.25)', borderRadius: 10, marginTop: 8 }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fb923c', marginBottom: 12 }}>👤 HUMAN-IN-THE-LOOP — Officer Review Required</div>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                  {['APPROVED', 'REJECTED', 'MARK_FOR_REVIEW'].map(action => (
-                    <button
-                      key={action}
-                      onClick={() => setReviewAction(action)}
+              {effectiveRisk.formula?.factors ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                  {effectiveRisk.formula.factors.map((factor) => (
+                    <div
+                      key={factor.name}
                       style={{
-                        padding: '6px 12px', borderRadius: 8, fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
-                        background: reviewAction === action ? 'rgba(59, 130, 246, 0.2)' : 'rgba(30,45,74,0.5)',
-                        color: reviewAction === action ? '#60a5fa' : '#64748b',
-                        border: `1px solid ${reviewAction === action ? 'rgba(59,130,246,0.4)' : 'var(--bg-border)'}`,
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid var(--bg-border)',
+                        borderRadius: 12,
+                        padding: 16,
                       }}
-                    >{action.replace(/_/g, ' ')}</button>
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f0f4ff' }}>
+                          {factor.name}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: '#3b82f6', fontWeight: 700 }}>
+                          Weight: {Math.round(factor.weight * 100)}%
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: '#f0f4ff' }}>
+                          {factor.score}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>/ 100</span>
+                        <span style={{ marginLeft: 'auto', fontSize: '0.8rem', fontWeight: 700, color: '#10b981' }}>
+                          +{factor.contribution} pts
+                        </span>
+                      </div>
+                      <div className="progress-bar" style={{ marginBottom: 8 }}>
+                        <div className="progress-fill" style={{ width: `${factor.score}%`, background: '#3b82f6' }} />
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                        {factor.detail}
+                      </div>
+                    </div>
                   ))}
                 </div>
-                <textarea
-                  className="input"
-                  placeholder="Officer remarks (optional)..."
-                  value={reviewRemarks}
-                  onChange={e => setReviewRemarks(e.target.value)}
-                  style={{ height: 60, resize: 'none', marginBottom: 10 }}
-                />
-                <button className="btn-primary" disabled={loading || !reviewAction} onClick={handleReview} style={{ width: '100%', justifyContent: 'center' }}>
-                  {loading ? '⟳ Submitting...' : 'Submit Review Decision'}
-                </button>
+              ) : (
+                <div style={{ color: '#4a6080', fontSize: '0.8rem' }}>No formula factors available.</div>
+              )}
+            </div>
+
+            {/* Risk Flags Card */}
+            <div className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <span className="section-title">Identified Risk Flags & Issues</span>
+                <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 700 }}>
+                  {(effectiveRisk.riskFlags || []).length} Active Flags
+                </span>
               </div>
-            )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {(effectiveRisk.riskFlags || []).map((flag, idx) => {
+                  const isCrit = flag.severity === 'CRITICAL' || flag.severity === 'HIGH';
+                  const flagColor = isCrit ? '#ef4444' : flag.severity === 'MEDIUM' ? '#f59e0b' : '#3b82f6';
+
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        border: `1px solid ${flagColor}40`,
+                        background: `${flagColor}08`,
+                        borderRadius: 10,
+                        padding: '12px 16px',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 12,
+                      }}
+                    >
+                      <span style={{ fontSize: '1.1rem' }}>
+                        {isCrit ? '⚠️' : 'ℹ️'}
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f0f4ff' }}>
+                            {flag.title || flag.code}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              color: flagColor,
+                              padding: '1px 6px',
+                              borderRadius: 4,
+                              background: `${flagColor}20`,
+                            }}
+                          >
+                            {flag.severity}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.4 }}>
+                          {flag.description}
+                        </div>
+                        {flag.evidence && (
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 4 }}>
+                            <strong>Linked Evidence:</strong> {flag.evidence}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {(effectiveRisk.riskFlags || []).length === 0 && (
+                  <div style={{ color: '#10b981', fontSize: '0.85rem', padding: '12px 0' }}>
+                    ✓ No critical risk flags identified for this bidder submission.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Evidence Viewer Modal ────────────────────────────────────────────── */}
+      {viewingEvidenceItem && (
+        <EvidenceViewer
+          item={viewingEvidenceItem}
+          onClose={() => setViewingEvidenceItem(null)}
+        />
+      )}
+
+      {/* ── Human Officer Review Modal ──────────────────────────────────────── */}
+      {reviewingItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.75)',
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+          onClick={() => setReviewingItem(null)}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: 550,
+              width: '100%',
+              background: '#0a1628',
+              border: '1px solid #1e3a5f',
+              padding: 24,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', color: '#60a5fa', fontWeight: 700 }}>
+                  HUMAN-IN-THE-LOOP EVALUATION
+                </span>
+                <h3 style={{ color: '#f0f4ff', fontWeight: 800, fontSize: '1.05rem', marginTop: 4 }}>
+                  {reviewingItem.requirement?.title || 'Requirement Review'}
+                </h3>
+              </div>
+              <button className="btn-ghost" onClick={() => setReviewingItem(null)}>
+                ✕
+              </button>
+            </div>
+
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: 16, background: '#0d1b2e', padding: 10, borderRadius: 8 }}>
+              <div><strong>Extracted Evidence:</strong> {reviewingItem.evidenceSummary || 'None found.'}</div>
+              <div style={{ marginTop: 4 }}><strong>Current AI Status:</strong> {reviewingItem.status}</div>
+            </div>
+
+            {/* Review Decision Buttons */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 6 }}>
+                OFFICER ACTION
+              </label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[
+                  { key: 'APPROVED',         label: '✓ Approve',        color: '#10b981' },
+                  { key: 'REJECTED',         label: '✗ Reject',         color: '#ef4444' },
+                  { key: 'MARK_FOR_REVIEW',  label: '👁 Mark for Review', color: '#fb923c' },
+                ].map((act) => (
+                  <button
+                    key={act.key}
+                    onClick={() => setReviewAction(act.key)}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: 8,
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      background: reviewAction === act.key ? `${act.color}25` : 'transparent',
+                      color: reviewAction === act.key ? act.color : '#94a3b8',
+                      border: `1px solid ${reviewAction === act.key ? act.color : '#1e2d4a'}`,
+                    }}
+                  >
+                    {act.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Optional Status Override */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 6 }}>
+                OVERRIDE STATUS (OPTIONAL)
+              </label>
+              <select
+                className="input"
+                value={overrideStatus}
+                onChange={(e) => setOverrideStatus(e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="">-- Keep Current Status ({reviewingItem.status}) --</option>
+                <option value="COMPLIANT">COMPLIANT</option>
+                <option value="NON_COMPLIANT">NON_COMPLIANT</option>
+                <option value="NEEDS_REVIEW">NEEDS_REVIEW</option>
+                <option value="MISSING_EVIDENCE">MISSING_EVIDENCE</option>
+              </select>
+            </div>
+
+            {/* Remarks */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 6 }}>
+                OFFICER REMARKS / JUSTIFICATION
+              </label>
+              <textarea
+                className="input"
+                placeholder="Enter justification or observations for audit trail..."
+                value={reviewRemarks}
+                onChange={(e) => setReviewRemarks(e.target.value)}
+                style={{ width: '100%', height: 70, resize: 'none' }}
+              />
+            </div>
+
+            {/* Submit */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                className="btn-secondary"
+                style={{ flex: 1, justifyContent: 'center' }}
+                onClick={() => setReviewingItem(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                style={{ flex: 2, justifyContent: 'center' }}
+                disabled={submittingReview}
+                onClick={handleSubmitReview}
+              >
+                {submittingReview ? '⟳ Recording...' : 'Submit Human Decision'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -15,8 +15,7 @@ load_dotenv()
 # Import database initializer
 from app.database.seed_data import init_db, seed_demo_data
 
-# Import routers
-from app.routes import documents, requirements, bidder_analysis, embeddings_routes, rag_routes, health
+from app.routes import documents, requirements, bidder_analysis, embeddings_routes, rag_routes, health, gov_data
 
 app = FastAPI(
     title="ComplyGeM AI Service",
@@ -40,6 +39,7 @@ app.include_router(requirements.router, tags=["Requirements"])
 app.include_router(bidder_analysis.router, tags=["Bidder Analysis"])
 app.include_router(embeddings_routes.router, prefix="/embeddings", tags=["Embeddings"])
 app.include_router(rag_routes.router, prefix="/rag", tags=["RAG"])
+app.include_router(gov_data.router)
 
 
 @app.on_event("startup")

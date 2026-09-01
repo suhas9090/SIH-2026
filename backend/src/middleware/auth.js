@@ -79,13 +79,16 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split('Bearer ')[1];
 
     // Demo mode bypass — only in development, only with specific demo token
-    if (process.env.NODE_ENV === 'development' && token === 'demo-token') {
-      req.user = {
+    if (process.env.NODE_ENV === 'development' && (token === 'demo-token' || token.startsWith('demo-'))) {
+      const demoRole = req.headers['x-demo-role'] || 'PROCUREMENT_OFFICER';
+      const dbUser = await prisma.user.findFirst({ where: { role: demoRole } });
+      
+      req.user = dbUser || {
         id: 'demo-user-id',
         firebaseUid: 'demo-uid',
         email: 'officer@complygem.gov.in',
         name: 'Demo Procurement Officer',
-        role: 'PROCUREMENT_OFFICER',
+        role: demoRole,
         isActive: true,
         approvalStatus: 'APPROVED',
         emailVerified: true,

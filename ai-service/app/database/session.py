@@ -9,8 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from loguru import logger
 
-# Fallback default connection URL for local development
-DEFAULT_DB_URL = "postgresql+psycopg://complygem_app:complygem_secure_pass@localhost:5432/complygem"
+DEFAULT_DB_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/complygem"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
 
 # Normalize postgres:// to postgresql+psycopg:// if needed (e.g. from cloud providers)
@@ -20,21 +19,40 @@ elif DATABASE_URL.startswith("postgresql://") and "+psycopg" not in DATABASE_URL
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
 # Connection Pooling Configuration
+engine = None
 try:
-    engine = create_engine(
-        DATABASE_URL,
-        pool_size=10,
-        max_overflow=20,
-        pool_timeout=30,
-        pool_recycle=1800,
-        pool_pre_ping=True,
-        echo=os.getenv("SQL_ECHO", "false").lower() == "true",
-    )
-    logger.info("Initialized PostgreSQL SQLAlchemy Engine with Psycopg 3 driver")
+    if "localhost" in DATABASE_URL or "127.0.0.1" in DATABASE_URL:
+        # Check if local postgres port is open
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1.5)
+        result = sock.connect_ex(('127.0.0.1', 5432))
+        sock.close()
+        if result == 0:
+            engine = create_engine(
+                DATABASE_URL,
+                pool_size=5,
+                max_overflow=10,
+                pool_timeout=5,
+                pool_recycle=1800,
+                echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+            )
+            logger.info("Connected to local PostgreSQL database")
+        else:
+            logger.info("Local PostgreSQL not detected on port 5432 — using local SQLite fallback for standalone AI services")
+            engine = create_engine("sqlite:///./complygem_ai.db", echo=False)
+    else:
+        engine = create_engine(
+            DATABASE_URL,
+            pool_size=5,
+            max_overflow=10,
+            pool_timeout=5,
+            pool_recycle=1800,
+            echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+        )
 except Exception as e:
-    logger.warning(f"SQLAlchemy engine initialization notice: {e}")
-    # SQLite fallback strictly for zero-config demo / offline testing
-    engine = create_engine("sqlite:///./complygem_demo.db", echo=False)
+    logger.warning(f"Database connection note: {e}. Using SQLite fallback.")
+    engine = create_engine("sqlite:///./complygem_ai.db", echo=False)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

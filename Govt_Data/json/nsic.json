@@ -1,0 +1,30 @@
+[
+  {
+    "nsicRegistrationNumber": "NSIC-SPR-2020-001122",
+    "enterpriseName": "ABC Safety Technologies Private Limited",
+    "panNumber": "SYNPA0001C",
+    "registrationDate": "2020-09-01",
+    "validityDate": "2027-08-31",
+    "certificateStatus": "ACTIVE",
+    "productOrServiceCategory": "Safety Helmets, Fall Arrest Harnesses, Protective Eyewear",
+    "monetaryLimit": 50000000,
+    "state": "Karnataka",
+    "district": "Bengaluru Urban",
+    "verificationSource": "SYNTHETIC_NSIC_SPR_PORTAL",
+    "lastVerifiedAt": "2026-09-01T05:24:49.788Z"
+  },
+  {
+    "nsicRegistrationNumber": "NSIC-SPR-2018-003344",
+    "enterpriseName": "Zenith Protection Gear & Safety Works",
+    "panNumber": "SYNPA0003P",
+    "registrationDate": "2018-04-10",
+    "validityDate": "2021-04-09",
+    "certificateStatus": "EXPIRED",
+    "productOrServiceCategory": "Fire Protection Suits",
+    "monetaryLimit": 10000000,
+    "state": "Delhi",
+    "district": "South Delhi",
+    "verificationSource": "SYNTHETIC_NSIC_SPR_PORTAL",
+    "lastVerifiedAt": "2026-09-01T05:24:49.788Z"
+  }
+]

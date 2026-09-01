@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚖️ COMPLYGEM AI (कम्प्लाईजेम)
+# ⚖️ COMPLYGEM AI
 ### AI-Powered Integrated Bid Compliance Verification Platform for GeM Procurement
 
 <p align="center">

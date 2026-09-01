@@ -1,9 +1,23 @@
 /**
- * Deterministic Compliance Rule Engine
+ * Deterministic Compliance Rule Engine (Spec §10, §11, §35)
  * 
- * This engine applies explicit rules to evaluate each requirement.
- * It does NOT use LLM for compliance decisions.
- * LLM assists with extraction only; the final rule evaluation is deterministic.
+ * Applies explicit, auditable rules to evaluate each requirement.
+ * Does NOT use LLM for compliance decisions — LLM provides explanations only.
+ *
+ * Compliance statuses (Spec §11):
+ *   COMPLIANT             — requirement fully met with evidence
+ *   NON_COMPLIANT         — requirement explicitly not met
+ *   MISSING               — required document not submitted
+ *   MISSING_EVIDENCE      — document submitted but required field not found inside it
+ *   INCONSISTENT          — conflicting evidence between documents or verifications
+ *   NEEDS_REVIEW          — ambiguous result; human reviewer must decide
+ *   UNVERIFIED            — external source (GST portal etc.) was unreachable
+ *   PENDING_VERIFICATION  — verification not yet started
+ *   REQUIRES_HUMAN_REVIEW — AI confidence insufficient for automated decision
+ *
+ * Each ComplianceItem stores:
+ *   aiStatus    — status determined by AI pipeline (before human review)
+ *   finalStatus — status after human reviewer acts (may override aiStatus)
  */
 
 const { PrismaClient } = require('@prisma/client');
@@ -33,7 +47,11 @@ const evaluateRequirement = async (requirement, bidder, verificationMap, aiResul
     aiExplanation: null,
     evidenceSummary: null,
     similarityScore: null,
-    status: 'PENDING_VERIFICATION'
+    status: 'PENDING_VERIFICATION',
+    // aiStatus: set by this engine (AI-assisted deterministic result)
+    // finalStatus: set by human reviewer override (null until reviewed)
+    aiStatus: 'PENDING_VERIFICATION',
+    finalStatus: null,
   };
 
   // Check AI results for this requirement
@@ -83,12 +101,19 @@ const evaluateRegistrationRequirement = (req, bidder, verificationMap, base) => 
     if (gstVerification?.status === 'MOCK_VERIFIED' || gstVerification?.status === 'VERIFIED') {
       const gstStatus = gstVerification.verifiedData?.status;
       if (gstStatus === 'ACTIVE') {
-        return { ...base, status: 'COMPLIANT', ruleApplied: 'GST registration is Active.', evidenceSummary: `GSTIN: ${bidder.gstin}`, confidence: 1.0 };
+        return { ...base, status: 'COMPLIANT', aiStatus: 'COMPLIANT',
+          ruleApplied: 'GST registration is Active.', evidenceSummary: `GSTIN: ${bidder.gstin}`, confidence: 1.0 };
       } else {
-        return { ...base, status: 'NON_COMPLIANT', ruleApplied: `GST status is ${gstStatus}, not Active.`, confidence: 1.0 };
+        return { ...base, status: 'NON_COMPLIANT', aiStatus: 'NON_COMPLIANT',
+          ruleApplied: `GST status is ${gstStatus}, not Active.`, confidence: 1.0 };
       }
     }
-    return { ...base, status: 'PENDING_VERIFICATION', ruleApplied: 'GST verification pending.', confidence: 0.5 };
+    if (gstVerification?.status === 'UNAVAILABLE') {
+      return { ...base, status: 'UNVERIFIED', aiStatus: 'UNVERIFIED',
+        ruleApplied: 'GST portal unavailable. Cannot verify registration status.', confidence: 0.0 };
+    }
+    return { ...base, status: 'PENDING_VERIFICATION', aiStatus: 'PENDING_VERIFICATION',
+      ruleApplied: 'GST verification pending.', confidence: 0.5 };
   }
 
   if (title.includes('pan')) {
@@ -106,7 +131,12 @@ const evaluateRegistrationRequirement = (req, bidder, verificationMap, base) => 
   if (base.evidenceSummary) {
     return { ...base, status: 'COMPLIANT', ruleApplied: 'Registration document found in submission.', confidence: 0.85 };
   }
-  return { ...base, status: 'MISSING', ruleApplied: 'Required registration document not found.', confidence: 0.9 };
+  // Document not submitted at all (MISSING) vs. submitted but field absent (MISSING_EVIDENCE)
+  if (base.evidenceSummary) {
+    return { ...base, status: 'MISSING_EVIDENCE', aiStatus: 'MISSING_EVIDENCE',
+      ruleApplied: 'Document submitted but required registration field not found inside it.', confidence: 0.75 };
+  }
+  return { ...base, status: 'MISSING', aiStatus: 'MISSING', ruleApplied: 'Required registration document not submitted.', confidence: 0.9 };
 };
 
 const evaluateFinancialRequirement = (req, bidder, aiItem, base) => {
@@ -204,11 +234,18 @@ const evaluateDocumentRequirement = (req, bidder, aiItem, base) => {
 
   // AI found evidence — use similarity score to determine status
   if (aiItem.similarityScore >= 0.85) {
-    return { ...base, status: 'COMPLIANT', ruleApplied: `Evidence found with high confidence (score: ${aiItem.similarityScore?.toFixed(2)}).`, confidence: aiItem.confidence || 0.85 };
+    return { ...base, status: 'COMPLIANT', aiStatus: 'COMPLIANT',
+      ruleApplied: `Evidence found with high confidence (score: ${aiItem.similarityScore?.toFixed(2)}).`,
+      confidence: aiItem.confidence || 0.85 };
   } else if (aiItem.similarityScore >= 0.6) {
-    return { ...base, status: 'REQUIRES_HUMAN_REVIEW', ruleApplied: `Partial evidence found. Similarity score: ${aiItem.similarityScore?.toFixed(2)}. Human review recommended.`, confidence: aiItem.confidence || 0.65 };
+    return { ...base, status: 'NEEDS_REVIEW', aiStatus: 'NEEDS_REVIEW',
+      ruleApplied: `Partial evidence found. Similarity: ${aiItem.similarityScore?.toFixed(2)}. Human review required.`,
+      confidence: aiItem.confidence || 0.65 };
   }
-  return { ...base, status: 'INCONSISTENT', ruleApplied: `Low similarity evidence found. Score: ${aiItem.similarityScore?.toFixed(2)}. Possible mismatch.`, confidence: aiItem.confidence || 0.5 };
+  // Evidence found but very low similarity — possible mismatch
+  return { ...base, status: 'MISSING_EVIDENCE', aiStatus: 'MISSING_EVIDENCE',
+    ruleApplied: `Evidence found but similarity too low (${aiItem.similarityScore?.toFixed(2)}). Document may not address requirement.`,
+    confidence: aiItem.confidence || 0.5 };
 };
 
 const formatCrore = (value) => {

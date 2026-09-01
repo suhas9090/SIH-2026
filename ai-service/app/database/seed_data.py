@@ -117,7 +117,7 @@ def seed_demo_data():
         req_turnover = TenderRequirement(
             tender_id=tender.id,
             requirement_code="REQ_FIN_TURNOVER",
-            requirement_text="Bidder shall have an average annual turnover of at least ₹5.00 Crore over the preceding 3 FYs.",
+            requirement_text="Bidder shall have an average annual turnover of at least INR 5.00 Crore over the preceding 3 FYs.",
             requirement_type="FINANCIAL",
             mandatory=True,
             source_page=4,
@@ -212,7 +212,7 @@ def seed_demo_data():
             bid_id=bid.id,
             requirement_id=req_turnover.id,
             status="NON_COMPLIANT",
-            reason="Submitted FY 2025-26 turnover is ₹3.20 Cr, which is below the mandatory minimum of ₹5.00 Cr.",
+            reason="Submitted FY 2025-26 turnover is INR 3.20 Cr, which is below the mandatory minimum of INR 5.00 Cr.",
             confidence=0.92,
         )
         db.add_all([cc_gst, cc_turnover])
@@ -232,7 +232,7 @@ def seed_demo_data():
             document_id=doc_fin.id,
             source_type="DOCUMENT",
             page_number=4,
-            text_excerpt="Total Turnover from Operations: ₹3,20,00,000 (INR 3.20 Crore)",
+            text_excerpt="Total Turnover from Operations: INR 3,20,00,000 (INR 3.20 Crore)",
             evidence_score=0.92,
         ))
 

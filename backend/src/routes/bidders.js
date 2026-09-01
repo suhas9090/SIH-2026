@@ -153,13 +153,27 @@ router.post('/:id/verify', authenticate, async (req, res) => {
 
     // Step 4: Calculate overall score
     const riskEngine = require('../services/compliance/riskEngine');
-    const report = riskEngine.calculateScore(complianceItems);
+    const report = riskEngine.calculateScore(complianceItems, verifications);
+
+    // Filter report fields matching Prisma schema
+    const reportData = {
+      overallScore: report.overallScore,
+      riskLevel: report.riskLevel,
+      compliantCount: report.compliantCount,
+      nonCompliantCount: report.nonCompliantCount,
+      missingCount: report.missingCount,
+      inconsistentCount: report.inconsistentCount,
+      pendingCount: report.pendingCount,
+      reviewCount: report.reviewCount,
+      summary: report.summary,
+      recommendations: report.recommendations,
+    };
 
     // Save/update compliance report
     await prisma.complianceReport.upsert({
       where: { bidderId: req.params.id },
-      create: { bidderId: req.params.id, ...report },
-      update: report
+      create: { bidderId: req.params.id, ...reportData },
+      update: reportData,
     });
 
     res.json({

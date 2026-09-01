@@ -1,0 +1,14 @@
+{
+  "include": [
+    "ai-service/app"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "ai-service/.venv",
+    ".venv"
+  ],
+  "venvPath": "ai-service",
+  "venv": ".venv",
+  "pythonVersion": "3.11"
+}

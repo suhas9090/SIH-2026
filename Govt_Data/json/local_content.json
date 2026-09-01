@@ -1,0 +1,50 @@
+[
+  {
+    "declarationId": "MII-DECL-001",
+    "bidderName": "ABC Safety Technologies Private Limited",
+    "panNumber": "SYNPA0001C",
+    "tenderId": "t1",
+    "productName": "Industrial Safety Helmets & Fall Protection Harnesses",
+    "countryOfOrigin": "India",
+    "localContentPercentage": 68.5,
+    "declaredClassification": "CLASS_I_LOCAL_SUPPLIER",
+    "declarationDate": "2026-01-10",
+    "statutoryAuditorCertAttached": true,
+    "supportingDocument": "Auditor_Certificate_MII_ABC.pdf",
+    "verificationStatus": "COMPLIANT",
+    "verificationSource": "SYNTHETIC_MII_DECLARATION_REGISTRY",
+    "lastVerifiedAt": "2026-09-01T05:24:49.786Z"
+  },
+  {
+    "declarationId": "MII-DECL-002",
+    "bidderName": "Apex Industrial Protective Equipments LLP",
+    "panNumber": "SYNPA0002L",
+    "tenderId": "t1",
+    "productName": "Personal Protective Workwear & Eyewear",
+    "countryOfOrigin": "India",
+    "localContentPercentage": 35,
+    "declaredClassification": "CLASS_II_LOCAL_SUPPLIER",
+    "declarationDate": "2026-01-12",
+    "statutoryAuditorCertAttached": true,
+    "supportingDocument": "MII_Self_Declaration_Apex.pdf",
+    "verificationStatus": "COMPLIANT",
+    "verificationSource": "SYNTHETIC_MII_DECLARATION_REGISTRY",
+    "lastVerifiedAt": "2026-09-01T05:24:49.786Z"
+  },
+  {
+    "declarationId": "MII-DECL-005",
+    "bidderName": "Kavach Safety Equipment Manufacturing Limited",
+    "panNumber": "SYNPA0005C",
+    "tenderId": "t1",
+    "productName": "Imported Heavy Fall Arrest Hardware",
+    "countryOfOrigin": "Non-India",
+    "localContentPercentage": 12,
+    "declaredClassification": "NON_LOCAL_SUPPLIER",
+    "declarationDate": "2026-01-08",
+    "statutoryAuditorCertAttached": false,
+    "supportingDocument": "Import_Declaration_Kavach.pdf",
+    "verificationStatus": "NON_COMPLIANT_FOR_CLASS_I_TENDERS",
+    "verificationSource": "SYNTHETIC_MII_DECLARATION_REGISTRY",
+    "lastVerifiedAt": "2026-09-01T05:24:49.786Z"
+  }
+]

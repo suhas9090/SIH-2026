@@ -1,0 +1,40 @@
+[
+  {
+    "recognitionNumber": "DIPP10001",
+    "startupName": "Apex Industrial Protective Equipments LLP",
+    "panNumber": "SYNPA0002L",
+    "incorporationDate": "2019-11-20",
+    "recognitionDate": "2020-03-15",
+    "sector": "Safety & Industrial Automation",
+    "startupStatus": "RECOGNIZED_STARTUP",
+    "recognitionStatus": "ACTIVE",
+    "validity": "VALID_TILL_2029",
+    "exemptionsEligible": [
+      "PRIOR_EXPERIENCE_EXEMPTION",
+      "TURNOVER_EXEMPTION",
+      "EMD_EXEMPTION"
+    ],
+    "state": "Maharashtra",
+    "verificationSource": "SYNTHETIC_DPIIT_STARTUP_INDIA",
+    "lastVerifiedAt": "2026-09-01T05:24:49.789Z"
+  },
+  {
+    "recognitionNumber": "DIPP10007",
+    "startupName": "Vanguard Security Works LLP",
+    "panNumber": "SYNPA0007L",
+    "incorporationDate": "2021-08-30",
+    "recognitionDate": "2021-12-05",
+    "sector": "Physical Security & Smart IoT",
+    "startupStatus": "RECOGNIZED_STARTUP",
+    "recognitionStatus": "ACTIVE",
+    "validity": "VALID_TILL_2031",
+    "exemptionsEligible": [
+      "PRIOR_EXPERIENCE_EXEMPTION",
+      "TURNOVER_EXEMPTION",
+      "EMD_EXEMPTION"
+    ],
+    "state": "Maharashtra",
+    "verificationSource": "SYNTHETIC_DPIIT_STARTUP_INDIA",
+    "lastVerifiedAt": "2026-09-01T05:24:49.789Z"
+  }
+]

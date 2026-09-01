@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext(null);
 
@@ -18,20 +19,28 @@ export const useAuth = () => {
   return ctx;
 };
 
-// Preset demo identities for hackathon evaluation across all 4 primary roles
-const DEMO_PROFILES = {
+// Preset demo identities for SIH26100 across all 5 distinct platform roles
+export const DEMO_PROFILES = {
+  ADMIN: {
+    id: 'demo-admin-id',
+    name: 'System Administrator',
+    email: 'admin@complygem.gov.in',
+    role: 'ADMIN',
+    organization: 'ComplyGeM Central Authority',
+    approvalStatus: 'APPROVED',
+  },
   PROCUREMENT_OFFICER: {
     id: 'demo-officer-id',
-    name: 'Rajesh Sharma (Officer)',
-    email: 'rajesh.officer@gem.gov.in',
+    name: 'Rajesh Kumar (Officer)',
+    email: 'rajesh.officer@labour.gov.in',
     role: 'PROCUREMENT_OFFICER',
     organization: 'Ministry of Labour & Employment',
     approvalStatus: 'APPROVED',
   },
   REVIEWER: {
     id: 'demo-reviewer-id',
-    name: 'Dr. Anita Desai (Reviewer)',
-    email: 'anita.reviewer@nic.gov.in',
+    name: 'Dr. Anita Desai (Compliance Officer)',
+    email: 'anita.compliance@nic.gov.in',
     role: 'REVIEWER',
     organization: 'National Informatics Centre (NIC)',
     approvalStatus: 'APPROVED',
@@ -44,12 +53,12 @@ const DEMO_PROFILES = {
     organization: 'ABC Industries Pvt Ltd',
     approvalStatus: 'APPROVED',
   },
-  ADMIN: {
-    id: 'demo-admin-id',
-    name: 'System Administrator',
-    email: 'admin@complygem.gov.in',
-    role: 'ADMIN',
-    organization: 'ComplyGeM Central Authority',
+  AUDITOR: {
+    id: 'demo-auditor-id',
+    name: 'Justice S. Narayan (Auditor)',
+    email: 'auditor.narayan@cag.gov.in',
+    role: 'AUDITOR',
+    organization: 'Comptroller & Auditor General of India (CAG)',
     approvalStatus: 'APPROVED',
   },
 };
@@ -78,11 +87,15 @@ export const AuthProvider = ({ children }) => {
           setUser(firebaseUser);
         }
       } else {
-        const savedDemo = localStorage.getItem('demoRole');
-        if (savedDemo && DEMO_PROFILES[savedDemo]) {
-          setProfile(DEMO_PROFILES[savedDemo]);
-          setUser({ email: DEMO_PROFILES[savedDemo].email, displayName: DEMO_PROFILES[savedDemo].name, uid: 'demo' });
+        const savedDemo = localStorage.getItem('demoRole') || 'PROCUREMENT_OFFICER';
+        if (DEMO_PROFILES[savedDemo]) {
+          const demoProf = DEMO_PROFILES[savedDemo];
+          setProfile(demoProf);
+          setUser({ email: demoProf.email, displayName: demoProf.name, uid: 'demo' });
           setIsDemoUser(true);
+          localStorage.setItem('authToken', 'demo-token');
+          api.defaults.headers.common['Authorization'] = 'Bearer demo-token';
+          api.defaults.headers.common['x-demo-role'] = demoProf.role;
         } else {
           setUser(null);
           setProfile(null);
@@ -98,87 +111,104 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const token = await cred.user.getIdToken();
-    localStorage.setItem('authToken', token);
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    setIsDemoUser(false);
-    localStorage.removeItem('demoRole');
-    return cred;
+    setLoading(true);
+    const cleanEmail = email.toLowerCase().trim();
+    try {
+      const res = await signInWithEmailAndPassword(auth, cleanEmail, password);
+      return res.user;
+    } catch (err) {
+      // Check for known system demo accounts
+      let matchedRole = null;
+      if (cleanEmail === 'admin@complygem.gov.in') matchedRole = 'ADMIN';
+      else if (cleanEmail === 'officer@complygem.gov.in' || cleanEmail.includes('officer') || cleanEmail.includes('labour')) matchedRole = 'PROCUREMENT_OFFICER';
+      else if (cleanEmail === 'auditor@complygem.gov.in' || cleanEmail.includes('auditor') || cleanEmail.includes('cag') || cleanEmail.includes('nic')) matchedRole = 'AUDITOR';
+      else if (cleanEmail === 'vendor@abcindustries.com' || cleanEmail.includes('vendor') || cleanEmail.includes('bidder') || cleanEmail.includes('abc')) matchedRole = 'BIDDER';
+
+      if (matchedRole && DEMO_PROFILES[matchedRole]) {
+        const demoProf = DEMO_PROFILES[matchedRole];
+        setProfile(demoProf);
+        setUser({ email: demoProf.email, displayName: demoProf.name, uid: 'demo' });
+        setIsDemoUser(true);
+        localStorage.setItem('demoRole', matchedRole);
+        localStorage.setItem('authToken', 'demo-token');
+        api.defaults.headers.common['Authorization'] = 'Bearer demo-token';
+        api.defaults.headers.common['x-demo-role'] = demoProf.role;
+        return demoProf;
+      }
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const register = async (email, password, name, organization, phone, role, organizationId) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: name });
-    const token = await cred.user.getIdToken();
-    localStorage.setItem('authToken', token);
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-    // Register profile in backend — backend enforces role policy
-    const res = await api.post('/auth/register-profile', {
-      name, organization, organizationId, phone,
-      role: role || 'BIDDER',
-    });
-
-    // Send email verification
+  const register = async (email, password, { name, role, organization, phone, organizationId }) => {
+    setLoading(true);
     try {
-      const { sendEmailVerification } = await import('firebase/auth');
-      await sendEmailVerification(cred.user);
-    } catch (verifyErr) {
-      console.warn('Email verification send failed:', verifyErr.message);
-    }
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(res.user, { displayName: name });
+      const token = await res.user.getIdToken();
 
-    return { cred, backendResponse: res.data };
+      // Register profile in backend database
+      await api.post('/auth/register', {
+        firebaseUid: res.user.uid,
+        email,
+        name,
+        role,
+        organization,
+        phone,
+        organizationId,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      return res.user;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch { /* ignore */ }
-    localStorage.removeItem('authToken');
     localStorage.removeItem('demoRole');
+    localStorage.removeItem('authToken');
+    delete api.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common['x-demo-role'];
     setUser(null);
     setProfile(null);
     setIsDemoUser(false);
+    try {
+      await signOut(auth);
+    } catch { /* ignore if in demo */ }
   };
 
   const resetPassword = (email) => sendPasswordResetEmail(auth, email);
 
-  // Demo login (for testing / judging without Firebase setup)
-  const demoLogin = async (targetRole = 'PROCUREMENT_OFFICER') => {
-    const demoProfile = DEMO_PROFILES[targetRole] || DEMO_PROFILES.PROCUREMENT_OFFICER;
-    api.defaults.headers.common['Authorization'] = 'Bearer demo-token';
-    localStorage.setItem('authToken', 'demo-token');
-    localStorage.setItem('demoRole', targetRole);
-    setProfile(demoProfile);
-    setUser({ email: demoProfile.email, displayName: demoProfile.name, uid: 'demo' });
-    setIsDemoUser(true);
-  };
-
-  // Switch demo persona on the fly to demonstrate RBAC during hackathon judging
   const switchDemoRole = (newRole) => {
     if (DEMO_PROFILES[newRole]) {
-      const demoProfile = DEMO_PROFILES[newRole];
+      const demoProf = DEMO_PROFILES[newRole];
+      setProfile(demoProf);
+      setUser({ email: demoProf.email, displayName: demoProf.name, uid: 'demo' });
+      setIsDemoUser(true);
       localStorage.setItem('demoRole', newRole);
-      setProfile(demoProfile);
-      setUser({ email: demoProfile.email, displayName: demoProfile.name, uid: 'demo' });
+      localStorage.setItem('authToken', 'demo-token');
+      api.defaults.headers.common['Authorization'] = 'Bearer demo-token';
+      api.defaults.headers.common['x-demo-role'] = demoProf.role;
+      toast.success(`Switched role to: ${demoProf.role.replace(/_/g, ' ')} (${demoProf.name})`);
     }
   };
 
   const value = {
     user,
     profile,
+    role: profile?.role || 'PROCUREMENT_OFFICER',
+    isAuthenticated: !!profile || !!user,
     loading,
+    isDemoUser,
     login,
     register,
     logout,
     resetPassword,
-    demoLogin,
     switchDemoRole,
-    isDemoUser,
-    isAuthenticated: !!user,
-    role: profile?.role || 'PROCUREMENT_OFFICER',
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

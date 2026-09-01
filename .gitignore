@@ -38,9 +38,13 @@ wheels/
 .installed.cfg
 *.egg
 
-# FAISS and local indexes
+# FAISS and local indexes & databases
 data/faiss_index/
 data/faiss_index.*
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
 
 # Vite / React build outputs
 dist/
