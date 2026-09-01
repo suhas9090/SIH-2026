@@ -12,9 +12,16 @@
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2018%20%7C%20SQLAlchemy%202.x-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
 [![Firebase](https://img.shields.io/badge/Auth-Firebase%20Security%20%7C%20RBAC-FFCA28?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
 [![Gemini](https://img.shields.io/badge/AI%2FLLM-Gemini%201.5%20Pro%20%7C%20FAISS%20Vector-8E44AD?style=for-the-badge&logo=google)](https://ai.google.dev/)
+[![Presentation](https://img.shields.io/badge/Presentation-Project%20PPT%20Deck-EA4335?style=for-the-badge&logo=googledrive&logoColor=white)](https://drive.google.com/file/d/1xMndcX6KonrEeBUFsQzmoAtvNU76YQNz/view?usp=sharing)
 
 <p align="center">
   <strong>An enterprise-grade, explainable compliance verification platform that automates tender clause extraction, validates bidder evidence across authoritative government gateways (GST, PAN, Udyam, MCA), and delivers auditable human-in-the-loop decision dossiers.</strong>
+</p>
+
+<p align="center">
+  <a href="https://drive.google.com/file/d/1xMndcX6KonrEeBUFsQzmoAtvNU76YQNz/view?usp=sharing" target="_blank">
+    <img src="https://img.shields.io/badge/📊_View_Project_Presentation_(PPT)-Google_Drive-4285F4?style=for-the-badge&logo=googleslides&logoColor=white" alt="View Project Presentation" />
+  </a>
 </p>
 
 </div>
@@ -327,10 +334,11 @@ ComplyGeM AI is styled with an executive, restrained procurement aesthetic:
 ---
 
 ## 👥 Authors & Team
-
+ 
 Developed for **Smart India Hackathon (SIH26100)**:
 * **Project**: ComplyGeM AI (AI-Powered Integrated Bid Compliance Verification Platform for GeM)
 * **Repository**: [https://github.com/suhas9090/SIH-2026](https://github.com/suhas9090/SIH-2026)
+* **Presentation Deck (PPT)**: [Google Drive Presentation Link](https://drive.google.com/file/d/1xMndcX6KonrEeBUFsQzmoAtvNU76YQNz/view?usp=sharing)
 
 ---
 

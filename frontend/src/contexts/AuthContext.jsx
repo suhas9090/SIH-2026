@@ -87,8 +87,8 @@ export const AuthProvider = ({ children }) => {
           setUser(firebaseUser);
         }
       } else {
-        const savedDemo = localStorage.getItem('demoRole') || 'PROCUREMENT_OFFICER';
-        if (DEMO_PROFILES[savedDemo]) {
+        const savedDemo = localStorage.getItem('demoRole');
+        if (savedDemo && DEMO_PROFILES[savedDemo]) {
           const demoProf = DEMO_PROFILES[savedDemo];
           setProfile(demoProf);
           setUser({ email: demoProf.email, displayName: demoProf.name, uid: 'demo' });

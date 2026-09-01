@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import RolePortalSelector from '../components/RolePortalSelector';
 
 // ─── Verification Gateway Nodes Definition ───────────────────────────────────
 const GATEWAY_NODES = [
@@ -464,35 +465,21 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 8. ROLES SECTION ───────────────────────────────────────────── */}
+      {/* ─── 8. ROLES SECTION (Government Access Portals) ──────────────── */}
       <section id="roles" style={{ maxWidth: 1240, margin: '0 auto 100px', padding: '0 24px', position: 'relative', zIndex: 1 }}>
-        <div style={{ textAlign: 'center', marginBottom: 50 }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-            Access Architecture
+            Government Access Portals
           </div>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '2rem', color: '#ffffff' }}>
-            One Platform. Distinct Responsibilities.
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '2.2rem', color: '#ffffff', marginBottom: 12 }}>
+            One Platform. Dedicated Personas.
           </h2>
+          <p style={{ color: '#94a3b8', fontSize: '0.92rem', maxWidth: 620, margin: '0 auto' }}>
+            Select your organization portal to access customized compliance verification, bid management, and evaluation dashboards.
+          </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-          {[
-            { role: 'Procurement Officer', desc: 'Create tenders, initiate compliance verifications, view scorecards, and generate reports.', icon: '🏛️', color: '#3b82f6' },
-            { role: 'Reviewer / Evaluator', desc: 'Examine AI-flagged cases, review evidence citations, and record human-in-the-loop decisions.', icon: '🔍', color: '#10b981' },
-            { role: 'Bidder (Supplier)', desc: 'Participate in procurement, submit encrypted documents, and monitor verification status.', icon: '🏢', color: '#8b5cf6' },
-            { role: 'Administrator', desc: 'Manage user permissions, approve government accounts, inspect system health, and review audit logs.', icon: '🛡️', color: '#ef4444' },
-          ].map(r => (
-            <div key={r.role} className="glass-panel-3d" style={{ padding: 24 }}>
-              <div style={{ fontSize: '1.6rem', marginBottom: 12 }}>{r.icon}</div>
-              <h3 style={{ fontWeight: 700, fontSize: '0.95rem', color: r.color, marginBottom: 8 }}>
-                {r.role}
-              </h3>
-              <p style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-                {r.desc}
-              </p>
-            </div>
-          ))}
-        </div>
+        <RolePortalSelector />
       </section>
 
       {/* ─── 9. FINAL CTA ───────────────────────────────────────────────── */}
