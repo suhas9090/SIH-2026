@@ -218,14 +218,58 @@ export default function RegisterPage() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '32px 16px', position: 'relative',
     }}>
+      {/* Floating Top-Left Back Button */}
+      <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 20 }}>
+        <button
+          type="button"
+          onClick={() => {
+            if (step > 1 && step < 5) {
+              setStep(s => s - 1);
+            } else {
+              navigate('/login');
+            }
+          }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(15, 23, 42, 0.8)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px',
+            padding: '8px 16px',
+            color: '#f0f4ff',
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#38bdf8'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.color = '#f0f4ff'; }}
+        >
+          <span>←</span> {step > 1 && step < 5 ? 'Previous Step' : 'Back to Sign In'}
+        </button>
+      </div>
+
       <div style={{ width: '100%', maxWidth: step === 3 || step === 4 ? 760 : 560, position: 'relative', zIndex: 1 }}>
         {/* Header Logo */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 12, margin: '0 auto 10px',
-            background: 'linear-gradient(135deg, #1e40af, #0891b2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem',
-          }}>⚖️</div>
+          <Link to="/" style={{ textDecoration: 'none', display: 'inline-block' }}>
+            <img
+              src="/complygem_logo.png"
+              alt="ComplyGeM Logo"
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 14,
+                margin: '0 auto 10px',
+                objectFit: 'contain',
+                boxShadow: '0 6px 20px rgba(2, 132, 199, 0.35)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                display: 'block',
+              }}
+            />
+          </Link>
           <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: '#f0f4ff', marginBottom: 2 }}>
             Secure Platform Registration
           </h1>

@@ -124,6 +124,33 @@ export default function LoginPage() {
         transition: 'background 0.4s ease',
       }} />
 
+      {/* Floating Top-Left Back Button */}
+      <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 20 }}>
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(15, 23, 42, 0.8)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px',
+            padding: '8px 16px',
+            color: '#f0f4ff',
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#38bdf8'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.color = '#f0f4ff'; }}
+        >
+          <span>←</span> Back to Home
+        </button>
+      </div>
+
       <div style={{
         width: '100%',
         maxWidth: selectedPortal ? 480 : 1140,
@@ -134,19 +161,20 @@ export default function LoginPage() {
         {/* Header Branding */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'inline-block' }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: 14, margin: '0 auto 10px',
-              background: selectedPortal
-                ? `linear-gradient(135deg, ${selectedPortal.color} 0%, #0284c7 100%)`
-                : 'linear-gradient(135deg, #1e40af 0%, #0284c7 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.3rem', color: '#ffffff',
-              boxShadow: '0 8px 20px rgba(2, 132, 199, 0.3)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              transition: 'background 0.3s ease',
-            }}>
-              ◈
-            </div>
+            <img
+              src="/complygem_logo.png"
+              alt="ComplyGeM Logo"
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: 16,
+                margin: '0 auto 12px',
+                objectFit: 'contain',
+                boxShadow: '0 8px 24px rgba(2, 132, 199, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                display: 'block',
+              }}
+            />
           </Link>
           <h1 style={{
             fontFamily: 'Outfit, sans-serif',

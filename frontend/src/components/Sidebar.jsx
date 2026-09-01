@@ -91,15 +91,20 @@ const Sidebar = () => {
       {/* Logo */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--bg-border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: 10,
-            background: 'linear-gradient(135deg, #1e40af, #0891b2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.1rem', flexShrink: 0,
-          }}>⚖</div>
+          <img
+            src="/complygem_logo.png"
+            alt="ComplyGeM Logo"
+            style={{
+              width: 38, height: 38, borderRadius: 10,
+              objectFit: 'contain',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              flexShrink: 0,
+            }}
+          />
           <div>
             <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.05rem', color: '#f0f4ff', letterSpacing: '-0.02em' }}>
-              ComplyGeM
+              COMPLYGEM <span style={{ color: '#0284c7' }}>AI</span>
             </div>
             <div style={{ fontSize: '0.62rem', color: '#3b82f6', fontWeight: 700, letterSpacing: '0.08em' }}>
               SIH26100 · GeM AI
@@ -192,11 +197,77 @@ const Sidebar = () => {
 };
 
 export const AppLayout = ({ children }) => {
+  const navigate = useNavigate();
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)' }}>
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
         <DemoBanner />
+        
+        {/* Universal Top Action & Back Navigation Bar */}
+        <div style={{
+          padding: '10px 24px',
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--bg-border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
+        }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/dashboard');
+              }
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '20px',
+              padding: '6px 14px',
+              color: '#f0f4ff',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+              e.currentTarget.style.borderColor = '#3b82f6';
+              e.currentTarget.style.color = '#38bdf8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = '#f0f4ff';
+            }}
+          >
+            <span style={{ fontSize: '0.9rem' }}>←</span> Back
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src="/complygem_logo.png"
+              alt="ComplyGeM Logo"
+              style={{ width: 22, height: 22, borderRadius: 6, objectFit: 'contain' }}
+            />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em' }}>
+              COMPLYGEM <span style={{ color: '#0284c7' }}>AI</span> VERIFICATION
+            </span>
+          </div>
+        </div>
+
         <main style={{ flex: 1 }}>{children}</main>
       </div>
     </div>

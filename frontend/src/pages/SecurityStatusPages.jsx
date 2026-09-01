@@ -9,10 +9,30 @@ export const PendingApprovalPage = () => {
   return (
     <div style={{
       minHeight: '100vh', background: 'var(--gradient-hero)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative',
     }}>
+      {/* Top Left Floating Back Button */}
+      <div style={{ position: 'absolute', top: 24, left: 24 }}>
+        <button
+          type="button"
+          onClick={async () => { await logout(); navigate('/'); }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px', padding: '8px 16px', color: '#f0f4ff',
+            fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          <span>←</span> Back to Home
+        </button>
+      </div>
+
       <div className="card" style={{ maxWidth: 480, width: '100%', textAlign: 'center', padding: 36 }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>⏳</div>
+        <img
+          src="/complygem_logo.png"
+          alt="ComplyGeM Logo"
+          style={{ width: 56, height: 56, borderRadius: 14, margin: '0 auto 16px', objectFit: 'contain' }}
+        />
         <h1 style={{ fontWeight: 800, fontSize: '1.3rem', color: '#f59e0b', marginBottom: 12 }}>
           Account Pending Administrator Approval
         </h1>
@@ -42,10 +62,30 @@ export const AccountSuspendedPage = () => {
   return (
     <div style={{
       minHeight: '100vh', background: 'var(--gradient-hero)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative',
     }}>
+      {/* Top Left Floating Back Button */}
+      <div style={{ position: 'absolute', top: 24, left: 24 }}>
+        <button
+          type="button"
+          onClick={async () => { await logout(); navigate('/'); }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px', padding: '8px 16px', color: '#f0f4ff',
+            fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          <span>←</span> Back to Home
+        </button>
+      </div>
+
       <div className="card" style={{ maxWidth: 480, width: '100%', textAlign: 'center', padding: 36, border: '1px solid rgba(239,68,68,0.4)' }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>🚫</div>
+        <img
+          src="/complygem_logo.png"
+          alt="ComplyGeM Logo"
+          style={{ width: 56, height: 56, borderRadius: 14, margin: '0 auto 16px', objectFit: 'contain' }}
+        />
         <h1 style={{ fontWeight: 800, fontSize: '1.3rem', color: '#ef4444', marginBottom: 12 }}>
           Account Access Suspended
         </h1>
@@ -66,10 +106,30 @@ export const Forbidden403Page = () => {
   return (
     <div style={{
       minHeight: '100vh', background: 'var(--gradient-hero)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative',
     }}>
+      {/* Top Left Floating Back Button */}
+      <div style={{ position: 'absolute', top: 24, left: 24 }}>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px', padding: '8px 16px', color: '#f0f4ff',
+            fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          <span>←</span> Go Back
+        </button>
+      </div>
+
       <div className="card" style={{ maxWidth: 480, width: '100%', textAlign: 'center', padding: 36 }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>🛡️</div>
+        <img
+          src="/complygem_logo.png"
+          alt="ComplyGeM Logo"
+          style={{ width: 56, height: 56, borderRadius: 14, margin: '0 auto 16px', objectFit: 'contain' }}
+        />
         <h1 style={{ fontWeight: 800, fontSize: '1.3rem', color: '#f0f4ff', marginBottom: 8 }}>
           403 — Access Forbidden
         </h1>

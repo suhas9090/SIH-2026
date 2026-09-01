@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚖️ COMPLYGEM AI
+# <img src="./complygem_logo.png" width="44" height="44" style="vertical-align: middle; border-radius: 10px; margin-right: 8px;" /> COMPLYGEM-AI
 ### AI-Powered Integrated Bid Compliance Verification Platform for GeM Procurement
 
 <p align="center">

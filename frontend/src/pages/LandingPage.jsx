@@ -63,22 +63,24 @@ export default function LandingPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: 'linear-gradient(135deg, #1e40af 0%, #0284c7 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1rem', color: '#ffffff',
-              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-            }}>
-              ◈
-            </div>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+            <img
+              src="/complygem_logo.png"
+              alt="ComplyGeM Logo"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                objectFit: 'contain',
+                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+              }}
+            />
             <div>
-              <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.05rem', color: '#f0f4ff', letterSpacing: '-0.01em' }}>
+              <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#f0f4ff', letterSpacing: '-0.01em' }}>
                 COMPLYGEM
               </span>
-              <span style={{ color: '#0284c7', fontWeight: 800, fontSize: '1.05rem', marginLeft: 4 }}>AI</span>
+              <span style={{ color: '#0284c7', fontWeight: 800, fontSize: '1.1rem', marginLeft: 4 }}>AI</span>
             </div>
           </Link>
 
@@ -521,8 +523,12 @@ export default function LandingPage() {
           marginBottom: 32,
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ color: '#0284c7', fontSize: '1.1rem' }}>◈</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <img
+                src="/complygem_logo.png"
+                alt="ComplyGeM Logo"
+                style={{ width: 26, height: 26, borderRadius: 6, objectFit: 'contain' }}
+              />
               <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, color: '#f0f4ff' }}>COMPLYGEM AI</span>
             </div>
             <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0 }}>
