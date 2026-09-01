@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { verificationAPI } from '../services/api';
 import toast from 'react-hot-toast';
@@ -46,11 +46,29 @@ const ACCOUNT_TYPES = [
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [selectedRole, setSelectedRole] = useState(null);
-  const [step, setStep] = useState(1); // 1=Role, 2=Personal+OTP, 3=Company/Org, 4=Verification, 5=Done
+  const rawRoleParam = (searchParams.get('role') || searchParams.get('portal') || '').toUpperCase();
+  const normalizedRole = rawRoleParam === 'AUDITOR'
+    ? 'COMPLIANCE_AUDITOR'
+    : rawRoleParam === 'OFFICER'
+    ? 'PROCUREMENT_OFFICER'
+    : rawRoleParam;
+
+  const initialRole = ACCOUNT_TYPES.find(t => t.type === normalizedRole && !t.disabled)?.type || null;
+
+  const [selectedRole, setSelectedRole] = useState(initialRole);
+  const [step, setStep] = useState(initialRole ? 2 : 1); // 1=Role, 2=Personal+OTP, 3=Company/Org, 4=Verification, 5=Done
   const [loading, setLoading] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+  // Sync if URL query param changes dynamically
+  useEffect(() => {
+    if (normalizedRole && initialRole) {
+      setSelectedRole(initialRole);
+      setStep(2);
+    }
+  }, [normalizedRole, initialRole]);
 
   // Step 2: Personal Details
   const [personal, setPersonal] = useState({
@@ -332,11 +350,55 @@ export default function RegisterPage() {
         {/* STEP 2: Personal Details + Phone OTP */}
         {step === 2 && (
           <div className="card" style={{ padding: 28 }}>
+            {/* Selected Role Context Banner */}
+            {selectedRole && (
+              <div style={{
+                padding: '12px 16px',
+                borderRadius: 12,
+                background: `${ACCOUNT_TYPES.find(t => t.type === selectedRole)?.badgeColor || '#3b82f6'}15`,
+                border: `1px solid ${ACCOUNT_TYPES.find(t => t.type === selectedRole)?.badgeColor || '#3b82f6'}40`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 20,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: '1.4rem' }}>{ACCOUNT_TYPES.find(t => t.type === selectedRole)?.icon || '🏛️'}</span>
+                  <div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#f0f4ff' }}>
+                      Registering as: {ACCOUNT_TYPES.find(t => t.type === selectedRole)?.title || selectedRole.replace(/_/g, ' ')}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: ACCOUNT_TYPES.find(t => t.type === selectedRole)?.badgeColor || '#3b82f6', fontWeight: 600 }}>
+                      {ACCOUNT_TYPES.find(t => t.type === selectedRole)?.badge || 'Verified Account'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole(null);
+                    setStep(1);
+                    setSearchParams({});
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '16px',
+                    padding: '4px 12px',
+                    color: '#38bdf8',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Change Role
+                </button>
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <span className="section-title">Step 1: Personal & Identity Details</span>
-              <span style={{ fontSize: '0.72rem', color: '#3b82f6', fontWeight: 700 }}>
-                {selectedRole.replace(/_/g, ' ')}
-              </span>
+              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Step 1 of 3</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -392,8 +392,8 @@ export default function LoginPage() {
 
             <p style={{ textAlign: 'center', marginTop: 22, fontSize: '0.8rem', color: '#64748b' }}>
               Don't have an official account?{' '}
-              <Link to="/register" style={{ color: selectedPortal.color, fontWeight: 700 }}>
-                Register Organization
+              <Link to={`/register?role=${selectedPortal.roleKey}`} style={{ color: selectedPortal.color, fontWeight: 700 }}>
+                Register as {selectedPortal.title} →
               </Link>
             </p>
           </div>
