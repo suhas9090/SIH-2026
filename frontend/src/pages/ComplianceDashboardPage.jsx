@@ -46,6 +46,8 @@ export default function ComplianceDashboardPage() {
   const [generatingReport, setGeneratingReport] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
+  const [verifyingBid, setVerifyingBid] = useState(false);
+
   // EvidenceViewer modal state
   const [viewingEvidenceItem, setViewingEvidenceItem] = useState(null);
 
@@ -70,7 +72,7 @@ export default function ComplianceDashboardPage() {
 
       const mergedData = {
         ...compRes.data,
-        bidder: compRes.data.bidder || bidderRes.data || { organizationName: 'Bidder' },
+        bidder: compRes.data?.bidder || bidderRes.data || { organizationName: 'Bidder' },
       };
       setData(mergedData);
     } catch (err) {
@@ -84,6 +86,19 @@ export default function ComplianceDashboardPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleVerifyBid = async () => {
+    setVerifyingBid(true);
+    try {
+      await bidderAPI.verify(bidderId);
+      toast.success('Real-time bid compliance verified against master government gateways as of present date!');
+      await fetchData();
+    } catch (err) {
+      toast.error('Verification failed: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setVerifyingBid(false);
+    }
+  };
 
   const handleGenerateReport = async () => {
     setGeneratingReport(true);
@@ -151,10 +166,10 @@ export default function ComplianceDashboardPage() {
   if (loading) {
     return (
       <AppLayout>
-        <div style={{ padding: '60px 32px', textAlign: 'center', color: '#94a3b8' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: 16 }}>⚙️</div>
-          <h2 style={{ color: '#f0f4ff', fontWeight: 700 }}>Loading Compliance Intelligence...</h2>
-          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Evaluating deterministic rules and RAG evidence...</p>
+        <div style={{ padding: '60px 32px', textAlign: 'center', color: '#64748b' }}>
+          <div style={{ width: 44, height: 44, border: '3px solid #e2e8f0', borderTop: '3px solid #2563eb', borderRadius: '50%', animation: 'spin-slow 1s linear infinite', margin: '0 auto 16px' }} />
+          <h2 style={{ color: '#0f172a', fontWeight: 800 }}>Loading Compliance Intelligence...</h2>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Evaluating deterministic rules and RAG evidence against master government registries...</p>
         </div>
       </AppLayout>
     );
@@ -165,8 +180,8 @@ export default function ComplianceDashboardPage() {
       <AppLayout>
         <div style={{ padding: '40px 32px' }}>
           <div style={{
-            background: 'rgba(239,68,68,0.08)',
-            border: '1px solid rgba(239,68,68,0.3)',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
             borderRadius: 14,
             padding: 32,
             textAlign: 'center',
@@ -174,8 +189,8 @@ export default function ComplianceDashboardPage() {
             margin: '0 auto',
           }}>
             <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>⚠️</div>
-            <h2 style={{ color: '#f87171', fontWeight: 800, marginBottom: 8 }}>Compliance Data Unavailable</h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: 20 }}>{error}</p>
+            <h2 style={{ color: '#dc2626', fontWeight: 800, marginBottom: 8 }}>Compliance Data Unavailable</h2>
+            <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: 20 }}>{error}</p>
             <button className="btn-primary" onClick={fetchData}>
               ⟳ Retry Loading
             </button>
@@ -187,7 +202,8 @@ export default function ComplianceDashboardPage() {
 
   const { report, items = [], verifications = [], bidder = {}, riskAnalysis } = data || {};
   const effectiveRisk = riskAnalysis || report || {};
-  const riskCfg = RISK_CFG[effectiveRisk.riskLevel] || RISK_CFG.MEDIUM;
+  const isVerified = bidder?.status === 'VERIFIED';
+  const riskCfg = RISK_CFG[effectiveRisk.riskLevel] || (isVerified ? RISK_CFG.LOW : RISK_CFG.MEDIUM);
 
   const pieData = [
     { name: 'Compliant',     value: effectiveRisk.compliantCount || 0,     color: '#10b981' },
@@ -203,22 +219,30 @@ export default function ComplianceDashboardPage() {
       {/* ── Page Header ──────────────────────────────────────────────────────── */}
       <div className="page-header">
         <div>
-          <div style={{ fontSize: '0.75rem', color: '#4a6080', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>{bidder?.tender?.referenceNo || 'TENDER'}</span>
+          <div style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 800, letterSpacing: '0.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>{bidder?.tender?.referenceNo || 'GEM/2026/B/884129'}</span>
             <span>·</span>
-            <span>{bidder?.tender?.organization || 'GeM Procurement'}</span>
+            <span>{bidder?.tender?.organization || 'Ministry of Labour & Employment'}</span>
           </div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff', marginBottom: 4 }}>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.45rem', color: '#0f172a', marginBottom: 4 }}>
             {bidder?.organizationName || 'Bidder Verification'}
           </h1>
-          <div style={{ color: '#64748b', fontSize: '0.8rem' }}>
+          <div style={{ color: '#64748b', fontSize: '0.84rem' }}>
             {bidder?.tender?.title || 'Tender Compliance Verification'}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <button className="btn-secondary" onClick={() => navigate(-1)}>
             ← Back
+          </button>
+          <button
+            className="btn-primary"
+            style={{ background: 'linear-gradient(135deg, #059669, #047857)', display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={handleVerifyBid}
+            disabled={verifyingBid}
+          >
+            {verifyingBid ? '⟳ Verifying Live Registries...' : '⚡ Verify Present-Date Bid Compliance'}
           </button>
           <button
             className="btn-secondary"
@@ -228,17 +252,53 @@ export default function ComplianceDashboardPage() {
             {downloadingPdf ? '⟳ Generating PDF...' : '📥 Download PDF'}
           </button>
           <button
-            className="btn-primary"
+            className="btn-secondary"
             onClick={handleGenerateReport}
             disabled={generatingReport}
           >
-            {generatingReport ? '⟳ Calculating...' : '📊 Recalculate Report'}
+            {generatingReport ? '⟳ Calculating...' : '📊 Recalculate'}
           </button>
         </div>
       </div>
 
       <div style={{ padding: '24px 32px' }}>
-        {/* ── Top Summary Grid ───────────────────────────────────────────────── */}
+        {/* ── Point-in-Time Regulatory Verification Notice Banner ── */}
+        <div style={{
+          background: isVerified ? '#f0fdf4' : '#eff6ff',
+          border: `1px solid ${isVerified ? '#bbf7d0' : '#bfdbfe'}`,
+          borderRadius: 12,
+          padding: '16px 20px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: '1.8rem' }}>{isVerified ? '✅' : '⚡'}</span>
+            <div>
+              <div style={{ fontWeight: 900, fontSize: '0.92rem', color: isVerified ? '#15803d' : '#1d4ed8' }}>
+                {isVerified ? 'Bid Compliance Verified as of Present Date' : 'Tender Bid Point-in-Time Compliance Verification Required'}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: isVerified ? '#166534' : '#3b82f6', marginTop: 2 }}>
+                {isVerified
+                  ? 'All statutory documents (PAN operative status, GST filing regularity, MCA active status, CVC zero-debarment) verified against live government gateways.'
+                  : 'Company registration approval confirms baseline identity. Tender bid verification independently verifies present-date validity (PAN not deactivated, GST returns active, zero blacklisting, tender turnover).'}
+              </div>
+            </div>
+          </div>
+          {!isVerified && (
+            <button
+              className="btn-primary"
+              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', fontSize: '0.8rem', padding: '8px 16px' }}
+              onClick={handleVerifyBid}
+              disabled={verifyingBid}
+            >
+              {verifyingBid ? 'Verifying...' : 'Run Real-Time Verification →'}
+            </button>
+          )}
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginBottom: 20 }}>
           {[
             { label: 'Compliant',     val: effectiveRisk.compliantCount,     color: '#10b981' },
