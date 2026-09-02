@@ -540,6 +540,70 @@ export default function ComplianceDashboardPage() {
           </div>
         </div>
 
+        {/* ── Unapproved Points Alert Section (Visible when non-compliant items exist) ── */}
+        {unapprovedItems && unapprovedItems.length > 0 && (
+          <div style={{
+            background: '#fef2f2',
+            border: '2px solid #f87171',
+            borderRadius: 14,
+            padding: 24,
+            marginBottom: 24,
+            boxShadow: '0 4px 12px rgba(220, 38, 38, 0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <span style={{ fontSize: '1.6rem' }}>🚨</span>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#991b1b', margin: 0 }}>
+                  Unapproved Points & Regulatory Discrepancies ({unapprovedItems.length})
+                </h3>
+                <p style={{ color: '#7f1d1d', fontSize: '0.84rem', margin: '2px 0 0' }}>
+                  The following mandatory statutory or technical criteria failed automated point-in-time verification. Officer review required to proceed or override.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {unapprovedItems.map((item) => (
+                <div key={item.id} style={{
+                  background: '#ffffff',
+                  border: '1px solid #fca5a5',
+                  borderRadius: 10,
+                  padding: '14px 18px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 12
+                }}>
+                  <div style={{ flex: 1, minWidth: 260 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#991b1b' }}>
+                        ❌ {item.requirement?.title || item.title || 'Requirement'}
+                      </span>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: 4, background: '#fee2e2', color: '#b91c1c' }}>
+                        {item.discrepancyType || 'DISCREPANCY'}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: '#475569', margin: 0, lineHeight: 1.5 }}>
+                      {item.explanation || 'Verification failed against master government records.'}
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="btn-primary"
+                      style={{ fontSize: '0.78rem', padding: '6px 14px', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+                      onClick={(e) => handleOpenReview(item, e)}
+                    >
+                      👁️ Decide / Approve Override →
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Tab Content 1: Requirements Table ─────────────────────────────── */}
         {activeTab === 'requirements' && (
           <div className="card" style={{ padding: 0 }}>
