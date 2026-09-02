@@ -42,11 +42,6 @@ import BidVerificationPage from './pages/officer/BidVerificationPage';
 import BidderDossierPage from './pages/reviewer/BidderDossierPage';
 import VerifyCompanyProfilesPage from './pages/officer/VerifyCompanyProfilesPage';
 
-// Dedicated Compliance & Auditor Pages
-import AuditorQueuePage from './pages/auditor/AuditorQueuePage';
-import CrossDocumentComparisonPage from './pages/auditor/CrossDocumentComparisonPage';
-import DisputedResultsPage from './pages/auditor/DisputedResultsPage';
-import CompletedReviewsPage from './pages/auditor/CompletedReviewsPage';
 
 // Role-to-Dashboard route resolver
 const getRoleDashboardPath = (role, isBidderApproved) => {
@@ -55,7 +50,6 @@ const getRoleDashboardPath = (role, isBidderApproved) => {
     case 'PROCUREMENT_OFFICER': return '/procurement/dashboard';
     case 'REVIEWER':            return '/reviewer/dashboard';
     case 'BIDDER':              return isBidderApproved ? '/bidder/dashboard' : '/bidder/onboarding';
-    case 'AUDITOR':             return '/auditor/dashboard';
     default:                    return '/dashboard';
   }
 };
@@ -80,7 +74,7 @@ const ProtectedRoute = ({ children, roles, allowUnverifiedBidder = false }) => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   // Account Status Checks
-  if (profile?.approvalStatus === 'PENDING' && role !== 'BIDDER' && role !== 'ADMIN' && role !== 'AUDITOR') {
+  if (profile?.approvalStatus === 'PENDING' && role !== 'BIDDER' && role !== 'ADMIN') {
     return <Navigate to="/pending-approval" replace />;
   }
 
@@ -119,26 +113,25 @@ const AppRoutes = () => {
       <Route path="/account-suspended" element={<AccountSuspendedPage />} />
       <Route path="/403" element={<Forbidden403Page />} />
 
-      {/* Central & 5 Role-Specific Dashboard Routes */}
+      {/* Central & Role-Specific Dashboard Routes */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/admin/dashboard" element={<ProtectedRoute roles={['ADMIN']}><DashboardPage /></ProtectedRoute>} />
       <Route path="/procurement/dashboard" element={<ProtectedRoute roles={['PROCUREMENT_OFFICER', 'ADMIN']}><DashboardPage /></ProtectedRoute>} />
       <Route path="/reviewer/dashboard" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN']}><DashboardPage /></ProtectedRoute>} />
       <Route path="/bidder/dashboard" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><DashboardPage /></ProtectedRoute>} />
-      <Route path="/auditor/dashboard" element={<ProtectedRoute roles={['AUDITOR', 'ADMIN']}><DashboardPage /></ProtectedRoute>} />
 
       {/* Operational Pages */}
       <Route path="/tenders" element={<ProtectedRoute><TendersPage /></ProtectedRoute>} />
       <Route path="/tenders/create" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER']}><CreateTenderPage /></ProtectedRoute>} />
       <Route path="/tenders/:id" element={<ProtectedRoute><TenderDetailPage /></ProtectedRoute>} />
       <Route path="/tenders/:tenderId/bidders/:bidderId" element={<ProtectedRoute><BidderDetailPage /></ProtectedRoute>} />
-      <Route path="/bids" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER', 'AUDITOR']}><BidsPage /></ProtectedRoute>} />
-      <Route path="/risk-alerts" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER', 'AUDITOR']}><RiskAlertsPage /></ProtectedRoute>} />
+      <Route path="/bids" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER']}><BidsPage /></ProtectedRoute>} />
+      <Route path="/risk-alerts" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER']}><RiskAlertsPage /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-      <Route path="/compliance/:bidderId" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER', 'AUDITOR']}><ComplianceDashboardPage /></ProtectedRoute>} />
-      <Route path="/reports" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER', 'BIDDER', 'AUDITOR']}><ReportsPage /></ProtectedRoute>} />
-      <Route path="/audit" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER', 'AUDITOR']}><AuditPage /></ProtectedRoute>} />
+      <Route path="/compliance/:bidderId" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER']}><ComplianceDashboardPage /></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER', 'BIDDER']}><ReportsPage /></ProtectedRoute>} />
+      <Route path="/audit" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER']}><AuditPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute roles={['ADMIN']}><AdminPage /></ProtectedRoute>} />
 
       {/* Dedicated Bidder / Supplier Workflows */}
@@ -153,17 +146,11 @@ const AppRoutes = () => {
       <Route path="/bidder/clarifications" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderClarificationsPage /></ProtectedRoute>} />
       <Route path="/bidder/profile" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderProfilePage /></ProtectedRoute>} />
 
-      {/* Dedicated Compliance & Auditor Workflows */}
-      <Route path="/auditor/queue" element={<ProtectedRoute roles={['REVIEWER', 'AUDITOR', 'ADMIN', 'PROCUREMENT_OFFICER']}><AuditorQueuePage /></ProtectedRoute>} />
-      <Route path="/auditor/comparison" element={<ProtectedRoute roles={['REVIEWER', 'AUDITOR', 'ADMIN', 'PROCUREMENT_OFFICER']}><CrossDocumentComparisonPage /></ProtectedRoute>} />
-      <Route path="/auditor/disputed" element={<ProtectedRoute roles={['REVIEWER', 'AUDITOR', 'ADMIN', 'PROCUREMENT_OFFICER']}><DisputedResultsPage /></ProtectedRoute>} />
-      <Route path="/auditor/completed" element={<ProtectedRoute roles={['REVIEWER', 'AUDITOR', 'ADMIN', 'PROCUREMENT_OFFICER']}><CompletedReviewsPage /></ProtectedRoute>} />
-
       {/* Verification Officer Workflows */}
       <Route path="/reviewer/verification-queue" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN', 'PROCUREMENT_OFFICER']}><VerificationQueuePage /></ProtectedRoute>} />
       <Route path="/reviewer/bidder/:profileId" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN', 'PROCUREMENT_OFFICER']}><BidderDossierPage /></ProtectedRoute>} />
       <Route path="/procurement/verify-company-profiles" element={<ProtectedRoute roles={['PROCUREMENT_OFFICER', 'ADMIN', 'REVIEWER']}><VerifyCompanyProfilesPage /></ProtectedRoute>} />
-      <Route path="/verify-bid/:bidderId" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER', 'AUDITOR']}><BidVerificationPage /></ProtectedRoute>} />
+      <Route path="/verify-bid/:bidderId" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER']}><BidVerificationPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

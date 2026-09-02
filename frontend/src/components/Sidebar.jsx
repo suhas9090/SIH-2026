@@ -28,11 +28,6 @@ const ROLE_NAV_ITEMS = {
   REVIEWER: [
     { path: '/dashboard',                    label: 'Verification Dashboard' },
     { path: '/reviewer/verification-queue',  label: 'Bidder Verification Queue', badge: 'NEW' },
-    { path: '/auditor/queue',                label: 'Document Review Queue' },
-    { path: '/compliance/4c57ba4b-7854-4dbf-b0fc-ac987e46f9bf', label: '3-Panel Workspace' },
-    { path: '/auditor/comparison',           label: 'Cross-Doc Matrix' },
-    { path: '/auditor/disputed',             label: 'Disputed Results' },
-    { path: '/auditor/completed',            label: 'Completed Reviews' },
     { path: '/risk-alerts',                  label: 'Risk Flags & Alerts' },
     { path: '/audit',                        label: 'Audit Trail' },
     { path: '/reports',                      label: 'Official Reports' },
@@ -44,16 +39,6 @@ const ROLE_NAV_ITEMS = {
     { path: '/bidder/my-bids',         label: 'My Bids & Tracking' },
     { path: '/notifications',          label: 'Notifications' },
   ],
-  AUDITOR: [
-    { path: '/dashboard',             label: 'Auditor Overview' },
-    { path: '/auditor/queue',         label: 'Verification Queue' },
-    { path: '/compliance/4c57ba4b-7854-4dbf-b0fc-ac987e46f9bf', label: '3-Panel Evidence Viewer' },
-    { path: '/auditor/comparison',    label: 'Cross-Doc Matrix' },
-    { path: '/auditor/disputed',      label: 'Disputed Results' },
-    { path: '/auditor/completed',     label: 'Completed Reviews' },
-    { path: '/reports',               label: 'Compliance Records' },
-    { path: '/audit',                 label: 'Decision Traceability' },
-  ],
 };
 
 const ROLE_META = {
@@ -61,7 +46,6 @@ const ROLE_META = {
   PROCUREMENT_OFFICER: { label: 'Procurement Officer', icon: '🏛️', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)', desc: 'Tenders, bids & procurement assessments' },
   REVIEWER:            { label: 'Compliance Officer',  icon: '🔍', color: '#10b981', bg: 'rgba(16,185,129,0.15)', desc: 'Evidence examination, OCR & rule checks' },
   BIDDER:              { label: 'Bidder (Supplier)',   icon: '🏢', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', desc: 'Document uploads & submission tracking' },
-  AUDITOR:             { label: 'Independent Auditor', icon: '⚖️', color: '#06b6d4', bg: 'rgba(6,182,212,0.15)', desc: 'Read-only traceability & compliance oversight' },
 };
 
 const Sidebar = () => {

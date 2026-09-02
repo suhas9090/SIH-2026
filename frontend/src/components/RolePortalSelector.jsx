@@ -49,22 +49,6 @@ export const PORTAL_ROLES = [
     defaultEmail: 'vendor@abcindustries.com',
     demoName: 'Vikram Mehta (Bidder / Supplier)',
     officerInfo: 'ABC Industries Pvt Ltd'
-  },
-  {
-    id: 'AUDITOR',
-    roleKey: 'AUDITOR',
-    title: 'Auditor Portal',
-    badge: '🔍',
-    description: 'Independent oversight, cross-document comparison, and immutable audit trails.',
-    color: '#0891b2',
-    circleBg: '#cffafe',
-    btnColor: '#0891b2',
-    btnHover: '#0e7490',
-    btnText: 'Auditor Login',
-    path: '/auditor/dashboard',
-    defaultEmail: 'auditor@complygem.gov.in',
-    demoName: 'Justice S. Narayan (Auditor)',
-    officerInfo: 'CAG / NIC Oversight'
   }
 ];
 

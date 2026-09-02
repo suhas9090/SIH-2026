@@ -22,14 +22,6 @@ const ACCOUNT_TYPES = [
     badgeColor: '#2563eb',
   },
   {
-    type: 'COMPLIANCE_AUDITOR',
-    icon: '🔍',
-    title: 'Compliance Auditor',
-    desc: 'Independent evaluation of AI findings, evidence inspection, and decision sign-offs',
-    badge: 'Instant Access & Verified',
-    badgeColor: '#0891b2',
-  },
-  {
     type: 'ADMIN',
     icon: '🔒',
     title: 'System Administrator',
@@ -45,9 +37,7 @@ export default function RegisterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const rawRoleParam = (searchParams.get('role') || searchParams.get('portal') || '').toUpperCase();
-  const normalizedRole = rawRoleParam === 'AUDITOR'
-    ? 'COMPLIANCE_AUDITOR'
-    : rawRoleParam === 'OFFICER'
+  const normalizedRole = rawRoleParam === 'OFFICER'
     ? 'PROCUREMENT_OFFICER'
     : rawRoleParam;
 
@@ -71,7 +61,7 @@ export default function RegisterPage() {
     sent: false, verified: false, code: '', cooldown: 0
   });
 
-  // ── OFFICER / AUDITOR FORM STATE (Single unified page) ───────────────────
+  // ── OFFICER FORM STATE (Single unified page) ───────────────────
   const [officerForm, setOfficerForm] = useState({
     name: '',
     designation: '',
@@ -244,7 +234,7 @@ export default function RegisterPage() {
     }
   };
 
-  // ── OFFICER / AUDITOR OTP HANDLERS ──────────────────────────────────────
+  // ── OFFICER OTP HANDLERS ──────────────────────────────────────
   const handleOfficerSendEmailOtp = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!officerForm.email || !emailRegex.test(officerForm.email.trim())) {
@@ -350,18 +340,6 @@ export default function RegisterPage() {
           organization: 'Government Procurement Authority',
           department: 'Public Procurement Division',
           designation: officerForm.designation.trim() || 'Procurement Officer',
-          password: officerForm.password,
-        });
-      } else if (selectedRole === 'COMPLIANCE_AUDITOR') {
-        await api.post('/auth/register-auditor', {
-          name: officerForm.name.trim(),
-          email: officerForm.email.trim(),
-          phone: officerForm.phone.trim(),
-          auditorId: officerForm.employeeId.trim(),
-          employeeId: officerForm.employeeId.trim(),
-          organization: 'Office of Comptroller & Auditor General (CAG)',
-          department: 'Compliance Audit Division',
-          designation: officerForm.designation.trim() || 'Compliance Auditor',
           password: officerForm.password,
         });
       }
@@ -684,8 +662,8 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* ── OFFICER / AUDITOR REGISTRATION (SINGLE PAGE WITH DUAL OTP) ─── */}
-        {(selectedRole === 'PROCUREMENT_OFFICER' || selectedRole === 'COMPLIANCE_AUDITOR') && !submittedStatus && (
+        {/* ── OFFICER REGISTRATION (SINGLE PAGE WITH DUAL OTP) ─── */}
+        {selectedRole === 'PROCUREMENT_OFFICER' && !submittedStatus && (
           <div className="card" style={{ padding: 32 }}>
             {/* Header role context */}
             <div style={{
@@ -758,7 +736,7 @@ export default function RegisterPage() {
               {/* Row 2: Official Employee / Officer ID */}
               <div>
                 <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>
-                  {selectedRole === 'PROCUREMENT_OFFICER' ? 'OFFICIAL EMPLOYEE / OFFICER ID *' : 'OFFICIAL AUDITOR ID *'}
+                  OFFICIAL EMPLOYEE / OFFICER ID *
                 </label>
                 <input
                   className="input"
@@ -1000,14 +978,14 @@ export default function RegisterPage() {
                   ACCOUNT ACTIVE & VERIFIED
                 </div>
                 <p style={{ color: '#475569', fontSize: '0.88rem', maxWidth: 440, margin: '0 auto 24px', lineHeight: 1.5 }}>
-                  Your account has been verified and activated immediately. You can now sign in to access the {selectedRole === 'PROCUREMENT_OFFICER' ? 'Procurement Officer' : 'Compliance Auditor'} portal.
+                  Your account has been verified and activated immediately. You can now sign in to access the Procurement Officer portal.
                 </p>
                 <button
                   className="btn-primary"
                   style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', padding: '12px 28px' }}
-                  onClick={() => navigate(selectedRole === 'PROCUREMENT_OFFICER' ? '/login?portal=OFFICER' : '/login?portal=AUDITOR')}
+                  onClick={() => navigate('/login?portal=OFFICER')}
                 >
-                  Sign In to {selectedRole === 'PROCUREMENT_OFFICER' ? 'Procurement' : 'Auditor'} Portal →
+                  Sign In to Procurement Portal →
                 </button>
               </>
             )}

@@ -9,7 +9,6 @@ const DEMO_USERS = [
   { id: 'u1', name: 'Rajesh Kumar', email: 'rajesh.officer@labour.gov.in', role: 'PROCUREMENT_OFFICER', organization: 'Ministry of Labour & Employment', approvalStatus: 'APPROVED', isActive: true, createdAt: new Date(Date.now() - 86400000 * 5) },
   { id: 'u2', name: 'Dr. Anita Desai', email: 'anita.compliance@nic.gov.in', role: 'REVIEWER', organization: 'National Informatics Centre (NIC)', approvalStatus: 'APPROVED', isActive: true, createdAt: new Date(Date.now() - 86400000 * 3) },
   { id: 'u3', name: 'Vikram Mehta', email: 'vikram@abc-industries.com', role: 'BIDDER', organization: 'ABC Industries Pvt Ltd', approvalStatus: 'APPROVED', isActive: true, createdAt: new Date(Date.now() - 86400000 * 2) },
-  { id: 'u4', name: 'Justice S. Narayan', email: 'auditor.narayan@cag.gov.in', role: 'AUDITOR', organization: 'CAG of India', approvalStatus: 'APPROVED', isActive: true, createdAt: new Date(Date.now() - 86400000 * 1) },
   { id: 'u5', name: 'System Administrator', email: 'admin@complygem.gov.in', role: 'ADMIN', organization: 'ComplyGeM Central Authority', approvalStatus: 'APPROVED', isActive: true, createdAt: new Date(Date.now() - 86400000 * 10) },
 ];
 
@@ -23,7 +22,6 @@ const ROLE_COLOR = {
   PROCUREMENT_OFFICER: '#3b82f6',
   REVIEWER: '#10b981',
   BIDDER: '#8b5cf6',
-  AUDITOR: '#06b6d4',
 };
 
 export default function AdminPage() {
@@ -451,7 +449,6 @@ export default function AdminPage() {
                   <option value="PROCUREMENT_OFFICER">Procurement Officer</option>
                   <option value="REVIEWER">Compliance / Verification Officer</option>
                   <option value="BIDDER">Bidder (Supplier)</option>
-                  <option value="AUDITOR">Independent Auditor</option>
                   <option value="ADMIN">System Administrator</option>
                 </select>
               </div>

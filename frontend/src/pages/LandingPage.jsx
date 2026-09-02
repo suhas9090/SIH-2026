@@ -78,23 +78,23 @@ export default function LandingPage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Background watermark icon */}
+        {/* Background watermark icon with enhanced brand colors */}
         <img
           src="/complygem_logo.png"
           alt=""
           aria-hidden="true"
           style={{
             position: 'absolute',
-            right: '-60px',
+            right: '-30px',
             top: '50%',
             transform: 'translateY(-50%)',
             width: 520,
             height: 520,
             objectFit: 'contain',
-            opacity: 0.06,
+            opacity: 0.16,
             pointerEvents: 'none',
             userSelect: 'none',
-            filter: 'grayscale(100%)',
+            filter: 'drop-shadow(0 20px 40px rgba(37,99,235,0.18))',
           }}
         />
         <div style={{ maxWidth: 840, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>

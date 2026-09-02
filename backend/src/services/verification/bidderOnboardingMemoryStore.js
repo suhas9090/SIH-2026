@@ -586,19 +586,16 @@ module.exports = {
       const userRole = (user.role || 'BIDDER').toUpperCase().trim();
 
       const isBidderPortal = (normalizedPortal === 'BIDDER');
-      const isOfficerPortal = (normalizedPortal === 'PROCUREMENT_OFFICER' || normalizedPortal === 'OFFICER');
-      const isAuditorPortal = (normalizedPortal === 'AUDITOR' || normalizedPortal === 'COMPLIANCE_AUDITOR' || normalizedPortal === 'REVIEWER');
+      const isOfficerPortal = (normalizedPortal === 'PROCUREMENT_OFFICER' || normalizedPortal === 'OFFICER' || normalizedPortal === 'REVIEWER');
       const isAdminPortal = (normalizedPortal === 'ADMIN');
 
       const isUserBidder = (userRole === 'BIDDER');
-      const isUserOfficer = (userRole === 'PROCUREMENT_OFFICER' || userRole === 'OFFICER');
-      const isUserAuditor = (userRole === 'AUDITOR' || userRole === 'COMPLIANCE_AUDITOR' || userRole === 'REVIEWER');
+      const isUserOfficer = (userRole === 'PROCUREMENT_OFFICER' || userRole === 'OFFICER' || userRole === 'REVIEWER');
       const isUserAdmin = (userRole === 'ADMIN');
 
       let isAllowed = false;
       if (isBidderPortal && isUserBidder) isAllowed = true;
       else if (isOfficerPortal && (isUserOfficer || isUserAdmin)) isAllowed = true;
-      else if (isAuditorPortal && (isUserAuditor || isUserAdmin)) isAllowed = true;
       else if (isAdminPortal && isUserAdmin) isAllowed = true;
 
       if (!isAllowed) {
@@ -606,23 +603,18 @@ module.exports = {
           'BIDDER': 'Bidder & Supplier',
           'PROCUREMENT_OFFICER': 'Procurement Officer',
           'OFFICER': 'Procurement Officer',
-          'COMPLIANCE_AUDITOR': 'Compliance Auditor',
-          'AUDITOR': 'Compliance Auditor',
-          'REVIEWER': 'Compliance Auditor',
+          'REVIEWER': 'Compliance / Review Officer',
           'ADMIN': 'System Administrator'
         };
 
         const portalLabels = {
           'BIDDER': 'Bidder / Supplier Portal',
           'PROCUREMENT_OFFICER': 'Procurement Officer Portal',
-          'AUDITOR': 'Compliance Auditor Portal',
-          'COMPLIANCE_AUDITOR': 'Compliance Auditor Portal',
           'ADMIN': 'System Administrator Portal'
         };
 
         const correctPortalKey = isUserBidder ? 'BIDDER' :
           isUserOfficer ? 'PROCUREMENT_OFFICER' :
-          isUserAuditor ? 'AUDITOR' :
           'ADMIN';
 
         const userRoleLabel = roleLabels[userRole] || userRole;

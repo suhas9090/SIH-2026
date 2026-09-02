@@ -90,8 +90,8 @@ export default function LoginPage() {
         } catch (_) {
           navigate('/bidder/onboarding');
         }
-      } else if (role === 'AUDITOR' || role === 'REVIEWER') {
-        navigate('/auditor/dashboard');
+      } else if (role === 'REVIEWER') {
+        navigate('/reviewer/dashboard');
       } else {
         navigate('/procurement/dashboard');
       }

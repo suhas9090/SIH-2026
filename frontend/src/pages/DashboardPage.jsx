@@ -531,59 +531,6 @@ const BidderDashboard = ({ profile, bidderOnboardingProfile, myBidsCount = 0, te
 };
 
 // =============================================================================
-// 5. ⚖️ INDEPENDENT AUDITOR DASHBOARD
-// =============================================================================
-const AuditorDashboard = ({ profile, navigate }) => {
-  return (
-    <div>
-      <div className="page-header">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: '1.2rem' }}>⚖️</span>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#0f172a' }}>
-              Compliance Oversight & Decision Traceability
-            </h1>
-          </div>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
-            Independent audit of AI verification assessments, human decisions, and provenance logs
-          </p>
-        </div>
-        <button className="btn-primary" onClick={() => navigate('/audit')}>
-          📜 Immutable Audit Trail
-        </button>
-      </div>
-
-      <div style={{ padding: '24px 32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-          {[
-            { label: 'Audited Evaluations', value: 0, color: '#0284c7' },
-            { label: 'High-Risk Flags', value: 0, color: '#dc2626' },
-            { label: 'Disputed Overrides', value: 0, color: '#d97706' },
-            { label: 'Compliance Reports', value: 0, color: '#059669' },
-          ].map((c) => (
-            <div key={c.label} className="card" style={{ padding: 20, borderLeft: `4px solid ${c.color}` }}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2rem', color: '#0f172a' }}>{c.value}</div>
-              <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#475569' }}>{c.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="card" style={{ textAlign: 'center', padding: '48px 20px' }}>
-          <div style={{ fontSize: '2.2rem', marginBottom: 8 }}>📜</div>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>No Audited Records Yet</h3>
-          <p style={{ color: '#64748b', fontSize: '0.84rem', marginBottom: 16 }}>
-            As procurement officers and compliance reviewers evaluate bidder submissions, all decision events will be permanently logged in the audit trail.
-          </p>
-          <button className="btn-secondary" onClick={() => navigate('/audit')}>
-            View Audit Log System
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// =============================================================================
 // MAIN DASHBOARD PAGE
 // =============================================================================
 export default function DashboardPage() {
@@ -648,7 +595,6 @@ export default function DashboardPage() {
       {role === 'PROCUREMENT_OFFICER' && <OfficerDashboard profile={profile} tenders={tenders} stats={stats} navigate={navigate} />}
       {role === 'REVIEWER' && <ComplianceDashboard profile={profile} navigate={navigate} />}
       {role === 'BIDDER' && <BidderDashboard profile={profile} bidderOnboardingProfile={bidderOnboardingProfile} myBidsCount={myBidsCount} tenders={tenders} navigate={navigate} />}
-      {role === 'AUDITOR' && <AuditorDashboard profile={profile} navigate={navigate} />}
     </AppLayout>
   );
 }

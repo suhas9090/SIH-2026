@@ -44,14 +44,6 @@ export const DEMO_PROFILES = {
     organization: 'ABC Safety Technologies Private Limited',
     approvalStatus: 'APPROVED',
   },
-  AUDITOR: {
-    id: 'user-auditor-001',
-    name: 'Priya Iyer (Auditor)',
-    email: 'auditor@complygem.gov.in',
-    role: 'AUDITOR',
-    organization: 'Comptroller & Auditor General (CAG)',
-    approvalStatus: 'APPROVED',
-  },
 };
 
 export const AuthProvider = ({ children }) => {
@@ -225,7 +217,6 @@ export const AuthProvider = ({ children }) => {
     isOfficer: role === 'PROCUREMENT_OFFICER',
     isReviewer: role === 'REVIEWER',
     isBidder: role === 'BIDDER',
-    isAuditor: role === 'AUDITOR' || role === 'REVIEWER',
   };
 
   return (
