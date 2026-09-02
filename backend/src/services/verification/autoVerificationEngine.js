@@ -6,15 +6,17 @@
  * → Cross-Check with Previous User Inputs (PAN, GSTIN, Aadhaar, Company Name)
  * → Real-Time Master Government Database Validation (CBDT, GSTN, MCA21, UIDAI, MSME, CVC Blacklist)
  * → Automated Decision Engine:
- *     ALL CHECKS PASS → APPROVED_TO_BID (Eligible to Bid ✓)
- *     ANY MISMATCH / RISK → REVIEW_REQUIRED (Routed to Verification Officer)
+ *     ALL CHECKS PASS & ZERO MISMATCHES → APPROVED_TO_BID (Eligible to Bid ✓)
+ *     ANY MISMATCH / WRONG DOCUMENT / RISK → REVIEW_REQUIRED (Routed to Procurement Officer)
  */
 
 const memoryStore = require('./bidderOnboardingMemoryStore');
 const {
+  SYNTHETIC_PAN_RECORDS,
   findAadhaarRecord,
   findPanRecord,
   findGstRecord,
+  findGstByPan,
   findUdyamRecord,
   findUdyamByPan,
   findMcaRecord,
@@ -22,24 +24,26 @@ const {
   checkBlacklistStatus
 } = require('../../../../Govt_Data');
 
+const { parseAndVerifyDocument } = require('./documentOcrExtractor');
+
 // ── Weights for each check ──────────────────────────────────────────────────
 const CHECK_WEIGHTS = {
-  EMAIL_NOT_VERIFIED:         10,
-  AADHAAR_NOT_VERIFIED:       30,  // Hard gate
-  AADHAAR_DATASET_MISMATCH:   25,
-  AADHAAR_PAN_UNLINKED:       15,
-  PAN_NOT_VERIFIED:           30,  // Hard gate
-  PAN_DATASET_MISMATCH:       25,
-  PAN_INACTIVE:               30,
-  GST_NOT_VERIFIED:           25,  // Hard gate
-  PAN_GSTIN_LINKAGE_FAIL:     25,  // GSTIN chars 3-12 must match PAN
-  PAN_GST_NAME_MISMATCH:      20,
-  UDYAM_MISMATCH:             15,
-  MCA_MISMATCH:               15,
+  EMAIL_NOT_VERIFIED:         15,
+  AADHAAR_NOT_VERIFIED:       35,  // Hard gate
+  AADHAAR_DATASET_MISMATCH:   30,
+  AADHAAR_PAN_UNLINKED:       25,
+  PAN_NOT_VERIFIED:           35,  // Hard gate
+  PAN_DATASET_MISMATCH:       35,  // Hard gate
+  PAN_INACTIVE:               35,
+  GST_NOT_VERIFIED:           30,  // Hard gate
+  PAN_GSTIN_LINKAGE_FAIL:     35,  // GSTIN chars 3-12 must match PAN
+  PAN_GST_NAME_MISMATCH:      25,
+  UDYAM_MISMATCH:             30,
+  MCA_MISMATCH:               25,
   BLACKLIST_HIT:              50,  // Hard gate
-  NO_DOCUMENTS_UPLOADED:      30,
-  MISSING_MANDATORY_DOC:      20,
-  DOCUMENT_CONTENT_MISMATCH:  20,
+  NO_DOCUMENTS_UPLOADED:      35,
+  MISSING_MANDATORY_DOC:      25,
+  DOCUMENT_CONTENT_MISMATCH:  35,  // Hard gate when wrong doc is uploaded
 };
 
 const RISK_THRESHOLD = 20;  // Score >= threshold → REVIEW_REQUIRED
@@ -132,7 +136,7 @@ function checkAadhaarIdentity(profile) {
     label: 'Aadhaar & DigiLocker Identity Check',
     detail: nameMatches
       ? `✓ Identity confirmed for "${holderName}" via UIDAI DigiLocker Gateway.`
-      : `Name mismatch: Profile shows "${profile.fullName}" but UIDAI registry shows "${aadhaarRec?.holderName}".`,
+      : `Name mismatch: Profile shows "${profile.fullName}" but UIDAI registry records "${aadhaarRec?.holderName}".`,
   };
 }
 
@@ -298,6 +302,17 @@ function checkUdyamRegistry(company) {
     };
   }
 
+  // Check if Udyam belongs to a DIFFERENT PAN
+  if (udyamRec.panNumber && pan && udyamRec.panNumber.toUpperCase() !== pan) {
+    return {
+      check: 'UDYAM_MISMATCH',
+      pass: false,
+      weight: CHECK_WEIGHTS.UDYAM_MISMATCH,
+      label: 'MSME Udyam Registry Cross-Check',
+      detail: `Udyam MSME number "${udyamNumber || udyamRec.udyamNumber}" belongs to "${udyamRec.enterpriseName}" (PAN: ${udyamRec.panNumber}), which does NOT match registered company PAN "${pan}".`,
+    };
+  }
+
   const nameMatches = !company?.legalName || namesMatch(company.legalName, udyamRec.enterpriseName);
   return {
     check: 'UDYAM_VERIFIED',
@@ -374,109 +389,16 @@ function checkBlacklistAndDebarment(profile, company) {
   };
 }
 
-// 9. AI OCR & NLP Parsing across all 5 Mandatory Documents
+// 9. AI OCR & Document Inspection Across Uploaded Documents
 const MANDATORY_DOC_REQUIREMENTS = [
-  {
-    type: 'PAN_COMPANY',
-    alt: 'PAN_CARD',
-    label: 'Company PAN Card',
-    ocrParser: (doc, profile, company) => {
-      const regPan = (company?.panNumber || profile.panNumber || '').toUpperCase().trim();
-      const panRec = regPan ? findPanRecord(regPan) : null;
-      const panName = panRec?.legalName || company?.legalName || 'Authorized Enterprise';
-      return {
-        pass: true,
-        extracted: {
-          documentType: 'INCOME_TAX_PAN_CARD',
-          extractedPan: regPan || 'SYNPA0001C',
-          extractedEntity: panName,
-          ocrConfidence: '99.4%',
-          authority: 'Income Tax Department (CBDT)'
-        },
-        detail: `✓ AI OCR verified PAN ${regPan || 'active'} and entity "${panName}". Matches Step 2 PAN.`
-      };
-    }
-  },
-  {
-    type: 'GST_CERTIFICATE',
-    label: 'GST Registration Certificate (REG-06)',
-    ocrParser: (doc, profile, company) => {
-      const regGstin = (company?.gstin || '').toUpperCase().trim();
-      const gstRec = regGstin ? findGstRecord(regGstin) : null;
-      const legalName = gstRec?.legalName || company?.legalName || 'Verified Taxpayer';
-      return {
-        pass: true,
-        extracted: {
-          documentType: 'FORM_GST_REG_06',
-          extractedGstin: regGstin || '29SYNPA0001C1Z5',
-          extractedLegalName: legalName,
-          taxpayerType: gstRec?.taxpayerType || 'Regular',
-          ocrConfidence: '98.8%',
-          authority: 'Goods & Services Tax Network (GSTN)'
-        },
-        detail: `✓ AI OCR verified Form GST REG-06 for GSTIN ${regGstin || 'active'}. Matches registered company data.`
-      };
-    }
-  },
-  {
-    type: 'UDYAM_CERTIFICATE',
-    label: 'MSME Udyam Registration Certificate',
-    ocrParser: (doc, profile, company) => {
-      const regPan = (company?.panNumber || profile.panNumber || '').toUpperCase().trim();
-      const udyamRec = findUdyamByPan(regPan) || findUdyamRecord(company?.udyamRegistrationNumber);
-      return {
-        pass: true,
-        extracted: {
-          documentType: 'UDYAM_MSME_CERTIFICATE',
-          extractedUdyamNumber: udyamRec?.udyamNumber || company?.udyamRegistrationNumber || 'UDYAM-KR-03-0012345',
-          enterpriseType: udyamRec?.enterpriseType || 'Micro / Small Enterprise',
-          ocrConfidence: '99.1%',
-          authority: 'Ministry of Micro, Small and Medium Enterprises'
-        },
-        detail: `✓ AI OCR extracted Udyam MSME certificate (${udyamRec?.udyamNumber || 'verified'}). Matches enterprise registry.`
-      };
-    }
-  },
-  {
-    type: 'MAKE_IN_INDIA',
-    label: 'Make in India (MII) Declaration',
-    ocrParser: (doc, profile, company) => {
-      return {
-        pass: true,
-        extracted: {
-          documentType: 'MII_LOCAL_CONTENT_UNDERTAKING',
-          localContentPercentage: '65%',
-          supplierClass: 'Class-I Local Supplier (>=50%)',
-          signatory: profile.fullName || 'Authorized Signatory',
-          ocrConfidence: '97.9%',
-          authority: 'DPIIT Public Procurement Preference Policy'
-        },
-        detail: '✓ AI NLP parsed Make in India declaration: 65% local value addition satisfies Class-I criteria (>50%).'
-      };
-    }
-  },
-  {
-    type: 'MCA_CERTIFICATE',
-    label: 'Certificate of Incorporation (MCA)',
-    ocrParser: (doc, profile, company) => {
-      const regPan = (company?.panNumber || profile.panNumber || '').toUpperCase().trim();
-      const mcaRec = (typeof findMcaByPan === 'function' ? findMcaByPan(regPan) : null) || (company?.cin && typeof findMcaRecord === 'function' ? findMcaRecord(company?.cin) : null);
-      return {
-        pass: true,
-        extracted: {
-          documentType: 'MCA_INCORPORATION_CERTIFICATE',
-          extractedCin: mcaRec?.cinOrLlpin || company?.cin || 'U29100KA2018PTC112233',
-          entityName: mcaRec?.legalName || company?.legalName || 'Registered Corporate Entity',
-          ocrConfidence: '99.6%',
-          authority: 'Ministry of Corporate Affairs (MCA21)'
-        },
-        detail: `✓ AI OCR confirmed Certificate of Incorporation (${mcaRec?.cinOrLlpin || 'valid'}). Matches MCA registry.`
-      };
-    }
-  },
+  { type: 'PAN_COMPANY', alt: 'PAN_CARD', label: 'Company PAN Card' },
+  { type: 'GST_CERTIFICATE', alt: 'GST_REGISTRATION', label: 'GST Registration Certificate (REG-06)' },
+  { type: 'UDYAM_CERTIFICATE', alt: 'MSME_CERTIFICATE', label: 'MSME Udyam Registration Certificate' },
+  { type: 'MAKE_IN_INDIA', alt: 'MII_DECLARATION', label: 'Make in India (MII) Declaration' },
+  { type: 'MCA_CERTIFICATE', alt: 'INCORPORATION_CERTIFICATE', label: 'Certificate of Incorporation (MCA)' },
 ];
 
-function checkDocumentVault(docs = [], profile = {}, company = {}) {
+async function checkDocumentVault(docs = [], profile = {}, company = {}) {
   if (!docs || docs.length === 0) {
     return {
       checks: [
@@ -485,10 +407,11 @@ function checkDocumentVault(docs = [], profile = {}, company = {}) {
           pass: false,
           weight: CHECK_WEIGHTS.NO_DOCUMENTS_UPLOADED,
           label: 'Statutory Document Vault',
-          detail: 'No statutory documents uploaded. All 5 mandatory certificates and declarations are required.',
+          detail: 'No statutory documents uploaded. Mandatory certificates and declarations are required.',
         }
       ],
-      ocrDossier: []
+      ocrDossier: [],
+      hasDocMismatch: true
     };
   }
 
@@ -499,39 +422,54 @@ function checkDocumentVault(docs = [], profile = {}, company = {}) {
   });
 
   const ocrDossier = [];
-  const checks = MANDATORY_DOC_REQUIREMENTS.map(req => {
+  const checks = [];
+  let hasDocMismatch = false;
+
+  for (const req of MANDATORY_DOC_REQUIREMENTS) {
     const matchingDoc = uploadedTypes.get(req.type) || (req.alt ? uploadedTypes.get(req.alt) : null);
     if (!matchingDoc) {
-      return {
+      checks.push({
         check: `MISSING_${req.type}`,
         pass: false,
         weight: CHECK_WEIGHTS.MISSING_MANDATORY_DOC,
         label: `Mandatory Document: ${req.label}`,
         detail: `Missing required statutory document: Please upload ${req.label}.`,
-      };
-    }
-
-    const ocrResult = req.ocrParser ? req.ocrParser(matchingDoc, profile, company) : { pass: true, detail: `✓ ${req.label} validated.` };
-    if (ocrResult.extracted) {
-      ocrDossier.push({
-        requirement: req.label,
-        documentType: req.type,
-        fileName: matchingDoc.originalFileName || matchingDoc.documentName,
-        fileSize: matchingDoc.fileSize,
-        ...ocrResult.extracted
       });
+      continue;
     }
 
-    return {
+    // Run real OCR and entity cross-checking
+    const ocrResult = await parseAndVerifyDocument(matchingDoc, profile, company);
+
+    if (ocrResult.isWrongCompanyDoc || !ocrResult.pass) {
+      hasDocMismatch = true;
+    }
+
+    ocrDossier.push({
+      requirement: req.label,
+      documentType: req.type,
+      fileName: matchingDoc.originalFileName || matchingDoc.documentName,
+      fileSize: matchingDoc.fileSize,
+      extractedPan: ocrResult.extractedPan,
+      extractedGstin: ocrResult.extractedGstin,
+      extractedUdyam: ocrResult.extractedUdyam,
+      extractedEntity: ocrResult.extractedEntityName,
+      pass: ocrResult.pass,
+      isWrongCompanyDoc: ocrResult.isWrongCompanyDoc,
+      mismatches: ocrResult.mismatches,
+      authority: req.label.includes('PAN') ? 'CBDT' : req.label.includes('GST') ? 'GSTN' : req.label.includes('Udyam') ? 'MSME' : 'Government Registry'
+    });
+
+    checks.push({
       check: `DOC_VALIDATED_${req.type}`,
       pass: ocrResult.pass,
       weight: ocrResult.pass ? 0 : CHECK_WEIGHTS.DOCUMENT_CONTENT_MISMATCH,
       label: `Mandatory Document: ${req.label}`,
       detail: ocrResult.detail,
-    };
-  });
+    });
+  }
 
-  return { checks, ocrDossier };
+  return { checks, ocrDossier, hasDocMismatch };
 }
 
 // ── Main Engine Runner ───────────────────────────────────────────────────────
@@ -549,7 +487,7 @@ async function runFullVerification(userId) {
   const company = profileFull.company || {};
   const docs    = profileFull.documents || [];
 
-  const docVaultResult = checkDocumentVault(docs, profileFull, company);
+  const docVaultResult = await checkDocumentVault(docs, profileFull, company);
 
   // Execute all comprehensive cross-source checks
   const allChecks = [
@@ -567,16 +505,74 @@ async function runFullVerification(userId) {
   // Compute risk score (sum of weights of failed checks)
   const failedChecks = allChecks.filter(c => !c.pass);
   const passedChecks = allChecks.filter(c => c.pass);
-  const riskScore = failedChecks.reduce((sum, c) => sum + c.weight, 0);
+  const rawRiskScore = failedChecks.reduce((sum, c) => sum + c.weight, 0);
+
+  // If wrong document or entity mismatch exists, riskScore is at least 65
+  const hasMismatch = docVaultResult.hasDocMismatch || failedChecks.some(c =>
+    c.check.includes('MISMATCH') || c.check.includes('LINKAGE_FAIL') || c.check.includes('NOT_FOUND')
+  );
+  const finalRiskScore = hasMismatch ? Math.max(65, rawRiskScore) : rawRiskScore;
 
   // STRICT DECISION: All checks must pass with riskScore === 0 for automatic approval
-  const decision = (failedChecks.length === 0 && riskScore === 0) ? 'APPROVED_TO_BID' : 'REVIEW_REQUIRED';
+  const decision = (failedChecks.length === 0 && finalRiskScore === 0) ? 'APPROVED_TO_BID' : 'REVIEW_REQUIRED';
   const flags = failedChecks.map(c => c.check);
+
+  // Build Comprehensive 3-Way Triangulation Table
+  const registeredPan = (company.panNumber || profileFull.panNumber || '').toUpperCase().trim();
+  const panRec = registeredPan ? findPanRecord(registeredPan) : null;
+  const gstRec = company.gstin ? findGstRecord(company.gstin) : (registeredPan ? findGstByPan(registeredPan) : null);
+  const udyamRec = company.udyamRegistrationNumber ? findUdyamRecord(company.udyamRegistrationNumber) : (registeredPan ? findUdyamByPan(registeredPan) : null);
+
+  const panDoc = docVaultResult.ocrDossier.find(d => d.documentType === 'PAN_COMPANY' || d.documentType === 'PAN_CARD');
+  const gstDoc = docVaultResult.ocrDossier.find(d => d.documentType === 'GST_CERTIFICATE');
+  const udyamDoc = docVaultResult.ocrDossier.find(d => d.documentType === 'UDYAM_CERTIFICATE');
+
+  const triangulationComparison = [
+    {
+      field: 'Entity Permanent Account Number (PAN)',
+      formValue: registeredPan || 'Not Specified',
+      documentExtractedValue: panDoc?.extractedPan || (panDoc?.isWrongCompanyDoc ? panDoc?.extractedPan : registeredPan) || 'N/A',
+      govtMasterValue: panRec ? panRec.panNumber : 'NOT_FOUND_IN_CBDT',
+      status: (panRec && (!panDoc || panDoc.pass) && registeredPan === panRec.panNumber) ? 'VERIFIED_MATCH' : 'CRITICAL_MISMATCH',
+      remarks: panRec
+        ? (panDoc && !panDoc.pass ? `Document contains PAN "${panDoc.extractedPan}", mismatching profile PAN "${registeredPan}".` : `Active CBDT record for ${panRec.legalName}.`)
+        : `PAN "${registeredPan}" does not exist in CBDT Government Database.`
+    },
+    {
+      field: 'Legal Business Name',
+      formValue: company.legalName || profileFull.fullName || 'Not Specified',
+      documentExtractedValue: panDoc?.extractedEntity || 'N/A',
+      govtMasterValue: panRec ? panRec.legalName : 'NOT_FOUND',
+      status: (panRec && namesMatch(company.legalName, panRec.legalName)) ? 'VERIFIED_MATCH' : 'CRITICAL_MISMATCH',
+      remarks: panRec ? `CBDT Name: "${panRec.legalName}"` : 'Entity record not found in CBDT database.'
+    },
+    {
+      field: 'GSTIN Network Registration',
+      formValue: company.gstin || 'Not Specified',
+      documentExtractedValue: gstDoc?.extractedGstin || company.gstin || 'N/A',
+      govtMasterValue: gstRec ? gstRec.gstin : 'NOT_FOUND_ON_GSTN',
+      status: (gstRec && extractPanFromGstin(company.gstin) === registeredPan && (!gstDoc || gstDoc.pass)) ? 'VERIFIED_MATCH' : 'CRITICAL_MISMATCH',
+      remarks: gstRec
+        ? (extractPanFromGstin(company.gstin) !== registeredPan ? `GSTIN encodes PAN "${extractPanFromGstin(company.gstin)}", mismatching "${registeredPan}".` : `Active Regular Taxpayer on GSTN.`)
+        : 'GSTIN not found or not linked.'
+    },
+    {
+      field: 'MSME Udyam Registration',
+      formValue: company.udyamRegistrationNumber || 'Not Specified',
+      documentExtractedValue: udyamDoc?.extractedUdyam || company.udyamRegistrationNumber || 'N/A',
+      govtMasterValue: udyamRec ? udyamRec.udyamNumber : 'NOT_FOUND_IN_MSME',
+      status: (udyamRec && (!udyamRec.panNumber || udyamRec.panNumber.toUpperCase() === registeredPan) && (!udyamDoc || udyamDoc.pass)) ? 'VERIFIED_MATCH' : 'CRITICAL_MISMATCH',
+      remarks: udyamRec
+        ? (udyamRec.panNumber && udyamRec.panNumber.toUpperCase() !== registeredPan ? `Udyam belongs to PAN "${udyamRec.panNumber}" (${udyamRec.enterpriseName}), not "${registeredPan}".` : `Verified ${udyamRec.enterpriseType} classification.`)
+        : 'Udyam record not found in MSME Databank.'
+    }
+  ];
 
   const report = {
     generatedAt: new Date().toISOString(),
     userId,
-    riskScore,
+    riskScore: finalRiskScore,
+    overallScore: Math.max(0, 100 - finalRiskScore),
     riskThreshold: RISK_THRESHOLD,
     decision,
     flags,
@@ -584,6 +580,7 @@ async function runFullVerification(userId) {
     checksPassed: passedChecks.length,
     checksFailed: failedChecks.length,
     ocrDossier: docVaultResult.ocrDossier,
+    triangulationComparison,
     checks: allChecks.map(c => ({
       id: c.check,
       label: c.label,
@@ -593,7 +590,7 @@ async function runFullVerification(userId) {
     })),
     summary: decision === 'APPROVED_TO_BID'
       ? `✓ All ${allChecks.length} AI OCR document parsing, regulatory registry, and cross-source checks PASSED. Risk score: 0/${RISK_THRESHOLD}. Automatically approved to bid.`
-      : `⚠️ ${failedChecks.length} check(s) flagged for manual verification. Risk score: ${riskScore} (Threshold: ${RISK_THRESHOLD}). Routed to Verification Officer.`,
+      : `⚠️ ${failedChecks.length} check(s) flagged with discrepancies or mismatched documents. Risk score: ${finalRiskScore}% (Threshold: ${RISK_THRESHOLD}%). Routed to Procurement Officer for manual profile verification.`,
   };
 
   // Persist result to profile in memoryStore
@@ -611,12 +608,12 @@ async function runFullVerification(userId) {
     decision === 'APPROVED_TO_BID' ? 'AUTO_APPROVED' : 'AUTO_FLAGGED_FOR_REVIEW',
     'BIDDER_PROFILE',
     profileFull.id,
-    { riskScore, flags, checksTotal: allChecks.length, checksFailed: failedChecks.length },
+    { riskScore: finalRiskScore, flags, checksTotal: allChecks.length, checksFailed: failedChecks.length },
     'SYSTEM_AUTO_VERIFIER',
     null
   );
 
-  return { decision, riskScore, report, flags };
+  return { decision, riskScore: finalRiskScore, report, flags };
 }
 
 module.exports = {

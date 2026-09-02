@@ -474,6 +474,55 @@ export default function VerifyCompanyProfilesPage() {
                 </div>
               </div>
 
+              {/* 2. AI Triangulation Comparison Table */}
+              {selectedProfile.autoVerificationReport?.triangulationComparison && (
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: '0.88rem', fontWeight: 900, color: '#334155', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🤖</span> 2. AI MULTI-GATEWAY TRIANGULATION AUDIT (DOCS vs FORM vs MASTER GOVT DATA)
+                  </h3>
+                  <div className="table-container" style={{ border: '1px solid #e2e8f0', background: '#ffffff', borderRadius: 10 }}>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Statutory Identifier</th>
+                          <th>Form Input</th>
+                          <th>AI OCR Extracted</th>
+                          <th>Govt Master DB</th>
+                          <th>Status</th>
+                          <th>Discrepancy Analysis</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedProfile.autoVerificationReport.triangulationComparison.map((row, idx) => {
+                          const isMatch = row.status === 'VERIFIED_MATCH';
+                          return (
+                            <tr key={idx} style={{ background: isMatch ? '#ffffff' : '#fef2f2' }}>
+                              <td style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.78rem' }}>{row.field}</td>
+                              <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#2563eb' }}>{row.formValue}</td>
+                              <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: isMatch ? '#059669' : '#dc2626', fontWeight: 700 }}>{row.documentExtractedValue}</td>
+                              <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#475569' }}>{row.govtMasterValue}</td>
+                              <td>
+                                <span style={{
+                                  padding: '2px 8px', borderRadius: 10, fontSize: '0.7rem', fontWeight: 800,
+                                  background: isMatch ? '#ecfdf5' : '#fee2e2',
+                                  color: isMatch ? '#059669' : '#dc2626',
+                                  border: `1px solid ${isMatch ? '#a7f3d0' : '#fca5a5'}`
+                                }}>
+                                  {isMatch ? '✓ MATCH' : '⚠️ MISMATCH'}
+                                </span>
+                              </td>
+                              <td style={{ fontSize: '0.72rem', color: isMatch ? '#475569' : '#991b1b', fontWeight: isMatch ? 500 : 700 }}>
+                                {row.remarks}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {/* 2. Uploaded PDFs & Image Documents */}
               <div style={{ marginBottom: 24 }}>
                 <h3 style={{ fontSize: '0.88rem', fontWeight: 900, color: '#334155', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>

@@ -1832,6 +1832,48 @@ export default function BidderOnboardingPage() {
                   All your company details, identity data, and uploaded statutory documents have been cross-checked and verified against Government Databases. Your bidder profile is active.
                 </p>
 
+                {/* 3-Way Triangulation Comparison Table */}
+                {autoVerify.report?.triangulationComparison && (
+                  <div style={{ textAlign: 'left', marginBottom: 28, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20 }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      📋 Multi-Gateway Triangulation Audit Summary (Uploaded Docs vs Form vs Master Database)
+                    </div>
+                    <div className="table-container" style={{ border: 'none', background: '#ffffff' }}>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Statutory Identifier</th>
+                            <th>Form Input (Entered)</th>
+                            <th>AI OCR Document Value</th>
+                            <th>Govt Master Record</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {autoVerify.report.triangulationComparison.map((row, idx) => (
+                            <tr key={idx}>
+                              <td style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.8rem' }}>{row.field}</td>
+                              <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2563eb' }}>{row.formValue}</td>
+                              <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#059669' }}>{row.documentExtractedValue}</td>
+                              <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#475569' }}>{row.govtMasterValue}</td>
+                              <td>
+                                <span style={{
+                                  padding: '2px 8px', borderRadius: 12, fontSize: '0.72rem', fontWeight: 800,
+                                  background: row.status === 'VERIFIED_MATCH' ? '#ecfdf5' : '#fef2f2',
+                                  color: row.status === 'VERIFIED_MATCH' ? '#059669' : '#dc2626',
+                                  border: `1px solid ${row.status === 'VERIFIED_MATCH' ? '#a7f3d0' : '#fecaca'}`
+                                }}>
+                                  {row.status === 'VERIFIED_MATCH' ? '✓ MATCH' : '⚠️ MISMATCH'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={handleDownloadPdfReport} disabled={downloadingPdf}>
                     📥 {downloadingPdf ? 'Generating PDF...' : 'Download Official Audit Report (PDF)'}
@@ -1842,8 +1884,8 @@ export default function BidderOnboardingPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
-                  <button className="btn-secondary" style={{ border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.78rem' }} onClick={() => setActiveStep(2)}>🔍 Recheck Company Details</button>
-                  <button className="btn-secondary" style={{ border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.78rem' }} onClick={() => setActiveStep(1)}>👤 Recheck Personal Identity</button>
+                  <button className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setActiveStep(2)}>🔍 Recheck Company Details</button>
+                  <button className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setActiveStep(1)}>👤 Recheck Personal Identity</button>
                 </div>
               </div>
             )}
@@ -1851,12 +1893,65 @@ export default function BidderOnboardingPage() {
             {/* ── REVIEW_REQUIRED RESULT ── */}
             {!autoVerify.scanning && autoVerify.done && autoVerify.decision === 'REVIEW_REQUIRED' && (
               <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                <div style={{ width: 84, height: 84, background: 'radial-gradient(circle,rgba(245,158,11,0.2),rgba(245,158,11,0.05))', border: '2px solid rgba(245,158,11,0.4)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.4rem', margin: '0 auto 20px' }}>⚠️</div>
-                <div style={{ display: 'inline-block', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 20, padding: '4px 16px', fontSize: '0.72rem', color: '#f59e0b', fontWeight: 700, marginBottom: 16, letterSpacing: '0.08em' }}>ROUTED FOR OFFICER VERIFICATION</div>
-                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: '#f0f4ff', marginBottom: 8 }}>Under Review by Procurement Officer</h2>
-                <p style={{ color: '#94a3b8', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.7, fontSize: '0.92rem' }}>
-                  Your submitted profile and documents have been routed to the Procurement Officer for manual verification. Once reviewed and approved by the officer, your account will be fully activated.
+                <div style={{ width: 84, height: 84, background: '#fffbeb', border: '2px solid #fde68a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.4rem', margin: '0 auto 20px' }}>⚠️</div>
+                <div style={{ display: 'inline-block', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 20, padding: '4px 16px', fontSize: '0.74rem', color: '#d97706', fontWeight: 800, marginBottom: 16, letterSpacing: '0.06em' }}>
+                  DISCREPANCIES DETECTED — ROUTED FOR OFFICER VERIFICATION
+                </div>
+                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.55rem', color: '#0f172a', marginBottom: 8 }}>
+                  Under Review by Procurement Officer
+                </h2>
+                <p style={{ color: '#475569', maxWidth: 540, margin: '0 auto 24px', lineHeight: 1.7, fontSize: '0.92rem' }}>
+                  The AI automated inspection detected discrepancies between your uploaded documents, entered identity numbers, and Master Government Database records. Your application has been routed to the Procurement Officer for manual profile inspection.
                 </p>
+
+                {/* 3-Way Triangulation Comparison Table with Red Mismatches */}
+                {autoVerify.report?.triangulationComparison && (
+                  <div style={{ textAlign: 'left', marginBottom: 28, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20 }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#dc2626', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      ⚠️ Cross-Source Verification & Discrepancy Breakdown
+                    </div>
+                    <div className="table-container" style={{ border: 'none', background: '#ffffff' }}>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Statutory Identifier</th>
+                            <th>Form Input (Entered)</th>
+                            <th>AI OCR Document Value</th>
+                            <th>Govt Master Record</th>
+                            <th>Status</th>
+                            <th>AI Findings & Remarks</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {autoVerify.report.triangulationComparison.map((row, idx) => {
+                            const isMatch = row.status === 'VERIFIED_MATCH';
+                            return (
+                              <tr key={idx} style={{ background: isMatch ? '#ffffff' : '#fef2f2' }}>
+                                <td style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.8rem' }}>{row.field}</td>
+                                <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2563eb', fontWeight: 700 }}>{row.formValue}</td>
+                                <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: isMatch ? '#059669' : '#dc2626', fontWeight: 700 }}>{row.documentExtractedValue}</td>
+                                <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#475569' }}>{row.govtMasterValue}</td>
+                                <td>
+                                  <span style={{
+                                    padding: '2px 8px', borderRadius: 12, fontSize: '0.72rem', fontWeight: 800,
+                                    background: isMatch ? '#ecfdf5' : '#fee2e2',
+                                    color: isMatch ? '#059669' : '#dc2626',
+                                    border: `1px solid ${isMatch ? '#a7f3d0' : '#fca5a5'}`
+                                  }}>
+                                    {isMatch ? '✓ MATCH' : '⚠️ MISMATCH'}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '0.75rem', color: isMatch ? '#475569' : '#991b1b', fontWeight: isMatch ? 500 : 700 }}>
+                                  {row.remarks}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={handleDownloadPdfReport} disabled={downloadingPdf}>
@@ -1868,8 +1963,8 @@ export default function BidderOnboardingPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
-                  <button className="btn-secondary" style={{ border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.78rem' }} onClick={() => setActiveStep(3)}>📁 Manage Documents</button>
-                  <button className="btn-secondary" style={{ border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.78rem' }} onClick={() => setActiveStep(2)}>🏢 Recheck Company Details</button>
+                  <button className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setActiveStep(3)}>📁 Replace Uploaded Documents</button>
+                  <button className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setActiveStep(2)}>🏢 Correct Company Details</button>
                 </div>
               </div>
             )}
@@ -1878,7 +1973,7 @@ export default function BidderOnboardingPage() {
             {!autoVerify.scanning && !autoVerify.done && (
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '3rem', marginBottom: 16 }}>🤖</div>
-                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.3rem', color: '#f0f4ff', marginBottom: 8 }}>Ready for Automated Verification</h2>
+                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.3rem', color: '#0f172a', marginBottom: 8 }}>Ready for Automated Verification</h2>
                 <p style={{ color: '#64748b', maxWidth: 440, margin: '0 auto 24px', lineHeight: 1.7 }}>Go back to Document Upload and click "Submit for Automated Verification" once you have uploaded your documents.</p>
                 <button className="btn-secondary" onClick={() => setActiveStep(3)}>← Back to Document Upload</button>
               </div>
