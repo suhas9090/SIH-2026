@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
 export default function VerifyCompanyProfilesPage() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Active sub-tab: 'QUEUE' | 'LOOKUP'
   const [activeTab, setActiveTab] = useState('QUEUE');
@@ -98,39 +97,42 @@ export default function VerifyCompanyProfilesPage() {
     const compName = (p.company?.legalName || p.fullName || '').toLowerCase();
     const pan = (p.company?.panNumber || p.panNumber || '').toLowerCase();
     const gstin = (p.company?.gstin || '').toLowerCase();
-    const matchesSearch = compName.includes(searchTerm.toLowerCase()) || pan.includes(searchTerm.toLowerCase()) || gstin.includes(searchTerm.toLowerCase());
-    if (filterStatus === 'ALL') return matchesSearch;
-    return matchesSearch && p.lifecycleStatus === filterStatus;
+    const q = searchTerm.toLowerCase();
+
+    const matchesSearch = compName.includes(q) || pan.includes(q) || gstin.includes(q);
+    const matchesFilter = filterStatus === 'ALL' || p.lifecycleStatus === filterStatus;
+
+    return matchesSearch && matchesFilter;
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0f1d', color: '#f0f4ff', paddingBottom: 60 }}>
-      {/* Top Header */}
-      <div style={{ background: 'rgba(15,23,42,0.9)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '24px 32px' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a' }}>
+      {/* ── Top Header ── */}
+      <div style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '24px 32px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: '1.4rem' }}>🏛️</span>
-              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.45rem', color: '#f0f4ff', margin: 0 }}>
-                Verify Company Profiles & Statutory Records
+              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>
+                Verify Company Profiles & Statutory PAN Database
               </h1>
             </div>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>
-              Procurement Officer Verification Portal — Review bidder submitted company profiles, view uploaded PDFs/images, and perform live Government PAN lookups.
+            <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>
+              Officer portal to audit bidder-submitted company data, examine uploaded PDF certificates, and query live Government master databases.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               className="btn-secondary"
-              style={{ fontSize: '0.8rem', padding: '8px 16px' }}
+              style={{ fontSize: '0.82rem', padding: '8px 16px' }}
               onClick={() => navigate('/procurement/dashboard')}
             >
               ← Back to Dashboard
             </button>
             <button
               className="btn-primary"
-              style={{ fontSize: '0.8rem', padding: '8px 18px', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
+              style={{ fontSize: '0.82rem', padding: '8px 18px', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}
               onClick={loadProfiles}
             >
               ⟳ Refresh Queue
@@ -141,16 +143,16 @@ export default function VerifyCompanyProfilesPage() {
 
       <div style={{ maxWidth: 1280, margin: '24px auto', padding: '0 24px' }}>
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
           <button
             style={{
-              background: activeTab === 'QUEUE' ? 'rgba(59,130,246,0.15)' : 'transparent',
-              color: activeTab === 'QUEUE' ? '#60a5fa' : '#94a3b8',
-              border: `1px solid ${activeTab === 'QUEUE' ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
+              background: activeTab === 'QUEUE' ? '#eff6ff' : '#ffffff',
+              color: activeTab === 'QUEUE' ? '#1d4ed8' : '#475569',
+              border: `1px solid ${activeTab === 'QUEUE' ? '#bfdbfe' : '#cbd5e1'}`,
               borderRadius: 8,
-              padding: '8px 18px',
-              fontWeight: 700,
-              fontSize: '0.84rem',
+              padding: '9px 20px',
+              fontWeight: 800,
+              fontSize: '0.85rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -164,13 +166,13 @@ export default function VerifyCompanyProfilesPage() {
 
           <button
             style={{
-              background: activeTab === 'LOOKUP' ? 'rgba(59,130,246,0.15)' : 'transparent',
-              color: activeTab === 'LOOKUP' ? '#60a5fa' : '#94a3b8',
-              border: `1px solid ${activeTab === 'LOOKUP' ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
+              background: activeTab === 'LOOKUP' ? '#eff6ff' : '#ffffff',
+              color: activeTab === 'LOOKUP' ? '#1d4ed8' : '#475569',
+              border: `1px solid ${activeTab === 'LOOKUP' ? '#bfdbfe' : '#cbd5e1'}`,
               borderRadius: 8,
-              padding: '8px 18px',
-              fontWeight: 700,
-              fontSize: '0.84rem',
+              padding: '9px 20px',
+              fontWeight: 800,
+              fontSize: '0.85rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -186,11 +188,11 @@ export default function VerifyCompanyProfilesPage() {
         {/* ─── TAB 1: LIVE PAN LOOKUP PAGE ─── */}
         {activeTab === 'LOOKUP' && (
           <div>
-            <div style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 24, marginBottom: 24 }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f0f4ff', marginBottom: 6 }}>
+            <div className="card" style={{ padding: 24, marginBottom: 24 }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', marginBottom: 6 }}>
                 ⚡ Government Master Database PAN Search & Verification
               </h2>
-              <p style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: 16 }}>
+              <p style={{ color: '#64748b', fontSize: '0.84rem', marginBottom: 18 }}>
                 Enter any Company PAN to instantly retrieve and verify records from CBDT Direct Taxes, GSTN Network, MSME Udyam, MCA21, and the Central Debarment list.
               </p>
 
@@ -202,12 +204,12 @@ export default function VerifyCompanyProfilesPage() {
                   placeholder="Enter 10-digit Company PAN (e.g. SYNPA0001C, SYNPA0003P)"
                   value={searchPan}
                   onChange={(e) => setSearchPan(e.target.value.toUpperCase())}
-                  style={{ flex: 1, fontFamily: 'monospace', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.05em' }}
+                  style={{ flex: 1, fontFamily: 'monospace', fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.05em' }}
                   onKeyDown={(e) => e.key === 'Enter' && handleFetchPanDetails(searchPan)}
                 />
                 <button
                   className="btn-primary"
-                  style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', padding: '10px 24px', fontWeight: 700, fontSize: '0.85rem' }}
+                  style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', padding: '10px 24px', fontWeight: 800, fontSize: '0.88rem' }}
                   onClick={() => handleFetchPanDetails(searchPan)}
                   disabled={fetchingPan}
                 >
@@ -217,7 +219,7 @@ export default function VerifyCompanyProfilesPage() {
 
               {/* Quick Sample PAN Pills */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Quick Test Records:</span>
+                <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700 }}>Quick Test Records:</span>
                 {[
                   { label: 'ABC Safety Tech', pan: 'SYNPA0001C' },
                   { label: 'Apex Industrial LLP', pan: 'SYNPA0002L' },
@@ -227,12 +229,13 @@ export default function VerifyCompanyProfilesPage() {
                   <button
                     key={item.pan}
                     style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#94a3b8',
+                      background: '#f1f5f9',
+                      border: '1px solid #cbd5e1',
+                      color: '#334155',
                       borderRadius: 20,
-                      padding: '3px 12px',
-                      fontSize: '0.7rem',
+                      padding: '4px 12px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
                       cursor: 'pointer'
                     }}
                     onClick={() => handleFetchPanDetails(item.pan)}
@@ -247,66 +250,66 @@ export default function VerifyCompanyProfilesPage() {
             {panResult && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
                 {/* Card 1: CBDT PAN */}
-                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 12, padding: 18 }}>
+                <div className="card" style={{ borderLeft: '4px solid #2563eb', padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#60a5fa' }}>🪪 CBDT Direct Taxes Master</div>
-                    <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#1e40af' }}>🪪 CBDT Direct Taxes Master</div>
+                    <span style={{ fontSize: '0.7rem', background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: 10, fontWeight: 800 }}>
                       {panResult.status || 'ACTIVE'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div>Legal Entity Name: <strong style={{ color: '#f0f4ff' }}>{panResult.legalName}</strong></div>
-                    <div>PAN Number: <strong style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{panResult.panNumber}</strong></div>
-                    <div>Entity Type: <strong style={{ color: '#f0f4ff' }}>{panResult.entityType || 'COMPANY'}</strong></div>
-                    <div>Date of Incorporation: <strong style={{ color: '#f0f4ff' }}>{panResult.dateOfIncorporation || 'N/A'}</strong></div>
-                    <div>Jurisdiction: <span style={{ color: '#cbd5e1' }}>{panResult.jurisdiction || 'N/A'}</span></div>
+                  <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div>Legal Entity Name: <strong style={{ color: '#0f172a' }}>{panResult.legalName}</strong></div>
+                    <div>PAN Number: <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>{panResult.panNumber}</strong></div>
+                    <div>Entity Type: <strong style={{ color: '#0f172a' }}>{panResult.entityType || 'COMPANY'}</strong></div>
+                    <div>Date of Incorporation: <strong style={{ color: '#0f172a' }}>{panResult.dateOfIncorporation || 'N/A'}</strong></div>
+                    <div>Jurisdiction: <span style={{ color: '#334155' }}>{panResult.jurisdiction || 'N/A'}</span></div>
                   </div>
                 </div>
 
                 {/* Card 2: GSTIN Linkage */}
-                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 12, padding: 18 }}>
+                <div className="card" style={{ borderLeft: '4px solid #059669', padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#34d399' }}>🧾 GSTN Network Registry</div>
-                    <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#065f46' }}>🧾 GSTN Network Registry</div>
+                    <span style={{ fontSize: '0.7rem', background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: 10, fontWeight: 800 }}>
                       {panResult.gstin ? 'LINKED' : 'NOT FOUND'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div>GSTIN: <strong style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{panResult.gstin || 'N/A'}</strong></div>
-                    <div>Trade Name: <strong style={{ color: '#f0f4ff' }}>{panResult.tradeName || panResult.legalName}</strong></div>
-                    <div>Registration State: <strong style={{ color: '#f0f4ff' }}>{panResult.state || 'N/A'}</strong></div>
-                    <div>Taxpayer Type: <strong style={{ color: '#f0f4ff' }}>{panResult.businessType || 'Regular Taxpayer'}</strong></div>
-                    <div>Filing Status: <strong style={{ color: '#10b981' }}>{panResult.filingStatus || 'COMPLIANT'}</strong></div>
+                  <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div>GSTIN: <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>{panResult.gstin || 'N/A'}</strong></div>
+                    <div>Trade Name: <strong style={{ color: '#0f172a' }}>{panResult.tradeName || panResult.legalName}</strong></div>
+                    <div>Registration State: <strong style={{ color: '#0f172a' }}>{panResult.state || 'N/A'}</strong></div>
+                    <div>Taxpayer Type: <strong style={{ color: '#0f172a' }}>{panResult.businessType || 'Regular Taxpayer'}</strong></div>
+                    <div>Filing Status: <strong style={{ color: '#059669' }}>{panResult.filingStatus || 'COMPLIANT'}</strong></div>
                   </div>
                 </div>
 
                 {/* Card 3: MSME Udyam */}
-                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 12, padding: 18 }}>
+                <div className="card" style={{ borderLeft: '4px solid #d97706', padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#fbbf24' }}>🏭 Ministry of MSME (Udyam)</div>
-                    <span style={{ fontSize: '0.68rem', background: 'rgba(245,158,11,0.15)', color: '#fbbf24', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#b45309' }}>🏭 Ministry of MSME (Udyam)</div>
+                    <span style={{ fontSize: '0.7rem', background: '#fffbeb', color: '#d97706', padding: '3px 8px', borderRadius: 10, fontWeight: 800 }}>
                       {panResult.udyamRegistrationNumber ? 'REGISTERED' : 'N/A'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div>Udyam Number: <strong style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{panResult.udyamRegistrationNumber || 'N/A'}</strong></div>
-                    <div>Enterprise Type: <strong style={{ color: '#f0f4ff' }}>{panResult.enterpriseType || 'Micro / Small Enterprise'}</strong></div>
-                    <div>Major Activity: <span style={{ color: '#cbd5e1' }}>{panResult.majorActivity || 'Manufacturing of Safety Equipment'}</span></div>
+                  <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div>Udyam Number: <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>{panResult.udyamRegistrationNumber || 'N/A'}</strong></div>
+                    <div>Enterprise Type: <strong style={{ color: '#0f172a' }}>{panResult.enterpriseType || 'Micro / Small Enterprise'}</strong></div>
+                    <div>Major Activity: <span style={{ color: '#334155' }}>{panResult.majorActivity || 'Manufacturing of Safety Equipment'}</span></div>
                   </div>
                 </div>
 
                 {/* Card 4: MCA21 Incorporation */}
-                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: 12, padding: 18 }}>
+                <div className="card" style={{ borderLeft: '4px solid #7c3aed', padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#c084fc' }}>🏛️ MCA21 Corporate Registry</div>
-                    <span style={{ fontSize: '0.68rem', background: 'rgba(168,85,247,0.15)', color: '#c084fc', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#6d28d9' }}>🏛️ MCA21 Corporate Registry</div>
+                    <span style={{ fontSize: '0.7rem', background: '#f5f3ff', color: '#7c3aed', padding: '3px 8px', borderRadius: 10, fontWeight: 800 }}>
                       {panResult.cin ? 'INCORPORATED' : 'PROPRIETARY'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div>CIN / LLPIN: <strong style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{panResult.cin || 'N/A'}</strong></div>
-                    <div>ROC Office: <strong style={{ color: '#f0f4ff' }}>{panResult.rocLocation || 'N/A'}</strong></div>
-                    <div>Company Status: <strong style={{ color: '#10b981' }}>{panResult.companyStatus || 'ACTIVE'}</strong></div>
+                  <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div>CIN / LLPIN: <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>{panResult.cin || 'N/A'}</strong></div>
+                    <div>ROC Office: <strong style={{ color: '#0f172a' }}>{panResult.rocLocation || 'N/A'}</strong></div>
+                    <div>Company Status: <strong style={{ color: '#059669' }}>{panResult.companyStatus || 'ACTIVE'}</strong></div>
                   </div>
                 </div>
               </div>
@@ -335,12 +338,12 @@ export default function VerifyCompanyProfilesPage() {
                   <button
                     key={status}
                     style={{
-                      background: filterStatus === status ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.03)',
-                      color: filterStatus === status ? '#60a5fa' : '#94a3b8',
-                      border: `1px solid ${filterStatus === status ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                      borderRadius: 6,
-                      padding: '6px 14px',
-                      fontSize: '0.72rem',
+                      background: filterStatus === status ? '#eff6ff' : '#ffffff',
+                      color: filterStatus === status ? '#1d4ed8' : '#64748b',
+                      border: `1px solid ${filterStatus === status ? '#bfdbfe' : '#cbd5e1'}`,
+                      borderRadius: 8,
+                      padding: '7px 14px',
+                      fontSize: '0.74rem',
                       fontWeight: 700,
                       cursor: 'pointer'
                     }}
@@ -353,79 +356,81 @@ export default function VerifyCompanyProfilesPage() {
             </div>
 
             {/* Profiles Table */}
-            <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden' }}>
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               {loadingProfiles ? (
-                <div style={{ textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading registered company profiles...</div>
+                <div style={{ textAlign: 'center', padding: 48, color: '#64748b' }}>Loading registered company profiles...</div>
               ) : filteredProfiles.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: 48, color: '#64748b' }}>
                   <div style={{ fontSize: '2rem', marginBottom: 8 }}>🏢</div>
                   <div>No company profiles found matching your search.</div>
                 </div>
               ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(255,255,255,0.04)', color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>
-                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Company & Signatory</th>
-                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Company PAN</th>
-                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>GSTIN</th>
-                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Uploaded Docs</th>
-                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Verification Status</th>
-                      <th style={{ padding: '12px 16px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProfiles.map((p) => {
-                      const isApproved = p.lifecycleStatus === 'APPROVED_TO_BID';
-                      const isReview = p.lifecycleStatus === 'REVIEW_REQUIRED';
-                      return (
-                        <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <td style={{ padding: '12px 16px' }}>
-                            <div style={{ fontWeight: 700, color: '#f0f4ff' }}>{p.company?.legalName || p.fullName || 'Registered Enterprise'}</div>
-                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Signatory: {p.fullName || 'N/A'} • {p.email || 'N/A'}</div>
-                          </td>
-                          <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontWeight: 700, color: '#60a5fa' }}>
-                            {p.company?.panNumber || p.panNumber || '—'}
-                          </td>
-                          <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '0.75rem', color: '#94a3b8' }}>
-                            {p.company?.gstin || '—'}
-                          </td>
-                          <td style={{ padding: '12px 16px' }}>
-                            <span style={{ background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 8, fontSize: '0.72rem', color: '#cbd5e1' }}>
-                              📁 {p.documents?.length || 0} Files
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 16px' }}>
-                            <span style={{
-                              fontSize: '0.7rem',
-                              fontWeight: 800,
-                              padding: '3px 10px',
-                              borderRadius: 12,
-                              background: isApproved ? 'rgba(16,185,129,0.15)' : isReview ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
-                              color: isApproved ? '#10b981' : isReview ? '#f59e0b' : '#60a5fa',
-                              border: `1px solid ${isApproved ? 'rgba(16,185,129,0.3)' : isReview ? 'rgba(245,158,11,0.3)' : 'rgba(59,130,246,0.3)'}`
-                            }}>
-                              {p.lifecycleStatus || 'DRAFT'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                            <button
-                              className="btn-primary"
-                              style={{ padding: '6px 14px', fontSize: '0.74rem', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
-                              onClick={() => {
-                                setSelectedProfile(p);
-                                if (p.company?.panNumber) {
-                                  setSearchPan(p.company.panNumber);
-                                }
-                              }}
-                            >
-                              Inspect & Verify 🔍
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Company & Signatory</th>
+                        <th>Company PAN</th>
+                        <th>GSTIN</th>
+                        <th>Uploaded Docs</th>
+                        <th>Verification Status</th>
+                        <th style={{ textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProfiles.map((p) => {
+                        const isApproved = p.lifecycleStatus === 'APPROVED_TO_BID';
+                        const isReview = p.lifecycleStatus === 'REVIEW_REQUIRED';
+                        return (
+                          <tr key={p.id}>
+                            <td>
+                              <div style={{ fontWeight: 800, color: '#0f172a' }}>{p.company?.legalName || p.fullName || 'Registered Enterprise'}</div>
+                              <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Signatory: {p.fullName || 'N/A'} • {p.email || 'N/A'}</div>
+                            </td>
+                            <td style={{ fontFamily: 'monospace', fontWeight: 800, color: '#2563eb' }}>
+                              {p.company?.panNumber || p.panNumber || '—'}
+                            </td>
+                            <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#475569' }}>
+                              {p.company?.gstin || '—'}
+                            </td>
+                            <td>
+                              <span style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: 8, fontSize: '0.74rem', color: '#334155', fontWeight: 700 }}>
+                                📁 {p.documents?.length || 0} Files
+                              </span>
+                            </td>
+                            <td>
+                              <span style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 800,
+                                padding: '3px 10px',
+                                borderRadius: 12,
+                                background: isApproved ? '#ecfdf5' : isReview ? '#fffbeb' : '#eff6ff',
+                                color: isApproved ? '#059669' : isReview ? '#d97706' : '#2563eb',
+                                border: `1px solid ${isApproved ? '#a7f3d0' : isReview ? '#fde68a' : '#bfdbfe'}`
+                              }}>
+                                {p.lifecycleStatus || 'DRAFT'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <button
+                                className="btn-primary"
+                                style={{ padding: '6px 14px', fontSize: '0.76rem', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}
+                                onClick={() => {
+                                  setSelectedProfile(p);
+                                  if (p.company?.panNumber) {
+                                    setSearchPan(p.company.panNumber);
+                                  }
+                                }}
+                              >
+                                Inspect & Verify 🔍
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
@@ -433,19 +438,19 @@ export default function VerifyCompanyProfilesPage() {
 
         {/* ─── DETAILED COMPANY INSPECTION MODAL ─── */}
         {selectedProfile && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-            <div style={{ background: '#0f172a', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 16, width: '100%', maxWidth: 900, maxHeight: '90vh', overflowY: 'auto', padding: 28, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)' }}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 16, width: '100%', maxWidth: 900, maxHeight: '90vh', overflowY: 'auto', padding: 28, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
               
               {/* Modal Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, borderBottom: '1px solid #e2e8f0', paddingBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontWeight: 700, letterSpacing: '0.05em' }}>OFFICER VERIFICATION INSPECTION</div>
-                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#f0f4ff', margin: '4px 0 0' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 800, letterSpacing: '0.05em' }}>OFFICER VERIFICATION INSPECTION</div>
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', margin: '4px 0 0' }}>
                     {selectedProfile.company?.legalName || selectedProfile.fullName || 'Company Profile'}
                   </h2>
                 </div>
                 <button
-                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: '1.1rem' }}
+                  style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: '1.1rem', fontWeight: 800 }}
                   onClick={() => setSelectedProfile(null)}
                 >
                   ✕
@@ -454,59 +459,59 @@ export default function VerifyCompanyProfilesPage() {
 
               {/* 1. Submitted Company Data */}
               <div style={{ marginBottom: 24 }}>
-                <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#94a3b8', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <h3 style={{ fontSize: '0.88rem', fontWeight: 900, color: '#334155', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>🏢</span> 1. SUBMITTED COMPANY & REGISTRATION DETAILS
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, background: 'rgba(255,255,255,0.02)', padding: 14, borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div><span style={{ color: '#64748b', fontSize: '0.7rem' }}>COMPANY PAN:</span> <strong style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{selectedProfile.company?.panNumber || selectedProfile.panNumber || 'N/A'}</strong></div>
-                  <div><span style={{ color: '#64748b', fontSize: '0.7rem' }}>GSTIN:</span> <strong style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{selectedProfile.company?.gstin || 'N/A'}</strong></div>
-                  <div><span style={{ color: '#64748b', fontSize: '0.7rem' }}>MSME UDYAM:</span> <strong style={{ color: '#f0f4ff' }}>{selectedProfile.company?.udyamRegistrationNumber || 'N/A'}</strong></div>
-                  <div><span style={{ color: '#64748b', fontSize: '0.7rem' }}>MCA CIN:</span> <strong style={{ color: '#f0f4ff' }}>{selectedProfile.company?.cin || 'N/A'}</strong></div>
-                  <div><span style={{ color: '#64748b', fontSize: '0.7rem' }}>SIGNATORY NAME:</span> <strong style={{ color: '#f0f4ff' }}>{selectedProfile.fullName || 'N/A'}</strong></div>
-                  <div><span style={{ color: '#64748b', fontSize: '0.7rem' }}>AADHAAR ID:</span> <strong style={{ color: '#f0f4ff' }}>XXXX XXXX {(selectedProfile.aadhaarNumber || '9923').slice(-4)}</strong></div>
-                  <div><span style={{ color: '#64748b', fontSize: '0.7rem' }}>EMAIL:</span> <span style={{ color: '#cbd5e1' }}>{selectedProfile.email || 'N/A'}</span></div>
-                  <div><span style={{ color: '#64748b', fontSize: '0.7rem' }}>REGISTERED ADDRESS:</span> <span style={{ color: '#cbd5e1' }}>{selectedProfile.company?.registeredAddress || selectedProfile.residentialAddress || 'N/A'}</span></div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, background: '#f8fafc', padding: 16, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                  <div><span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700 }}>COMPANY PAN:</span> <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>{selectedProfile.company?.panNumber || selectedProfile.panNumber || 'N/A'}</strong></div>
+                  <div><span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700 }}>GSTIN:</span> <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>{selectedProfile.company?.gstin || 'N/A'}</strong></div>
+                  <div><span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700 }}>MSME UDYAM:</span> <strong style={{ color: '#0f172a' }}>{selectedProfile.company?.udyamRegistrationNumber || 'N/A'}</strong></div>
+                  <div><span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700 }}>MCA CIN:</span> <strong style={{ color: '#0f172a' }}>{selectedProfile.company?.cin || 'N/A'}</strong></div>
+                  <div><span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700 }}>SIGNATORY NAME:</span> <strong style={{ color: '#0f172a' }}>{selectedProfile.fullName || 'N/A'}</strong></div>
+                  <div><span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700 }}>AADHAAR ID:</span> <strong style={{ color: '#0f172a' }}>XXXX XXXX {(selectedProfile.aadhaarNumber || '9923').slice(-4)}</strong></div>
+                  <div><span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700 }}>EMAIL:</span> <span style={{ color: '#334155' }}>{selectedProfile.email || 'N/A'}</span></div>
+                  <div><span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700 }}>REGISTERED ADDRESS:</span> <span style={{ color: '#334155' }}>{selectedProfile.company?.registeredAddress || selectedProfile.residentialAddress || 'N/A'}</span></div>
                 </div>
               </div>
 
               {/* 2. Uploaded PDFs & Image Documents */}
               <div style={{ marginBottom: 24 }}>
-                <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#94a3b8', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <h3 style={{ fontSize: '0.88rem', fontWeight: 900, color: '#334155', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>📁</span> 2. UPLOADED STATUTORY CERTIFICATES & DOCUMENTS ({selectedProfile.documents?.length || 0})
                 </h3>
 
                 {selectedProfile.documents && selectedProfile.documents.length > 0 ? (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
                     {selectedProfile.documents.map((doc, idx) => (
-                      <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 14 }}>
+                      <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: 14 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <div>
-                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#f0f4ff' }}>📄 {doc.documentName}</div>
-                            <div style={{ fontSize: '0.68rem', color: '#60a5fa', marginTop: 2, fontFamily: 'monospace' }}>Type: {doc.documentType}</div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>📄 {doc.documentName}</div>
+                            <div style={{ fontSize: '0.72rem', color: '#2563eb', marginTop: 2, fontFamily: 'monospace', fontWeight: 700 }}>Type: {doc.documentType}</div>
                           </div>
                           <button
-                            style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', color: '#60a5fa', borderRadius: 6, padding: '3px 8px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer' }}
+                            style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', borderRadius: 6, padding: '4px 10px', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}
                             onClick={() => setViewingDoc(doc)}
                           >
                             View 👁️
                           </button>
                         </div>
-                        <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: 8 }}>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 8 }}>
                           File: {doc.originalFileName} • {(doc.fileSize ? (doc.fileSize / 1024).toFixed(1) + ' KB' : 'PDF')}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div style={{ color: '#64748b', fontSize: '0.8rem', padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 8 }}>
+                  <div style={{ color: '#64748b', fontSize: '0.82rem', padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
                     No documents uploaded yet by this bidder.
                   </div>
                 )}
               </div>
 
               {/* 3. Officer Review & Decision */}
-              <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 18 }}>
-                <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f0f4ff', marginBottom: 8 }}>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20 }}>
+                <h3 style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f172a', marginBottom: 8 }}>
                   ✍️ 3. OFFICER EVALUATION & DECISION
                 </h3>
                 <textarea
@@ -515,13 +520,13 @@ export default function VerifyCompanyProfilesPage() {
                   placeholder="Enter officer audit notes (e.g. Cross-verified with CBDT and MCA21 master registries, certificates authentic)..."
                   value={officerNotes}
                   onChange={(e) => setOfficerNotes(e.target.value)}
-                  style={{ width: '100%', fontSize: '0.8rem', marginBottom: 14 }}
+                  style={{ width: '100%', fontSize: '0.82rem', marginBottom: 14 }}
                 />
 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                   <button
                     className="btn-secondary"
-                    style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)', fontSize: '0.82rem', padding: '8px 18px' }}
+                    style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', fontSize: '0.82rem', padding: '8px 18px', fontWeight: 700 }}
                     onClick={() => handleOfficerDecision('REJECT')}
                     disabled={actionLoading}
                   >
@@ -545,19 +550,19 @@ export default function VerifyCompanyProfilesPage() {
 
         {/* ─── DOCUMENT PREVIEW MODAL ─── */}
         {viewingDoc && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 20 }}>
-            <div style={{ background: '#0f172a', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 16, width: '100%', maxWidth: 780, maxHeight: '92vh', overflowY: 'auto', padding: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)' }}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 20 }}>
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 16, width: '100%', maxWidth: 780, maxHeight: '92vh', overflowY: 'auto', padding: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
               
               {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: '0.68rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>OFFICER AUDIT • STATUTORY DOCUMENT</div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f0f4ff', margin: '2px 0 0' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>OFFICER AUDIT • STATUTORY DOCUMENT</div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', margin: '2px 0 0' }}>
                     📄 {viewingDoc.documentName}
                   </h3>
                 </div>
                 <button
-                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '1rem' }}
+                  style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: '1rem', fontWeight: 800 }}
                   onClick={() => setViewingDoc(null)}
                 >
                   ✕
@@ -565,22 +570,22 @@ export default function VerifyCompanyProfilesPage() {
               </div>
 
               {/* Metadata Badges */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 12, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 16, fontSize: '0.74rem' }}>
-                <div><span style={{ color: '#64748b' }}>Original File:</span> <strong style={{ color: '#f0f4ff' }}>{viewingDoc.originalFileName}</strong></div>
-                <div><span style={{ color: '#64748b' }}>Classification:</span> <strong style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{viewingDoc.documentType}</strong></div>
-                <div><span style={{ color: '#64748b' }}>File Size:</span> <strong style={{ color: '#f0f4ff' }}>{viewingDoc.fileSize ? (viewingDoc.fileSize / 1024).toFixed(1) + ' KB' : 'PDF Document'}</strong></div>
-                <div><span style={{ color: '#64748b' }}>Audit Seal:</span> <span style={{ color: '#10b981', fontWeight: 800 }}>✓ SHA-256 VERIFIED</span></div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, background: '#f8fafc', borderRadius: 10, padding: 12, border: '1px solid #e2e8f0', marginBottom: 16, fontSize: '0.76rem' }}>
+                <div><span style={{ color: '#64748b' }}>Original File:</span> <strong style={{ color: '#0f172a' }}>{viewingDoc.originalFileName}</strong></div>
+                <div><span style={{ color: '#64748b' }}>Classification:</span> <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>{viewingDoc.documentType}</strong></div>
+                <div><span style={{ color: '#64748b' }}>File Size:</span> <strong style={{ color: '#0f172a' }}>{viewingDoc.fileSize ? (viewingDoc.fileSize / 1024).toFixed(1) + ' KB' : 'PDF Document'}</strong></div>
+                <div><span style={{ color: '#64748b' }}>Audit Seal:</span> <span style={{ color: '#059669', fontWeight: 800 }}>✓ SHA-256 VERIFIED</span></div>
               </div>
 
               {/* Live Document Preview Box */}
-              <div style={{ marginBottom: 18, background: '#1e293b', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700 }}>LIVE DOCUMENT PREVIEW</span>
+              <div style={{ marginBottom: 18, background: '#f8fafc', borderRadius: 10, overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+                <div style={{ background: '#f1f5f9', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.74rem', color: '#475569', fontWeight: 700 }}>LIVE DOCUMENT PREVIEW</span>
                   <a
                     href={`/api/bidder-onboarding/documents/${viewingDoc.id}/file`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: '#38bdf8', fontSize: '0.72rem', textDecoration: 'none', fontWeight: 700 }}
+                    style={{ color: '#2563eb', fontSize: '0.74rem', textDecoration: 'none', fontWeight: 800 }}
                   >
                     ↗ Open Full Screen
                   </a>
@@ -596,7 +601,7 @@ export default function VerifyCompanyProfilesPage() {
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button
                   className="btn-secondary"
-                  style={{ fontSize: '0.8rem', padding: '8px 18px' }}
+                  style={{ fontSize: '0.82rem', padding: '8px 18px' }}
                   onClick={() => setViewingDoc(null)}
                 >
                   Close
@@ -606,7 +611,7 @@ export default function VerifyCompanyProfilesPage() {
                   target="_blank"
                   rel="noreferrer"
                   className="btn-secondary"
-                  style={{ textDecoration: 'none', fontSize: '0.8rem', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6 }}
+                  style={{ textDecoration: 'none', fontSize: '0.82rem', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <span>↗</span> Open in New Tab
                 </a>
@@ -614,7 +619,7 @@ export default function VerifyCompanyProfilesPage() {
                   href={`/api/bidder-onboarding/documents/${viewingDoc.id}/file?download=true`}
                   download={viewingDoc.originalFileName || `${viewingDoc.documentName}.pdf`}
                   className="btn-primary"
-                  style={{ textDecoration: 'none', fontSize: '0.8rem', padding: '8px 20px', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+                  style={{ textDecoration: 'none', fontSize: '0.82rem', padding: '8px 20px', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
                 >
                   <span>📥</span> Download Certificate (PDF)
                 </a>

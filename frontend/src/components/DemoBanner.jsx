@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
- * DemoBanner — Persistent warning shown on all protected pages when
- * the user is logged in as a demo account (not real Firebase auth).
- * 
- * Spec §32: "The UI must clearly indicate Demo Data where applicable.
- * Never make demo data appear to be live government data."
+ * DemoBanner — Warning shown when the user is in demo mode.
  */
 export default function DemoBanner() {
   const { isDemoUser, profile } = useAuth();
@@ -22,19 +18,18 @@ export default function DemoBanner() {
           <span style={styles.title}>DEMO MODE</span>
           <span style={styles.separator}>—</span>
           <span style={styles.desc}>
-            Mock Government Data Active · Not Live Verification ·{' '}
-            Logged in as{' '}
-            <strong style={{ color: '#fcd34d' }}>{profile?.role?.replace(/_/g, ' ')}</strong>
+            Mock Government Data Active · Logged in as{' '}
+            <strong style={{ color: '#b45309' }}>{profile?.role?.replace(/_/g, ' ')}</strong>
             {' '}({profile?.name})
           </span>
         </div>
       </div>
       <div style={styles.right}>
-        <span style={styles.pill}>For Evaluation Only</span>
+        <span style={styles.pill}>Evaluation Environment</span>
         <button
           style={styles.dismissBtn}
           onClick={() => setDismissed(true)}
-          title="Dismiss banner for this session"
+          title="Dismiss banner"
         >
           ✕
         </button>
@@ -49,9 +44,9 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    background: 'linear-gradient(90deg, #1c1400 0%, #1a0e00 100%)',
-    borderBottom: '1px solid #92400e',
-    padding: '9px 20px',
+    background: '#fffbeb',
+    borderBottom: '1px solid #fde68a',
+    padding: '8px 20px',
     flexWrap: 'wrap',
     zIndex: 200,
     position: 'sticky',
@@ -67,22 +62,21 @@ const styles = {
     flexShrink: 0,
   },
   title: {
-    color: '#f59e0b',
+    color: '#b45309',
     fontWeight: 800,
-    fontSize: '0.78rem',
-    letterSpacing: '0.1em',
+    fontSize: '0.76rem',
+    letterSpacing: '0.08em',
     marginRight: 6,
-    fontFamily: "'Inter', sans-serif",
   },
   separator: {
-    color: '#78350f',
+    color: '#d97706',
     marginRight: 6,
-    fontSize: '0.78rem',
+    fontSize: '0.76rem',
   },
   desc: {
-    color: '#d97706',
+    color: '#78350f',
     fontSize: '0.78rem',
-    fontFamily: "'Inter', sans-serif",
+    fontWeight: 600,
   },
   right: {
     display: 'flex',
@@ -91,23 +85,25 @@ const styles = {
     flexShrink: 0,
   },
   pill: {
-    background: '#78350f',
-    color: '#fde68a',
+    background: '#fef3c7',
+    border: '1px solid #fde68a',
+    color: '#92400e',
     borderRadius: 20,
     padding: '2px 10px',
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    letterSpacing: '0.05em',
+    fontSize: '0.7rem',
+    fontWeight: 800,
+    letterSpacing: '0.04em',
   },
   dismissBtn: {
     background: 'transparent',
-    border: '1px solid #78350f',
-    color: '#d97706',
+    border: '1px solid #fde68a',
+    color: '#b45309',
     borderRadius: 6,
     width: 24,
     height: 24,
     cursor: 'pointer',
-    fontSize: '0.7rem',
+    fontSize: '0.72rem',
+    fontWeight: 800,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

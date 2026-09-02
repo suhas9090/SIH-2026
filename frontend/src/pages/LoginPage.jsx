@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth, DEMO_PROFILES } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import RolePortalSelector, { PORTAL_ROLES } from '../components/RolePortalSelector';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -29,7 +30,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [accessDeniedData, setAccessDeniedData] = useState(null);
 
-  // Sync with query param if present
   useEffect(() => {
     if (portalParam) {
       const match = PORTAL_ROLES.find(p => p.roleKey === portalParam);
@@ -46,7 +46,7 @@ export default function LoginPage() {
 
   const handlePortalSelect = (portal) => {
     setSelectedPortal(portal);
-    setEmail('');
+    setEmail(portal.defaultEmail || '');
     setPassword('');
     setAccessDeniedData(null);
     setSearchParams({ portal: portal.roleKey });
@@ -111,48 +111,26 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'var(--bg-dark)',
+      background: '#f8fafc',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '40px 20px',
       position: 'relative',
-      overflow: 'hidden',
     }}>
-      {/* Ambient Radial Lights */}
-      <div style={{
-        position: 'absolute', top: '20%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: 900, height: 900, borderRadius: '50%',
-        background: selectedPortal
-          ? `radial-gradient(ellipse, ${selectedPortal.color}25 0%, rgba(6, 182, 212, 0.04) 45%, transparent 75%)`
-          : 'radial-gradient(ellipse, rgba(30, 64, 175, 0.16) 0%, rgba(6, 182, 212, 0.04) 45%, transparent 75%)',
-        pointerEvents: 'none',
-        transition: 'background 0.4s ease',
-      }} />
-
       {/* Floating Top-Left Back Button */}
       <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 20 }}>
         <button
           type="button"
           onClick={() => navigate('/')}
+          className="btn-secondary"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'rgba(15, 23, 42, 0.8)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '20px',
-            padding: '8px 16px',
-            color: '#f0f4ff',
+            padding: '7px 16px',
             fontSize: '0.82rem',
             fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#38bdf8'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.color = '#f0f4ff'; }}
         >
           <span>←</span> Back to Home
         </button>
@@ -160,50 +138,48 @@ export default function LoginPage() {
 
       <div style={{
         width: '100%',
-        maxWidth: selectedPortal ? 480 : 1140,
+        maxWidth: selectedPortal ? 460 : 1140,
         position: 'relative',
         zIndex: 10,
         transition: 'max-width 0.3s ease',
       }}>
         {/* Header Branding */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div style={{ textAlign: 'center', marginBottom: 26 }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'inline-block' }}>
             <img
               src="/complygem_logo.png"
               alt="ComplyGeM Logo"
               style={{
-                width: 60,
-                height: 60,
-                borderRadius: 16,
-                margin: '0 auto 12px',
+                width: 52,
+                height: 52,
+                borderRadius: 12,
+                margin: '0 auto 10px',
                 objectFit: 'contain',
-                boxShadow: '0 8px 24px rgba(2, 132, 199, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
                 display: 'block',
               }}
             />
           </Link>
           <h1 style={{
             fontFamily: 'Outfit, sans-serif',
-            fontWeight: 800,
-            fontSize: '1.75rem',
-            color: '#f0f4ff',
+            fontWeight: 900,
+            fontSize: '1.8rem',
+            color: '#0f172a',
             letterSpacing: '-0.02em',
             marginBottom: 4,
           }}>
-            COMPLYGEM <span style={{ color: selectedPortal ? selectedPortal.color : '#0284c7' }}>AI</span>
+            COMPLYGEM <span style={{ color: selectedPortal ? selectedPortal.color : '#2563eb' }}>AI</span>
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem', maxWidth: 500, margin: '0 auto' }}>
-            Integrated Bid Compliance Verification Platform · Government of India
+          <p style={{ color: '#64748b', fontSize: '0.88rem', maxWidth: 480, margin: '0 auto' }}>
+            Public Procurement Compliance & Verification Platform
           </p>
         </div>
 
         {/* VIEW 1: DEDICATED PORTAL SIGN IN FORM */}
         {selectedPortal ? (
           <div className="card" style={{
-            padding: '34px 30px',
-            border: `1px solid ${selectedPortal.color}40`,
-            boxShadow: `0 20px 40px rgba(0,0,0,0.5), 0 0 30px ${selectedPortal.lightBg}`,
+            padding: '32px 28px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02)',
             position: 'relative',
           }}>
             {/* Top Portal Switcher Bar */}
@@ -213,7 +189,7 @@ export default function LoginPage() {
               alignItems: 'center',
               marginBottom: 20,
               paddingBottom: 12,
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              borderBottom: '1px solid #f1f5f9',
             }}>
               <button
                 type="button"
@@ -221,9 +197,9 @@ export default function LoginPage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#38bdf8',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
+                  color: '#2563eb',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -231,68 +207,63 @@ export default function LoginPage() {
                   padding: 0,
                 }}
               >
-                ← All Portals
+                ← Change Portal
               </button>
               <span style={{
-                fontSize: '0.7rem',
-                fontWeight: 700,
+                fontSize: '0.72rem',
+                fontWeight: 800,
                 color: selectedPortal.color,
-                background: selectedPortal.lightBg,
+                background: selectedPortal.circleBg || '#eff6ff',
                 padding: '3px 10px',
                 borderRadius: '12px',
-                border: `1px solid ${selectedPortal.color}33`,
               }}>
-                {selectedPortal.officerInfo}
+                {selectedPortal.title}
               </span>
             </div>
 
             {/* Portal Title & Badge */}
-            <div style={{ textAlign: 'center', marginBottom: 22 }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{
                 width: 56,
                 height: 56,
                 borderRadius: '50%',
                 margin: '0 auto 10px',
-                background: selectedPortal.lightBg,
-                border: `1px solid ${selectedPortal.color}50`,
+                background: selectedPortal.circleBg || '#eff6ff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '1.6rem',
-                boxShadow: `0 4px 14px ${selectedPortal.lightBg}`,
               }}>
                 {selectedPortal.badge}
               </div>
               <h2 style={{
                 fontFamily: 'Outfit, sans-serif',
-                fontWeight: 800,
+                fontWeight: 900,
                 fontSize: '1.35rem',
-                color: '#f8fafc',
+                color: '#0f172a',
                 marginBottom: 4,
               }}>
-                {selectedPortal.title} Sign In
+                {selectedPortal.title} Login
               </h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0 }}>
+              <p style={{ color: '#64748b', fontSize: '0.82rem', margin: 0 }}>
                 {selectedPortal.description}
               </p>
             </div>
 
-            {/* Access Denied / Role Mismatch Alert Card */}
+            {/* Access Denied Alert Card */}
             {accessDeniedData && (
               <div style={{
-                background: 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(15,23,42,0.9) 100%)',
-                border: '1px solid rgba(239,68,68,0.45)',
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
                 borderRadius: 12,
-                padding: '16px 18px',
+                padding: '14px 16px',
                 marginBottom: 20,
-                boxShadow: '0 4px 20px rgba(239,68,68,0.25)',
-                animation: 'shake 0.4s ease-in-out'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f87171', fontWeight: 800, fontSize: '0.88rem', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#dc2626', fontWeight: 800, fontSize: '0.85rem', marginBottom: 4 }}>
                   <span>🚫</span>
                   <span>Portal Access Denied</span>
                 </div>
-                <p style={{ color: '#f0f4ff', fontSize: '0.82rem', lineHeight: 1.5, margin: '0 0 12px 0' }}>
+                <p style={{ color: '#7f1d1d', fontSize: '0.8rem', lineHeight: 1.5, margin: '0 0 10px 0' }}>
                   {accessDeniedData.error || `You have a ${accessDeniedData.userRoleLabel || 'different'} account. You cannot log in through this portal.`}
                 </p>
                 {accessDeniedData.correctPortalKey && (
@@ -309,21 +280,17 @@ export default function LoginPage() {
                     }}
                     style={{
                       width: '100%',
-                      padding: '10px 14px',
-                      background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                      padding: '8px 12px',
+                      background: '#10b981',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: 8,
-                      fontWeight: 800,
-                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
                       cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6
                     }}
                   >
-                    <span>⚡ Switch to {accessDeniedData.correctPortalLabel || 'Your Designated Portal'} →</span>
+                    Switch to {accessDeniedData.correctPortalLabel || 'Your Designated Portal'} →
                   </button>
                 )}
               </div>
@@ -332,7 +299,7 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} noValidate>
               {/* Email */}
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>
+                <label className="label">
                   OFFICIAL EMAIL ADDRESS
                 </label>
                 <input
@@ -347,15 +314,14 @@ export default function LoginPage() {
                   onBlur={() => setEmailTouched(true)}
                   autoComplete="email"
                   style={{
-                    width: '100%',
                     borderColor: emailTouched && email && !isEmailValid ? '#ef4444' : isEmailValid ? '#10b981' : undefined
                   }}
                 />
               </div>
 
               {/* Password */}
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>
+              <div style={{ marginBottom: 16 }}>
+                <label className="label">
                   PASSWORD
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -366,7 +332,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     autoComplete="current-password"
-                    style={{ width: '100%', paddingRight: 44 }}
+                    style={{ paddingRight: 44 }}
                   />
                   <button
                     type="button"
@@ -382,8 +348,8 @@ export default function LoginPage() {
               </div>
 
               {/* Remember me & Forgot */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.78rem', color: '#94a3b8' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.8rem', color: '#475569' }}>
                   <input
                     type="checkbox"
                     checked={rememberMe}
@@ -393,7 +359,7 @@ export default function LoginPage() {
                   Remember me
                 </label>
                 <span
-                  style={{ fontSize: '0.78rem', color: selectedPortal.color, cursor: 'pointer', fontWeight: 600 }}
+                  style={{ fontSize: '0.8rem', color: selectedPortal.color, cursor: 'pointer', fontWeight: 700 }}
                   onClick={() => toast.success('Password reset instructions sent to your official email.')}
                 >
                   Forgot password?
@@ -406,19 +372,19 @@ export default function LoginPage() {
                 disabled={loading}
                 style={{
                   width: '100%',
-                  padding: '11px',
+                  padding: '12px',
                   borderRadius: '10px',
                   background: selectedPortal.btnColor,
                   color: '#ffffff',
                   border: 'none',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   fontSize: '0.92rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  boxShadow: `0 4px 14px ${selectedPortal.btnColor}50`,
+                  boxShadow: `0 4px 14px ${selectedPortal.btnColor}40`,
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -426,9 +392,9 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <p style={{ textAlign: 'center', marginTop: 22, fontSize: '0.8rem', color: '#64748b' }}>
+            <p style={{ textAlign: 'center', marginTop: 22, fontSize: '0.82rem', color: '#64748b' }}>
               Don't have an official account?{' '}
-              <Link to={`/register?role=${selectedPortal.roleKey}`} style={{ color: selectedPortal.color, fontWeight: 700 }}>
+              <Link to={`/register?role=${selectedPortal.roleKey}`} style={{ color: selectedPortal.color, fontWeight: 800, textDecoration: 'none' }}>
                 Register as {selectedPortal.title} →
               </Link>
             </p>
@@ -436,17 +402,17 @@ export default function LoginPage() {
         ) : (
           /* VIEW 2: PORTAL SELECTOR OVERVIEW (4 Cards) */
           <div>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <span style={{
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                color: '#3b82f6',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                color: '#2563eb',
                 textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                background: 'rgba(59, 130, 246, 0.1)',
-                padding: '4px 14px',
+                letterSpacing: '0.06em',
+                background: '#eff6ff',
+                padding: '6px 16px',
                 borderRadius: '20px',
-                border: '1px solid rgba(59, 130, 246, 0.25)',
+                border: '1px solid #bfdbfe',
               }}>
                 Select Your Access Portal to Sign In
               </span>
@@ -455,7 +421,7 @@ export default function LoginPage() {
             <RolePortalSelector onSelectPortal={handlePortalSelect} />
 
             <div style={{
-              marginTop: 28,
+              marginTop: 32,
               textAlign: 'center',
               display: 'flex',
               justifyContent: 'center',
@@ -463,14 +429,14 @@ export default function LoginPage() {
               gap: 20,
               flexWrap: 'wrap',
             }}>
-              <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+              <span style={{ fontSize: '0.84rem', color: '#475569' }}>
                 Need official registration?{' '}
-                <Link to="/register" style={{ color: '#3b82f6', fontWeight: 700, textDecoration: 'none' }}>
+                <Link to="/register" style={{ color: '#2563eb', fontWeight: 800, textDecoration: 'none' }}>
                   Register as Bidder or Officer →
                 </Link>
               </span>
-              <span style={{ color: 'rgba(255, 255, 255, 0.1)' }}>|</span>
-              <Link to="/" style={{ color: '#94a3b8', fontSize: '0.82rem', textDecoration: 'none' }}>
+              <span style={{ color: '#cbd5e1' }}>|</span>
+              <Link to="/" style={{ color: '#64748b', fontSize: '0.84rem', textDecoration: 'none', fontWeight: 600 }}>
                 ← Back to Home
               </Link>
             </div>

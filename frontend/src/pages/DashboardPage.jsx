@@ -2,12 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AppLayout } from '../components/Sidebar';
-import { tenderAPI, complianceAPI, auditAPI } from '../services/api';
-import { format } from 'date-fns';
+import { tenderAPI, complianceAPI } from '../services/api';
 
 const STATUS_COLOR = {
   ACTIVE: '#10b981',
-  PROCESSING: '#3b82f6',
+  PROCESSING: '#2563eb',
   DRAFT: '#64748b',
   CLOSED: '#ef4444',
   CANCELLED: '#ef4444',
@@ -23,7 +22,7 @@ const AdminDashboard = ({ profile, stats, navigate }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: '1.2rem' }}>🛡️</span>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff' }}>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#0f172a' }}>
               Platform Administration & System Health
             </h1>
           </div>
@@ -44,23 +43,23 @@ const AdminDashboard = ({ profile, stats, navigate }) => {
       <div style={{ padding: '24px 32px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
-            { label: 'Total Users', value: stats.totalUsers || 4, icon: '👥', color: '#3b82f6', desc: 'Registered system accounts' },
-            { label: 'Active Sessions', value: stats.activeUsers || 4, icon: '⚡', color: '#10b981', desc: 'Verified platform users' },
-            { label: 'Monitored Tenders', value: stats.totalTenders || 0, icon: '📋', color: '#8b5cf6', desc: 'Active procurement tenders' },
-            { label: 'Security Alerts', value: stats.alerts || 0, icon: '⚠️', color: '#ef4444', desc: 'Zero unaddressed threats' },
+            { label: 'Total Users', value: stats.totalUsers || 4, icon: '👥', color: '#2563eb', bg: '#eff6ff', desc: 'Registered system accounts' },
+            { label: 'Active Sessions', value: stats.activeUsers || 4, icon: '⚡', color: '#10b981', bg: '#ecfdf5', desc: 'Verified platform users' },
+            { label: 'Monitored Tenders', value: stats.totalTenders || 0, icon: '📋', color: '#7c3aed', bg: '#f5f3ff', desc: 'Active procurement tenders' },
+            { label: 'Security Alerts', value: stats.alerts || 0, icon: '⚠️', color: '#ef4444', bg: '#fef2f2', desc: 'Zero unaddressed threats' },
           ].map((s) => (
-            <div key={s.label} className="card" style={{ padding: 18, borderLeft: `3px solid ${s.color}` }}>
+            <div key={s.label} className="card" style={{ padding: 20, borderLeft: `4px solid ${s.color}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: '1.2rem' }}>{s.icon}</span>
-                <span style={{ fontSize: '0.68rem', color: s.color, fontWeight: 800, background: `${s.color}15`, padding: '2px 8px', borderRadius: 10 }}>
+                <span style={{ fontSize: '1.3rem' }}>{s.icon}</span>
+                <span style={{ fontSize: '0.68rem', color: s.color, fontWeight: 800, background: s.bg, padding: '2px 8px', borderRadius: 10 }}>
                   LIVE
                 </span>
               </div>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2rem', color: '#f0f4ff', marginBottom: 2 }}>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2rem', color: '#0f172a', marginBottom: 2 }}>
                 {s.value}
               </div>
-              <div style={{ fontWeight: 600, fontSize: '0.8rem', color: '#94a3b8' }}>{s.label}</div>
-              <div style={{ fontSize: '0.7rem', color: '#4a6080' }}>{s.desc}</div>
+              <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#334155' }}>{s.label}</div>
+              <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{s.desc}</div>
             </div>
           ))}
         </div>
@@ -77,14 +76,14 @@ const AdminDashboard = ({ profile, stats, navigate }) => {
                 { name: 'AI Engine (FastAPI + Gemini LLM)', status: 'Active (Port 8000)', ping: '110ms', color: '#10b981' },
                 { name: 'External Govt. Verification Gateways', status: 'Active (GSTN, PAN, MCA21, Udyam)', ping: '12ms', color: '#10b981' },
               ].map((item) => (
-                <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--bg-border)' }}>
+                <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f0f4ff' }}>{item.name}</span>
+                    <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0f172a' }}>{item.name}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'monospace' }}>{item.ping}</span>
-                    <span style={{ fontSize: '0.74rem', fontWeight: 700, color: item.color }}>{item.status}</span>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b', fontFamily: 'monospace' }}>{item.ping}</span>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 800, color: item.color }}>{item.status}</span>
                   </div>
                 </div>
               ))}
@@ -93,21 +92,21 @@ const AdminDashboard = ({ profile, stats, navigate }) => {
 
           <div className="card">
             <span className="section-title" style={{ display: 'block', marginBottom: 14 }}>
-              Government Verification Gateway
+              Government Verification Gateways
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
                 { name: 'GSTN Returns (GSTR-3B / 1)', status: 'Operational', icon: '🏛️' },
                 { name: 'Income Tax PAN (CBDT)', status: 'Operational', icon: '💳' },
-                { name: 'Ministry of Corporate Affairs (MCA21)', status: 'Operational', icon: '🏢' },
+                { name: 'Ministry of Corp Affairs (MCA21)', status: 'Operational', icon: '🏢' },
                 { name: 'MSME / Udyam Registry', status: 'Operational', icon: '🏭' },
               ].map((gw) => (
-                <div key={gw.name} style={{ padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--bg-border)' }}>
+                <div key={gw.name} style={{ padding: 14, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                     <span>{gw.icon}</span>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#f0f4ff' }}>{gw.name}</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>{gw.name}</span>
                   </div>
-                  <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 700 }}>● {gw.status}</span>
+                  <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 800 }}>● {gw.status}</span>
                 </div>
               ))}
             </div>
@@ -128,7 +127,7 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: '1.2rem' }}>🏛️</span>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff' }}>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#0f172a' }}>
               Welcome, {profile?.name?.split(' ')[0] || 'Procurement Officer'}
             </h1>
           </div>
@@ -137,7 +136,7 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)' }} onClick={() => navigate('/procurement/verify-company-profiles')}>
+          <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#059669,#047857)' }} onClick={() => navigate('/procurement/verify-company-profiles')}>
             🔍 Verify Company Profiles
           </button>
           <button className="btn-secondary" onClick={() => navigate('/reports')}>
@@ -152,10 +151,10 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
       <div style={{ padding: '24px 32px' }}>
         {/* Spotlight Action: Verify Company Profiles & PAN Lookup */}
         <div style={{
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(59,130,246,0.08))',
-          border: '1px solid rgba(99,102,241,0.3)',
+          background: '#eff6ff',
+          border: '1px solid #bfdbfe',
           borderRadius: 14,
-          padding: '18px 24px',
+          padding: '20px 24px',
           marginBottom: 24,
           display: 'flex',
           justifyContent: 'space-between',
@@ -166,18 +165,18 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: '1.2rem' }}>🔍</span>
-              <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f0f4ff' }}>Verify Company Profiles & Live PAN Lookup</span>
-              <span style={{ fontSize: '0.68rem', background: 'rgba(99,102,241,0.2)', color: '#818cf8', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+              <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#1e40af' }}>Verify Company Profiles & Live PAN Lookup</span>
+              <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1d4ed8', padding: '3px 10px', borderRadius: 10, fontWeight: 800 }}>
                 OFFICER WORKFLOW
               </span>
             </div>
-            <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0, maxWidth: 620 }}>
+            <p style={{ color: '#475569', fontSize: '0.84rem', margin: 0, maxWidth: 640, lineHeight: 1.5 }}>
               Inspect bidder-submitted company data, view uploaded PDF/image certificates, and perform real-time PAN lookups across CBDT, GSTN, MSME, and MCA21 government databases.
             </p>
           </div>
           <button
             className="btn-primary"
-            style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', padding: '10px 22px', fontSize: '0.84rem', fontWeight: 700 }}
+            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', padding: '11px 22px', fontSize: '0.86rem', fontWeight: 800 }}
             onClick={() => navigate('/procurement/verify-company-profiles')}
           >
             Open Profile Verifier →
@@ -186,35 +185,35 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14, marginBottom: 24 }}>
           {[
-            { label: 'Active Tenders', value: tenders.length || 0, color: '#3b82f6' },
-            { label: 'Bids Received', value: stats.totalBidders || 0, color: '#06b6d4' },
-            { label: 'Under Verification', value: stats.bidsUnderVerification || 0, color: '#f59e0b' },
-            { label: 'Compliant', value: stats.compliantBids || 0, color: '#10b981' },
-            { label: 'Non-Compliant', value: stats.nonCompliantBids || 0, color: '#ef4444' },
-            { label: 'High Risk', value: stats.highRiskBids || 0, color: '#dc2626' },
+            { label: 'Active Tenders', value: tenders.length || 0, color: '#2563eb', bg: '#eff6ff' },
+            { label: 'Bids Received', value: stats.totalBidders || 0, color: '#0284c7', bg: '#f0f9ff' },
+            { label: 'Under Verification', value: stats.bidsUnderVerification || 0, color: '#d97706', bg: '#fffbeb' },
+            { label: 'Compliant', value: stats.compliantBids || 0, color: '#059669', bg: '#ecfdf5' },
+            { label: 'Non-Compliant', value: stats.nonCompliantBids || 0, color: '#dc2626', bg: '#fef2f2' },
+            { label: 'High Risk', value: stats.highRiskBids || 0, color: '#b91c1c', bg: '#fee2e2' },
           ].map((card) => (
-            <div key={card.label} style={{ background: `${card.color}0D`, border: `1px solid ${card.color}33`, borderRadius: 12, padding: '14px', textAlign: 'center' }}>
+            <div key={card.label} style={{ background: card.bg, border: `1px solid ${card.color}30`, borderRadius: 12, padding: '16px', textAlign: 'center' }}>
               <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: card.color }}>
                 {card.value}
               </div>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginTop: 2 }}>{card.label}</div>
+              <div style={{ fontSize: '0.74rem', color: '#334155', fontWeight: 700, marginTop: 2 }}>{card.label}</div>
             </div>
           ))}
         </div>
 
         {/* Tenders Table / Empty State */}
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--bg-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span className="section-title">My Registered Tenders</span>
-            <Link to="/tenders" style={{ color: '#3b82f6', fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none' }}>
+            <Link to="/tenders" style={{ color: '#2563eb', fontSize: '0.84rem', fontWeight: 700, textDecoration: 'none' }}>
               View all ({tenders.length}) →
             </Link>
           </div>
           {tenders.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 20px' }}>
               <div style={{ fontSize: '2.2rem', marginBottom: 8 }}>📋</div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#f0f4ff', marginBottom: 4 }}>No Tenders Published Yet</h3>
-              <p style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: 16 }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>No Tenders Published Yet</h3>
+              <p style={{ color: '#64748b', fontSize: '0.84rem', marginBottom: 16 }}>
                 Create and publish your first procurement tender to start receiving bidder submissions and AI compliance checks.
               </p>
               <button className="btn-primary" onClick={() => navigate('/tenders/create')}>
@@ -222,7 +221,7 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
               </button>
             </div>
           ) : (
-            <div className="table-container" style={{ border: 'none' }}>
+            <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
               <table>
                 <thead>
                   <tr>
@@ -236,21 +235,21 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
                 <tbody>
                   {tenders.map((t) => (
                     <tr key={t.id}>
-                      <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#64748b' }}>{t.referenceNo}</td>
-                      <td style={{ fontWeight: 600, fontSize: '0.85rem' }}>{t.title}</td>
+                      <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>{t.referenceNo}</td>
+                      <td style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>{t.title}</td>
                       <td style={{ textAlign: 'center' }}>
-                        <span style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: 10, fontWeight: 700, fontSize: '0.78rem' }}>
+                        <span style={{ background: '#eff6ff', color: '#2563eb', padding: '2px 8px', borderRadius: 10, fontWeight: 800, fontSize: '0.78rem' }}>
                           {t._count?.bidders || t.bidders?.length || 0}
                         </span>
                       </td>
                       <td>
                         <span style={{
-                          background: `${STATUS_COLOR[t.status] || '#64748b'}20`, color: STATUS_COLOR[t.status] || '#64748b',
-                          border: `1px solid ${STATUS_COLOR[t.status] || '#64748b'}40`, padding: '2px 10px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700,
+                          background: `${STATUS_COLOR[t.status] || '#64748b'}15`, color: STATUS_COLOR[t.status] || '#64748b',
+                          border: `1px solid ${STATUS_COLOR[t.status] || '#64748b'}30`, padding: '3px 10px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 800,
                         }}>{t.status}</span>
                       </td>
                       <td>
-                        <button className="btn-ghost" style={{ fontSize: '0.75rem', color: '#3b82f6', padding: '4px 8px' }} onClick={() => navigate(`/tenders/${t.id}`)}>
+                        <button className="btn-ghost" style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: 700, padding: '4px 8px' }} onClick={() => navigate(`/tenders/${t.id}`)}>
                           Review Bids →
                         </button>
                       </td>
@@ -276,7 +275,7 @@ const ComplianceDashboard = ({ profile, navigate }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: '1.2rem' }}>🔍</span>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff' }}>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#0f172a' }}>
               Verification Center & Evidence Evaluation
             </h1>
           </div>
@@ -292,23 +291,23 @@ const ComplianceDashboard = ({ profile, navigate }) => {
       <div style={{ padding: '24px 32px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
-            { label: 'Pending Queue', value: 0, color: '#f59e0b', desc: 'Bids awaiting review' },
-            { label: 'High Risk Flags', value: 0, color: '#ef4444', desc: 'Inconsistencies detected' },
-            { label: 'Verified Bids', value: 0, color: '#10b981', desc: 'Evaluated compliant' },
-            { label: 'Disputed Overrides', value: 0, color: '#06b6d4', desc: 'Human corrections to AI' },
+            { label: 'Pending Queue', value: 0, color: '#d97706', desc: 'Bids awaiting review' },
+            { label: 'High Risk Flags', value: 0, color: '#dc2626', desc: 'Inconsistencies detected' },
+            { label: 'Verified Bids', value: 0, color: '#059669', desc: 'Evaluated compliant' },
+            { label: 'Disputed Overrides', value: 0, color: '#0284c7', desc: 'Human corrections to AI' },
           ].map((c) => (
-            <div key={c.label} className="card" style={{ padding: 18, borderLeft: `3px solid ${c.color}` }}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2rem', color: '#f0f4ff' }}>{c.value}</div>
-              <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#94a3b8' }}>{c.label}</div>
-              <div style={{ fontSize: '0.7rem', color: '#4a6080' }}>{c.desc}</div>
+            <div key={c.label} className="card" style={{ padding: 20, borderLeft: `4px solid ${c.color}` }}>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2rem', color: '#0f172a' }}>{c.value}</div>
+              <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#334155' }}>{c.label}</div>
+              <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{c.desc}</div>
             </div>
           ))}
         </div>
 
         <div className="card" style={{ textAlign: 'center', padding: '48px 20px' }}>
           <div style={{ fontSize: '2.2rem', marginBottom: 8 }}>✅</div>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#f0f4ff', marginBottom: 4 }}>Verification Queue is Clear</h3>
-          <p style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: 16 }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Verification Queue is Clear</h3>
+          <p style={{ color: '#64748b', fontSize: '0.84rem', marginBottom: 16 }}>
             No bidder submissions are currently pending compliance evaluation. When bids are submitted, they will appear here for evidence validation.
           </p>
           <button className="btn-secondary" onClick={() => navigate('/tenders')}>
@@ -330,7 +329,7 @@ const BidderDashboard = ({ profile, tenders, navigate }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: '1.2rem' }}>🏢</span>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff' }}>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#0f172a' }}>
               Supplier Dashboard — {profile?.organization || 'My Organization'}
             </h1>
           </div>
@@ -346,22 +345,22 @@ const BidderDashboard = ({ profile, tenders, navigate }) => {
       <div style={{ padding: '24px 32px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
-            { label: 'Available Tenders', value: tenders.length || 0, color: '#8b5cf6', onClick: () => navigate('/bidder/tenders') },
-            { label: 'My Active Bids', value: 0, color: '#3b82f6', onClick: () => navigate('/bidder/my-bids') },
-            { label: 'Company Documents', value: '5 Verified', color: '#10b981', onClick: () => navigate('/bidder/profile') },
-            { label: 'Compliance Standing', value: 'ELIGIBLE', color: '#06b6d4', onClick: () => navigate('/bidder/compliance') },
+            { label: 'Available Tenders', value: tenders.length || 0, color: '#7c3aed', onClick: () => navigate('/bidder/tenders') },
+            { label: 'My Active Bids', value: 0, color: '#2563eb', onClick: () => navigate('/bidder/my-bids') },
+            { label: 'Company Documents', value: '5 Verified', color: '#059669', onClick: () => navigate('/bidder/profile') },
+            { label: 'Compliance Standing', value: 'ELIGIBLE', color: '#0284c7', onClick: () => navigate('/bidder/compliance') },
           ].map((c) => (
-            <div key={c.label} className="card" style={{ padding: 18, borderLeft: `3px solid ${c.color}`, cursor: 'pointer' }} onClick={c.onClick}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.7rem', color: '#f0f4ff' }}>{c.value}</div>
-              <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#94a3b8', marginTop: 2 }}>{c.label}</div>
+            <div key={c.label} className="card" style={{ padding: 20, borderLeft: `4px solid ${c.color}`, cursor: 'pointer' }} onClick={c.onClick}>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: '#0f172a' }}>{c.value}</div>
+              <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#475569', marginTop: 2 }}>{c.label}</div>
             </div>
           ))}
         </div>
 
         <div className="card" style={{ textAlign: 'center', padding: '48px 20px' }}>
           <div style={{ fontSize: '2.2rem', marginBottom: 8 }}>📑</div>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#f0f4ff', marginBottom: 4 }}>Ready to Participate in Tenders</h3>
-          <p style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: 16 }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Ready to Participate in Tenders</h3>
+          <p style={{ color: '#64748b', fontSize: '0.84rem', marginBottom: 16 }}>
             Browse open government tenders, check your pre-bid compliance eligibility, and submit required documents.
           </p>
           <button className="btn-primary" onClick={() => navigate('/bidder/tenders')}>
@@ -383,7 +382,7 @@ const AuditorDashboard = ({ profile, navigate }) => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: '1.2rem' }}>⚖️</span>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff' }}>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#0f172a' }}>
               Compliance Oversight & Decision Traceability
             </h1>
           </div>
@@ -399,22 +398,22 @@ const AuditorDashboard = ({ profile, navigate }) => {
       <div style={{ padding: '24px 32px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
-            { label: 'Audited Evaluations', value: 0, color: '#06b6d4' },
-            { label: 'High-Risk Flags', value: 0, color: '#ef4444' },
-            { label: 'Disputed Overrides', value: 0, color: '#f59e0b' },
-            { label: 'Compliance Reports', value: 0, color: '#10b981' },
+            { label: 'Audited Evaluations', value: 0, color: '#0284c7' },
+            { label: 'High-Risk Flags', value: 0, color: '#dc2626' },
+            { label: 'Disputed Overrides', value: 0, color: '#d97706' },
+            { label: 'Compliance Reports', value: 0, color: '#059669' },
           ].map((c) => (
-            <div key={c.label} className="card" style={{ padding: 18, borderLeft: `3px solid ${c.color}` }}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2rem', color: '#f0f4ff' }}>{c.value}</div>
-              <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#94a3b8' }}>{c.label}</div>
+            <div key={c.label} className="card" style={{ padding: 20, borderLeft: `4px solid ${c.color}` }}>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2rem', color: '#0f172a' }}>{c.value}</div>
+              <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#475569' }}>{c.label}</div>
             </div>
           ))}
         </div>
 
         <div className="card" style={{ textAlign: 'center', padding: '48px 20px' }}>
           <div style={{ fontSize: '2.2rem', marginBottom: 8 }}>📜</div>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#f0f4ff', marginBottom: 4 }}>No Audited Records Yet</h3>
-          <p style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: 16 }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>No Audited Records Yet</h3>
+          <p style={{ color: '#64748b', fontSize: '0.84rem', marginBottom: 16 }}>
             As procurement officers and compliance reviewers evaluate bidder submissions, all decision events will be permanently logged in the audit trail.
           </p>
           <button className="btn-secondary" onClick={() => navigate('/audit')}>

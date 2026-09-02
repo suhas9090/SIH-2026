@@ -103,27 +103,25 @@ const Sidebar = () => {
   const currentRoleMeta = ROLE_META[role] || ROLE_META.PROCUREMENT_OFFICER;
 
   return (
-    <div className="sidebar" style={{ background: 'var(--bg-card)', borderRight: '1px solid var(--bg-border)' }}>
+    <div className="sidebar" style={{ background: '#ffffff', borderRight: '1px solid #e2e8f0' }}>
       {/* Logo */}
-      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--bg-border)' }}>
+      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #e2e8f0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
             src="/complygem_logo.png"
             alt="ComplyGeM Logo"
             style={{
-              width: 38, height: 38, borderRadius: 10,
+              width: 36, height: 36, borderRadius: 8,
               objectFit: 'contain',
-              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
               flexShrink: 0,
             }}
           />
           <div>
-            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.05rem', color: '#f0f4ff', letterSpacing: '-0.02em' }}>
-              COMPLYGEM <span style={{ color: '#0284c7' }}>AI</span>
+            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: '#0f172a', letterSpacing: '-0.02em' }}>
+              COMPLYGEM <span style={{ color: '#2563eb' }}>AI</span>
             </div>
-            <div style={{ fontSize: '0.62rem', color: '#3b82f6', fontWeight: 700, letterSpacing: '0.08em' }}>
-              SIH26100 · GeM AI
+            <div style={{ fontSize: '0.62rem', color: '#2563eb', fontWeight: 800, letterSpacing: '0.06em' }}>
+              PUBLIC PROCUREMENT AI
             </div>
           </div>
         </div>
@@ -132,8 +130,8 @@ const Sidebar = () => {
         <div style={{ marginTop: 14 }}>
           <div
             style={{
-              padding: '10px 12px', borderRadius: 8,
-              background: currentRoleMeta.bg, border: `1px solid ${currentRoleMeta.color}40`,
+              padding: '10px 12px', borderRadius: 10,
+              background: currentRoleMeta.bg || '#eff6ff', border: `1px solid ${currentRoleMeta.color || '#2563eb'}30`,
               display: 'flex', alignItems: 'center', gap: 10,
             }}
           >
@@ -142,11 +140,11 @@ const Sidebar = () => {
               <div style={{ fontSize: '0.75rem', fontWeight: 800, color: currentRoleMeta.color }}>
                 {currentRoleMeta.label}
               </div>
-              <div style={{ fontSize: '0.7rem', color: '#f0f4ff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '0.74rem', color: '#0f172a', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {profile?.name || user?.displayName || 'Authorized User'}
               </div>
-              <div style={{ fontSize: '0.62rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {profile?.organization || 'GeM Portal'}
+              <div style={{ fontSize: '0.65rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {profile?.organization || 'Central Procurement Division'}
               </div>
             </div>
           </div>
@@ -155,8 +153,8 @@ const Sidebar = () => {
 
       {/* Navigation Links */}
       <div style={{ padding: '14px 10px', flex: 1, overflowY: 'auto' }}>
-        <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#4a6080', padding: '0 10px 8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Navigation
+        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#94a3b8', padding: '0 10px 8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Menu
         </div>
 
         {/* Bidder Onboarding Nudge Banner */}
@@ -165,24 +163,22 @@ const Sidebar = () => {
             onClick={() => navigate('/bidder/onboarding')}
             style={{
               margin: '0 4px 12px', padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-              background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.1))',
-              border: '1px solid rgba(139,92,246,0.35)',
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
               transition: 'all 0.2s',
             }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.6)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)'}
           >
-            <div style={{ fontSize: '0.68rem', fontWeight: 900, color: '#a78bfa', marginBottom: 3 }}>⚠ Verification Required</div>
-            <div style={{ fontSize: '0.65rem', color: '#64748b', lineHeight: 1.4 }}>
-              Complete your identity & company verification to bid on tenders.
+            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#b45309', marginBottom: 3 }}>⚠️ Verification In Progress</div>
+            <div style={{ fontSize: '0.65rem', color: '#78350f', lineHeight: 1.4 }}>
+              Complete statutory profile & document verification to participate in tenders.
             </div>
-            <div style={{ marginTop: 6, fontSize: '0.65rem', fontWeight: 800, color: '#8b5cf6' }}>Start Verification →</div>
+            <div style={{ marginTop: 6, fontSize: '0.68rem', fontWeight: 800, color: '#d97706' }}>Complete Verification →</div>
           </div>
         )}
         {role === 'BIDDER' && bidderLifecycle === 'APPROVED_TO_BID' && (
-          <div style={{ margin: '0 4px 12px', padding: '8px 12px', borderRadius: 10, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
-            <div style={{ fontSize: '0.68rem', fontWeight: 900, color: '#10b981' }}>✓ Verified Bidder</div>
-            <div style={{ fontSize: '0.62rem', color: '#64748b', marginTop: 2 }}>Eligible to participate in tenders</div>
+          <div style={{ margin: '0 4px 12px', padding: '8px 12px', borderRadius: 10, background: '#ecfdf5', border: '1px solid #a7f3d0' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#059669' }}>✓ Verified Bidder</div>
+            <div style={{ fontSize: '0.65rem', color: '#065f46', marginTop: 2 }}>Eligible to participate in all tenders</div>
           </div>
         )}
 
@@ -200,15 +196,18 @@ const Sidebar = () => {
                 }
               }}
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-              style={{
+              style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
                 borderRadius: 8, textDecoration: 'none',
-                color: isLocked ? '#475569' : '#94a3b8',
-                fontSize: '0.82rem',
-                fontWeight: 600, marginBottom: 2, transition: 'all 0.15s',
+                color: isActive ? '#1d4ed8' : isLocked ? '#94a3b8' : '#475569',
+                background: isActive ? '#eff6ff' : 'transparent',
+                border: `1px solid ${isActive ? '#bfdbfe' : 'transparent'}`,
+                fontSize: '0.84rem',
+                fontWeight: isActive ? 700 : 600,
+                marginBottom: 2, transition: 'all 0.15s',
                 opacity: isLocked ? 0.6 : 1,
                 cursor: isLocked ? 'not-allowed' : 'pointer'
-              }}
+              })}
             >
               <span style={{ fontSize: '1rem', width: 20, textAlign: 'center' }}>
                 {isLocked ? '🔒' : item.icon}
@@ -217,15 +216,15 @@ const Sidebar = () => {
               {isLocked ? (
                 <span style={{
                   fontSize: '0.52rem', fontWeight: 900, padding: '2px 5px', borderRadius: 6,
-                  color: '#94a3b8', background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.1)', letterSpacing: '0.04em'
+                  color: '#64748b', background: '#f1f5f9',
+                  border: '1px solid #e2e8f0', letterSpacing: '0.04em'
                 }}>LOCKED</span>
               ) : item.badge ? (
                 <span style={{
                   fontSize: '0.55rem', fontWeight: 900, padding: '2px 5px', borderRadius: 6,
-                  color: item.badge === 'REQUIRED' ? '#f59e0b' : '#3b82f6',
-                  background: item.badge === 'REQUIRED' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
-                  border: `1px solid ${item.badge === 'REQUIRED' ? 'rgba(245,158,11,0.3)' : 'rgba(59,130,246,0.3)'}`,
+                  color: item.badge === 'REQUIRED' ? '#b45309' : '#1d4ed8',
+                  background: item.badge === 'REQUIRED' ? '#fef3c7' : '#dbeafe',
+                  border: `1px solid ${item.badge === 'REQUIRED' ? '#fde68a' : '#bfdbfe'}`,
                   letterSpacing: '0.04em',
                 }}>{item.badge}</span>
               ) : null}
@@ -235,22 +234,22 @@ const Sidebar = () => {
       </div>
 
       {/* User Profile & Logout */}
-      <div style={{ padding: '14px 16px', borderTop: '1px solid var(--bg-border)' }}>
+      <div style={{ padding: '14px 16px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <div style={{
             width: 32, height: 32, borderRadius: '50%',
-            background: currentRoleMeta.bg, border: `1px solid ${currentRoleMeta.color}40`,
+            background: '#e2e8f0', border: '1px solid #cbd5e1',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.85rem', color: currentRoleMeta.color, fontWeight: 700,
+            fontSize: '0.85rem', color: '#1e293b', fontWeight: 800,
           }}>
             {profile?.name?.[0] || 'U'}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#f0f4ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {profile?.name || 'Authorized User'}
             </div>
             <div style={{ fontSize: '0.68rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {profile?.organization || 'GeM Portal'}
+              {profile?.organization || 'Central Procurement Division'}
             </div>
           </div>
         </div>
@@ -258,11 +257,14 @@ const Sidebar = () => {
         <button
           onClick={handleLogout}
           style={{
-            width: '100%', padding: '6px 12px', borderRadius: 6,
-            border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)',
-            color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+            width: '100%', padding: '7px 12px', borderRadius: 8,
+            border: '1px solid #fecaca', background: '#fef2f2',
+            color: '#dc2626', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            transition: 'all 0.15s ease'
           }}
+          onMouseEnter={e => e.currentTarget.style.background = '#fee2e2'}
+          onMouseLeave={e => e.currentTarget.style.background = '#fef2f2'}
         >
           <span>⏻</span> Sign Out
         </button>
@@ -275,21 +277,21 @@ export const AppLayout = ({ children }) => {
   const navigate = useNavigate();
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
         {/* Universal Top Action & Back Navigation Bar */}
         <div style={{
           padding: '10px 24px',
-          background: 'rgba(15, 23, 42, 0.75)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid var(--bg-border)',
+          background: '#ffffff',
+          borderBottom: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           position: 'sticky',
           top: 0,
           zIndex: 30,
+          boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
         }}>
           <button
             type="button"
@@ -304,26 +306,26 @@ export const AppLayout = ({ children }) => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
               borderRadius: '20px',
-              padding: '6px 14px',
-              color: '#f0f4ff',
+              padding: '5px 14px',
+              color: '#334155',
               fontSize: '0.78rem',
               fontWeight: 700,
               cursor: 'pointer',
               transition: 'all 0.15s ease',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-              e.currentTarget.style.borderColor = '#3b82f6';
-              e.currentTarget.style.color = '#38bdf8';
+              e.currentTarget.style.background = '#f1f5f9';
+              e.currentTarget.style.borderColor = '#94a3b8';
+              e.currentTarget.style.color = '#0f172a';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-              e.currentTarget.style.color = '#f0f4ff';
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.borderColor = '#cbd5e1';
+              e.currentTarget.style.color = '#334155';
             }}
           >
             <span style={{ fontSize: '0.9rem' }}>←</span> Back
@@ -335,13 +337,13 @@ export const AppLayout = ({ children }) => {
               alt="ComplyGeM Logo"
               style={{ width: 22, height: 22, borderRadius: 6, objectFit: 'contain' }}
             />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em' }}>
-              COMPLYGEM <span style={{ color: '#0284c7' }}>AI</span> VERIFICATION
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', letterSpacing: '0.04em' }}>
+              COMPLYGEM <span style={{ color: '#2563eb' }}>AI</span> VERIFICATION
             </span>
           </div>
         </div>
 
-        <main style={{ flex: 1 }}>{children}</main>
+        <main style={{ flex: 1, background: '#f8fafc' }}>{children}</main>
       </div>
     </div>
   );

@@ -377,7 +377,7 @@ export default function RegisterPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: 'var(--gradient-hero)',
+      minHeight: '100vh', background: '#f8fafc',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '32px 16px', position: 'relative',
     }}>
@@ -392,23 +392,13 @@ export default function RegisterPage() {
               navigate('/login');
             }
           }}
+          className="btn-secondary"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'rgba(15, 23, 42, 0.8)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '20px',
-            padding: '8px 16px',
-            color: '#f0f4ff',
+            padding: '7px 16px',
             fontSize: '0.82rem',
             fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#38bdf8'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.color = '#f0f4ff'; }}
         >
           <span>←</span> {step > 1 && step < 5 ? 'Previous Step' : 'Back to Sign In'}
         </button>
@@ -422,27 +412,25 @@ export default function RegisterPage() {
               src="/complygem_logo.png"
               alt="ComplyGeM Logo"
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: 14,
+                width: 52,
+                height: 52,
+                borderRadius: 12,
                 margin: '0 auto 10px',
                 objectFit: 'contain',
-                boxShadow: '0 6px 20px rgba(2, 132, 199, 0.35)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
                 display: 'block',
               }}
             />
           </Link>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: '#f0f4ff', marginBottom: 2 }}>
-            Secure Platform Registration
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.6rem', color: '#0f172a', marginBottom: 2 }}>
+            Platform Registration
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.82rem' }}>ComplyGeM AI Verification Portal — SIH2026</p>
+          <p style={{ color: '#64748b', fontSize: '0.86rem' }}>ComplyGeM AI Public Procurement Portal</p>
         </div>
 
         {/* STEP 1: Select User Role */}
         {step === 1 && (
-          <div className="card" style={{ padding: 28 }}>
-            <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 16 }}>
+          <div className="card" style={{ padding: 28, boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.05)' }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: 16 }}>
               Select Registration Role
             </p>
 

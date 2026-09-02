@@ -810,14 +810,16 @@ export default function BidderOnboardingPage() {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020b18 0%, #0a1628 50%, #060f1e 100%)', padding: 0 }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', padding: 0 }}>
       {/* Top bar */}
-      <div style={{ padding: '16px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(2, 11, 24, 0.9)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <div style={{ padding: '14px 32px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src="/complygem_logo.png" alt="ComplyGeM" style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'contain' }} />
+          <img src="/complygem_logo.png" alt="ComplyGeM" style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'contain' }} />
           <div>
-            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1rem', color: '#f0f4ff' }}>COMPLYGeM-AI</div>
-            <div style={{ fontSize: '0.68rem', color: '#64748b' }}>Bidder Verification Portal</div>
+            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.05rem', color: '#0f172a' }}>
+              COMPLYGeM <span style={{ color: '#2563eb' }}>AI</span>
+            </div>
+            <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>Bidder Verification Portal</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -830,8 +832,8 @@ export default function BidderOnboardingPage() {
                 borderRadius: 8,
                 padding: '8px 16px',
                 color: '#ffffff',
-                fontSize: '0.8rem',
-                fontWeight: 700,
+                fontSize: '0.82rem',
+                fontWeight: 800,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -842,10 +844,10 @@ export default function BidderOnboardingPage() {
             </button>
           ) : (
             <span style={{
-              fontSize: '0.72rem',
-              color: '#f59e0b',
-              background: 'rgba(245,158,11,0.12)',
-              border: '1px solid rgba(245,158,11,0.3)',
+              fontSize: '0.74rem',
+              color: '#b45309',
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
               padding: '6px 14px',
               borderRadius: 20,
               fontWeight: 800,
@@ -862,14 +864,14 @@ export default function BidderOnboardingPage() {
               navigate('/login');
             }}
             style={{
-              background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.25)',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
               borderRadius: 8,
               padding: '7px 14px',
-              color: '#ef4444',
+              color: '#dc2626',
               fontSize: '0.8rem',
               cursor: 'pointer',
-              fontWeight: 600
+              fontWeight: 700
             }}
           >
             Sign Out
@@ -877,25 +879,25 @@ export default function BidderOnboardingPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
+      <div style={{ maxWidth: 940, margin: '0 auto', padding: '32px 20px' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ display: 'inline-block', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 20, padding: '4px 16px', fontSize: '0.72rem', color: '#3b82f6', fontWeight: 700, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ display: 'inline-block', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, padding: '4px 16px', fontSize: '0.74rem', color: '#1d4ed8', fontWeight: 800, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Bidder Verification & Onboarding
           </div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: '#f0f4ff', marginBottom: 8 }}>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.9rem', color: '#0f172a', marginBottom: 8 }}>
             Complete Your Verification
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: 540, margin: '0 auto' }}>
+          <p style={{ color: '#475569', fontSize: '0.92rem', maxWidth: 540, margin: '0 auto' }}>
             Complete identity, company, and document verification to become eligible to participate in government procurement tenders.
           </p>
         </div>
 
         {/* Correction banner */}
         {lifecycleStatus === 'CORRECTION_REQUIRED' && (
-          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 12, padding: '14px 18px', marginBottom: 24 }}>
-            <div style={{ fontWeight: 800, color: '#ef4444', marginBottom: 4 }}>⚠ Correction Required</div>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>{correctionReason || 'Please review and resubmit the required documents.'}</p>
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '14px 18px', marginBottom: 24 }}>
+            <div style={{ fontWeight: 800, color: '#dc2626', marginBottom: 4 }}>⚠️ Correction Required</div>
+            <p style={{ color: '#7f1d1d', fontSize: '0.85rem', margin: 0 }}>{correctionReason || 'Please review and resubmit the required documents.'}</p>
           </div>
         )}
 
@@ -912,27 +914,28 @@ export default function BidderOnboardingPage() {
                 title={`Jump to ${step.label} to review details`}
               >
                 {i < steps.length - 1 && (
-                  <div style={{ position: 'absolute', top: 20, left: '50%', right: '-50%', height: 2, background: isDone ? '#3b82f6' : 'rgba(255,255,255,0.08)', zIndex: 0, transition: 'background 0.4s' }} />
+                  <div style={{ position: 'absolute', top: 20, left: '50%', right: '-50%', height: 2, background: isDone ? '#2563eb' : '#e2e8f0', zIndex: 0, transition: 'background 0.4s' }} />
                 )}
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{
-                    width: 40,
-                    height: 40,
+                    width: 42,
+                    height: 42,
                     borderRadius: '50%',
                     margin: '0 auto 8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: isDone ? '1.1rem' : '0.9rem',
-                    background: isActive ? 'linear-gradient(135deg,#3b82f6,#1d4ed8)' : isDone ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
-                    border: `2px solid ${isActive ? '#3b82f6' : isDone ? 'rgba(59,130,246,0.5)' : 'rgba(255,255,255,0.1)'}`,
-                    boxShadow: isActive ? '0 0 16px rgba(59,130,246,0.4)' : 'none',
+                    background: isActive ? 'linear-gradient(135deg,#2563eb,#1d4ed8)' : isDone ? '#dbeafe' : '#ffffff',
+                    border: `2px solid ${isActive ? '#2563eb' : isDone ? '#93c5fd' : '#cbd5e1'}`,
+                    color: isActive ? '#ffffff' : isDone ? '#1d4ed8' : '#64748b',
+                    boxShadow: isActive ? '0 4px 14px rgba(37,99,235,0.3)' : '0 1px 3px rgba(0,0,0,0.04)',
                     transition: 'all 0.3s'
                   }}>
                     {isDone ? '✓' : step.icon}
                   </div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: isActive ? 800 : 600, color: isActive ? '#f0f4ff' : isDone ? '#60a5fa' : '#64748b' }}>{step.label}</div>
-                  <div style={{ fontSize: '0.62rem', color: '#475569', marginTop: 2 }}>{step.desc}</div>
+                  <div style={{ fontSize: '0.76rem', fontWeight: isActive ? 800 : 700, color: isActive ? '#0f172a' : isDone ? '#2563eb' : '#64748b' }}>{step.label}</div>
+                  <div style={{ fontSize: '0.64rem', color: '#64748b', marginTop: 2 }}>{step.desc}</div>
                 </div>
               </div>
             );
@@ -943,30 +946,27 @@ export default function BidderOnboardingPage() {
         {activeStep === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* DigiLocker & UIDAI Instant Identity Authentication Hub */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%)',
-              border: '1px solid rgba(59,130,246,0.3)',
-              borderRadius: 18,
+            <div className="card" style={{
               padding: 28,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.35)'
+              boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)'
             }}>
               {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid #f1f5f9', paddingBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #1e3a8a, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
                     🇮🇳
                   </div>
                   <div>
-                    <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#f0f4ff', letterSpacing: '-0.01em' }}>
+                    <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#0f172a', letterSpacing: '-0.01em' }}>
                       DigiLocker & UIDAI Identity Authentication Gateway
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#93c5fd', marginTop: 2 }}>
+                    <div style={{ fontSize: '0.76rem', color: '#2563eb', marginTop: 2, fontWeight: 700 }}>
                       Automated Statutory Verification • UIDAI & CBDT Pre-linked
                     </div>
                   </div>
                 </div>
                 {aadhaarFetch.data && (
-                  <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 800, background: 'rgba(16,185,129,0.15)', padding: '5px 12px', borderRadius: 20, border: '1px solid rgba(16,185,129,0.35)' }}>
+                  <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 800, background: '#ecfdf5', padding: '5px 12px', borderRadius: 20, border: '1px solid #a7f3d0' }}>
                     ✓ Identity Verified
                   </span>
                 )}
@@ -1241,30 +1241,27 @@ export default function BidderOnboardingPage() {
         {/* ─── STEP 2: COMPANY REGISTRATION (ZERO MANUAL ENTRY) ─── */}
         {activeStep === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%)',
-              border: '1px solid rgba(59,130,246,0.3)',
-              borderRadius: 18,
+            <div className="card" style={{
               padding: 28,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.35)'
+              boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)'
             }}>
               {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid #f1f5f9', paddingBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #1e3a8a, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
                     🏢
                   </div>
                   <div>
-                    <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#f0f4ff', letterSpacing: '-0.01em' }}>
+                    <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#0f172a', letterSpacing: '-0.01em' }}>
                       Company Statutory Identity & Registries Gateway
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#93c5fd', marginTop: 2 }}>
+                    <div style={{ fontSize: '0.76rem', color: '#2563eb', marginTop: 2, fontWeight: 700 }}>
                       Automated Multi-Registry Aggregation • Zero Manual Data Entry • CBDT, GSTN, MSME, MCA21, EPFO & ESIC
                     </div>
                   </div>
                 </div>
                 {compFetch.data && (
-                  <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 800, background: 'rgba(16,185,129,0.15)', padding: '5px 12px', borderRadius: 20, border: '1px solid rgba(16,185,129,0.35)' }}>
+                  <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 800, background: '#ecfdf5', padding: '5px 12px', borderRadius: 20, border: '1px solid #a7f3d0' }}>
                     ✓ Company Records Fetched
                   </span>
                 )}
@@ -1538,24 +1535,21 @@ export default function BidderOnboardingPage() {
               const allUploaded = uploadedCount === MANDATORY_DOC_REQUIREMENTS.length;
 
               return (
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%)',
-                  border: '1px solid rgba(59,130,246,0.3)',
-                  borderRadius: 18,
+                <div className="card" style={{
                   padding: 24,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.35)'
+                  boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)'
                 }}>
                   {/* Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20, borderBottom: '1px solid #f1f5f9', paddingBottom: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
                         📁
                       </div>
                       <div>
-                        <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#f0f4ff' }}>
+                        <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#0f172a' }}>
                           Mandatory Statutory Documents Upload
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 2 }}>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 2 }}>
                           Click directly on any document card below to upload that specific certificate or undertaking.
                         </div>
                       </div>
@@ -1565,9 +1559,9 @@ export default function BidderOnboardingPage() {
                       fontWeight: 800,
                       padding: '5px 14px',
                       borderRadius: 20,
-                      background: allUploaded ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                      color: allUploaded ? '#10b981' : '#f59e0b',
-                      border: `1px solid ${allUploaded ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.35)'}`
+                      background: allUploaded ? '#ecfdf5' : '#fffbeb',
+                      color: allUploaded ? '#059669' : '#d97706',
+                      border: `1px solid ${allUploaded ? '#a7f3d0' : '#fde68a'}`
                     }}>
                       {allUploaded ? `ALL ${MANDATORY_DOC_REQUIREMENTS.length} MANDATORY UPLOADED ✓` : `${uploadedCount} of ${MANDATORY_DOC_REQUIREMENTS.length} MANDATORY UPLOADED`}
                     </span>
@@ -1589,10 +1583,8 @@ export default function BidderOnboardingPage() {
                             }
                           }}
                           style={{
-                            background: isUploaded
-                              ? 'linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(15,23,42,0.95) 100%)'
-                              : 'rgba(255,255,255,0.03)',
-                            border: `2px dashed ${isUploaded ? 'rgba(16,185,129,0.45)' : 'rgba(255,255,255,0.15)'}`,
+                            background: isUploaded ? '#f0fdf4' : '#ffffff',
+                            border: `2px dashed ${isUploaded ? '#059669' : '#cbd5e1'}`,
                             borderRadius: 14,
                             padding: '16px 18px',
                             cursor: 'pointer',
@@ -1602,13 +1594,13 @@ export default function BidderOnboardingPage() {
                             justifyContent: 'space-between',
                             gap: 12,
                             position: 'relative',
-                            boxShadow: isUploaded ? '0 4px 16px rgba(16,185,129,0.12)' : 'none'
+                            boxShadow: isUploaded ? '0 4px 12px rgba(5,150,105,0.08)' : '0 1px 3px rgba(0,0,0,0.02)'
                           }}
                           onMouseEnter={e => {
-                            if (!isUploaded) e.currentTarget.style.borderColor = 'rgba(99,102,241,0.6)';
+                            if (!isUploaded) e.currentTarget.style.borderColor = '#2563eb';
                           }}
                           onMouseLeave={e => {
-                            if (!isUploaded) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                            if (!isUploaded) e.currentTarget.style.borderColor = '#cbd5e1';
                           }}
                         >
                           <input
@@ -1629,37 +1621,38 @@ export default function BidderOnboardingPage() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span style={{ fontSize: '1.3rem' }}>{req.icon}</span>
-                                <span style={{ fontWeight: 800, fontSize: '0.88rem', color: isUploaded ? '#f0fdf4' : '#f0f4ff' }}>
+                                <span style={{ fontWeight: 800, fontSize: '0.88rem', color: isUploaded ? '#065f46' : '#0f172a' }}>
                                   {req.label}
                                 </span>
                               </div>
                               <span style={{
-                                fontSize: '0.65rem',
+                                fontSize: '0.68rem',
                                 fontWeight: 800,
                                 padding: '3px 8px',
                                 borderRadius: 8,
-                                background: isUploaded ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                                color: isUploaded ? '#10b981' : '#fca5a5',
-                                border: `1px solid ${isUploaded ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                                background: isUploaded ? '#dcfce7' : '#fee2e2',
+                                color: isUploaded ? '#15803d' : '#b91c1c',
+                                border: `1px solid ${isUploaded ? '#86efac' : '#fca5a5'}`,
                                 whiteSpace: 'nowrap'
                               }}>
                                 {isUploaded ? '✓ Uploaded' : 'Required'}
                               </span>
                             </div>
 
-                            <p style={{ fontSize: '0.68rem', color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
+                            <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
                               {req.desc}
                             </p>
                           </div>
 
                           {/* Bottom info / actions */}
                           {isCurrentlyUploading ? (
-                            <div style={{ padding: '8px 12px', background: 'rgba(99,102,241,0.1)', borderRadius: 8, fontSize: '0.72rem', color: '#818cf8', fontWeight: 700, textAlign: 'center' }}>
+                            <div style={{ padding: '8px 12px', background: '#eff6ff', borderRadius: 8, fontSize: '0.74rem', color: '#2563eb', fontWeight: 700, textAlign: 'center' }}>
                               ⟳ Uploading document...
                             </div>
                           ) : isUploaded ? (
                             <div style={{
-                              background: 'rgba(0,0,0,0.3)',
+                              background: '#ffffff',
+                              border: '1px solid #e2e8f0',
                               borderRadius: 8,
                               padding: '8px 12px',
                               display: 'flex',
@@ -1668,7 +1661,7 @@ export default function BidderOnboardingPage() {
                               gap: 8
                             }}>
                               <div style={{ overflow: 'hidden' }}>
-                                <div style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700, textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                                <div style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 700, textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                                   📄 {matchingDoc.originalFileName || matchingDoc.documentName}
                                 </div>
                                 <div style={{ fontSize: '0.62rem', color: '#64748b', marginTop: 1 }}>
@@ -1808,23 +1801,23 @@ export default function BidderOnboardingPage() {
 
         {/* ─── STEP 4: AI VERIFICATION RESULT ─── */}
         {activeStep === 4 && (
-          <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 40 }}>
+          <div className="card" style={{ padding: 40, boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)' }}>
 
             {/* ── SCANNING ANIMATION ── */}
             {autoVerify.scanning && (
               <div style={{ textAlign: 'center', padding: '20px 0 40px' }}>
                 <div style={{ position: 'relative', width: 100, height: 100, margin: '0 auto 32px' }}>
-                  <div style={{ position: 'absolute', inset: 0, border: '3px solid rgba(99,102,241,0.15)', borderRadius: '50%' }} />
-                  <div style={{ position: 'absolute', inset: 0, border: '3px solid transparent', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin-slow 1s linear infinite' }} />
-                  <div style={{ position: 'absolute', inset: 12, border: '2px solid transparent', borderTopColor: '#818cf8', borderRadius: '50%', animation: 'spin-slow 1.5s linear infinite reverse' }} />
+                  <div style={{ position: 'absolute', inset: 0, border: '3px solid #e2e8f0', borderRadius: '50%' }} />
+                  <div style={{ position: 'absolute', inset: 0, border: '3px solid transparent', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin-slow 1s linear infinite' }} />
+                  <div style={{ position: 'absolute', inset: 12, border: '2px solid transparent', borderTopColor: '#60a5fa', borderRadius: '50%', animation: 'spin-slow 1.5s linear infinite reverse' }} />
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>🤖</div>
                 </div>
-                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: '#f0f4ff', marginBottom: 12 }}>Running Automated Verification</h2>
+                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.5rem', color: '#0f172a', marginBottom: 12 }}>Running Automated Verification</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: 440, margin: '0 auto 32px', lineHeight: 1.7 }}>
                   Cross-checking PAN, Aadhaar, GST, Udyam records against government data sources and running consistency analysis…
                 </p>
                 {[['🔍 Verifying PAN ↔ GST linkage…', 300],['📊 Running cross-source name match…', 800],['🛡 Checking blacklist & debarment registers…', 1400],['📄 Validating document coverage…', 2000]].map(([text]) => (
-                  <div key={text} style={{ fontSize: '0.78rem', color: '#475569', marginBottom: 6, fontFamily: 'monospace' }}>{text}</div>
+                  <div key={text} style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 6, fontFamily: 'monospace' }}>{text}</div>
                 ))}
               </div>
             )}
@@ -1832,15 +1825,15 @@ export default function BidderOnboardingPage() {
             {/* ── APPROVED RESULT ── */}
             {!autoVerify.scanning && autoVerify.done && autoVerify.decision === 'APPROVED_TO_BID' && (
               <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                <div style={{ width: 84, height: 84, background: 'radial-gradient(circle,rgba(16,185,129,0.2),rgba(16,185,129,0.05))', border: '2px solid rgba(16,185,129,0.4)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.4rem', margin: '0 auto 20px', animation: 'pulse-slow 2s ease-in-out infinite' }}>✅</div>
-                <div style={{ display: 'inline-block', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '4px 16px', fontSize: '0.72rem', color: '#10b981', fontWeight: 700, marginBottom: 16, letterSpacing: '0.08em' }}>AUTOMATICALLY VERIFIED & APPROVED</div>
-                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.6rem', color: '#f0f4ff', marginBottom: 8 }}>You are now eligible to bid!</h2>
-                <p style={{ color: '#94a3b8', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.7, fontSize: '0.92rem' }}>
+                <div style={{ width: 84, height: 84, background: '#ecfdf5', border: '2px solid #a7f3d0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.4rem', margin: '0 auto 20px' }}>✅</div>
+                <div style={{ display: 'inline-block', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 20, padding: '4px 16px', fontSize: '0.74rem', color: '#059669', fontWeight: 800, marginBottom: 16, letterSpacing: '0.06em' }}>AUTOMATICALLY VERIFIED & APPROVED</div>
+                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.6rem', color: '#0f172a', marginBottom: 8 }}>You are now eligible to bid!</h2>
+                <p style={{ color: '#475569', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.7, fontSize: '0.92rem' }}>
                   All your company details, identity data, and uploaded statutory documents have been cross-checked and verified against Government Databases. Your bidder profile is active.
                 </p>
 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={handleDownloadPdfReport} disabled={downloadingPdf}>
+                  <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={handleDownloadPdfReport} disabled={downloadingPdf}>
                     📥 {downloadingPdf ? 'Generating PDF...' : 'Download Official Audit Report (PDF)'}
                   </button>
                   <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#10b981,#059669)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={() => navigate('/bidder/dashboard')}>
