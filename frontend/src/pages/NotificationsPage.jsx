@@ -24,13 +24,13 @@ export default function NotificationsPage() {
     <AppLayout>
       <div className="page-header">
         <div>
-          <div style={{ fontSize: '0.75rem', color: '#60a5fa', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>
+          <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>
             SYSTEM NOTIFICATIONS
           </div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff', marginBottom: 4 }}>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.45rem', color: '#0f172a', marginBottom: 4 }}>
             Notifications & Operational Alerts
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+          <p style={{ color: '#475569', fontSize: '0.88rem' }}>
             Real-time procurement alerts, submission updates, and review triggers
           </p>
         </div>
@@ -39,7 +39,7 @@ export default function NotificationsPage() {
         </button>
       </div>
 
-      <div style={{ padding: '24px 32px', maxWidth: 800 }}>
+      <div style={{ padding: '24px 32px', maxWidth: 840 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {notifications.map((n) => (
             <div
@@ -49,26 +49,27 @@ export default function NotificationsPage() {
               style={{
                 cursor: 'pointer',
                 padding: '16px 20px',
-                borderLeft: n.unread ? '3px solid #3b82f6' : '1px solid var(--bg-border)',
-                background: n.unread ? 'rgba(59,130,246,0.04)' : 'var(--bg-card)',
+                borderLeft: n.unread ? '4px solid #2563eb' : '1px solid #e2e8f0',
+                background: n.unread ? '#eff6ff' : '#ffffff',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                transition: 'all 0.15s ease'
               }}
             >
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#f0f4ff' }}>
+                  <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#0f172a' }}>
                     {n.title}
                   </span>
                   {n.unread && (
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3b82f6' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563eb' }} />
                   )}
                 </div>
-                <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                <div style={{ fontSize: '0.82rem', color: '#475569' }}>
                   {n.desc}
                 </div>
               </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{n.time}</span>
+              <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: 16 }}>
+                <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600 }}>{n.time}</span>
               </div>
             </div>
           ))}

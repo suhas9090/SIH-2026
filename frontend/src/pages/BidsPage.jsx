@@ -5,9 +5,9 @@ import { bidderAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const RISK_BADGE = {
-  LOW: { bg: 'rgba(16,185,129,0.15)', color: '#10b981', label: 'LOW RISK' },
-  MEDIUM: { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b', label: 'MEDIUM RISK' },
-  HIGH: { bg: 'rgba(239,68,68,0.15)', color: '#ef4444', label: 'HIGH RISK' },
+  LOW: { bg: '#ecfdf5', color: '#059669', label: 'LOW RISK' },
+  MEDIUM: { bg: '#fffbeb', color: '#d97706', label: 'MEDIUM RISK' },
+  HIGH: { bg: '#fef2f2', color: '#dc2626', label: 'HIGH RISK' },
 };
 
 export default function BidsPage() {
@@ -63,13 +63,13 @@ export default function BidsPage() {
     <AppLayout>
       <div className="page-header">
         <div>
-          <div style={{ fontSize: '0.75rem', color: '#60a5fa', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>
+          <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>
             BIDDING PORTFOLIO
           </div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff', marginBottom: 4 }}>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.45rem', color: '#0f172a', marginBottom: 4 }}>
             Received Bid Submissions & AI Evaluations
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+          <p style={{ color: '#475569', fontSize: '0.88rem' }}>
             Multi-factor compliance scores, risk levels, and direct links to the 3-panel evidence workspace
           </p>
         </div>
@@ -89,10 +89,13 @@ export default function BidsPage() {
                 key={tab.key}
                 onClick={() => setStatusFilter(tab.key)}
                 style={{
-                  padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  fontSize: '0.78rem', fontWeight: 700,
-                  background: statusFilter === tab.key ? '#1e3a5f' : 'rgba(255,255,255,0.03)',
-                  color: statusFilter === tab.key ? '#60a5fa' : '#94a3b8',
+                  padding: '7px 15px', borderRadius: 8, cursor: 'pointer',
+                  fontSize: '0.8rem', fontWeight: 700,
+                  background: statusFilter === tab.key ? '#eff6ff' : '#ffffff',
+                  color: statusFilter === tab.key ? '#1d4ed8' : '#475569',
+                  border: `1px solid ${statusFilter === tab.key ? '#bfdbfe' : '#e2e8f0'}`,
+                  boxShadow: statusFilter === tab.key ? '0 2px 6px rgba(37,99,235,0.1)' : 'none',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 {tab.label}
@@ -105,7 +108,7 @@ export default function BidsPage() {
             placeholder="Search by supplier, tender, contact..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ width: 280, fontSize: '0.8rem' }}
+            style={{ width: 280, fontSize: '0.82rem' }}
           />
         </div>
 
@@ -113,8 +116,8 @@ export default function BidsPage() {
         {filteredBids.length === 0 && (
           <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📤</div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f0f4ff', marginBottom: 6 }}>No Bids Received Yet</h3>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', maxWidth: 420, margin: '0 auto 20px' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>No Bids Received Yet</h3>
+            <p style={{ color: '#64748b', fontSize: '0.88rem', maxWidth: 420, margin: '0 auto 20px' }}>
               No vendor bids have been submitted yet. Once bidders submit documents for published tenders, they will appear here for verification.
             </p>
             <button className="btn-secondary" onClick={() => navigate('/tenders')}>
@@ -144,57 +147,59 @@ export default function BidsPage() {
 
                     return (
                       <tr key={bid.id}>
-                      <td>
-                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f0f4ff' }}>
-                          {bid.organizationName}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          {bid.contactName} · {bid.docsCount} Docs
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.78rem', color: '#60a5fa' }}>
-                          {bid.tenderRef}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>{bid.tenderTitle}</div>
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ fontWeight: 900, fontSize: '1.1rem', color: bid.complianceScore >= 80 ? '#10b981' : bid.complianceScore >= 60 ? '#f59e0b' : '#ef4444' }}>
-                          {bid.complianceScore}%
-                        </div>
-                        <div className="progress-bar" style={{ height: 4, width: 80, margin: '4px auto 0' }}>
-                          <div className="progress-fill" style={{ width: `${bid.complianceScore}%`, background: bid.complianceScore >= 80 ? '#10b981' : bid.complianceScore >= 60 ? '#f59e0b' : '#ef4444' }} />
-                        </div>
-                      </td>
-                      <td>
-                        <span style={{
-                          padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
-                          background: riskMeta.bg, color: riskMeta.color,
-                        }}>
-                          {riskMeta.label}
-                        </span>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600 }}>
-                          {bid.status.replace(/_/g, ' ')}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn-primary"
-                          style={{ fontSize: '0.72rem', padding: '4px 10px' }}
-                          onClick={() => navigate(`/compliance/${bid.id}`)}
-                        >
-                          Inspect Evidence →
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        <td>
+                          <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>
+                            {bid.organizationName}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>
+                            {bid.contactName} · {bid.docsCount} Docs
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '0.82rem', color: '#2563eb' }}>
+                            {bid.tenderRef}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#475569', marginTop: 2 }}>{bid.tenderTitle}</div>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ fontWeight: 900, fontSize: '1.15rem', color: bid.complianceScore >= 80 ? '#059669' : bid.complianceScore >= 60 ? '#d97706' : '#dc2626' }}>
+                            {bid.complianceScore}%
+                          </div>
+                          <div className="progress-bar" style={{ height: 6, width: 80, margin: '4px auto 0', background: '#e2e8f0', borderRadius: 4 }}>
+                            <div className="progress-fill" style={{ width: `${bid.complianceScore}%`, background: bid.complianceScore >= 80 ? '#059669' : bid.complianceScore >= 60 ? '#d97706' : '#dc2626', height: '100%', borderRadius: 4 }} />
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{
+                            padding: '4px 10px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 800,
+                            background: riskMeta.bg, color: riskMeta.color, border: `1px solid ${riskMeta.color}35`
+                          }}>
+                            {riskMeta.label}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 700 }}>
+                            {bid.status.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              className="btn-primary"
+                              style={{ fontSize: '0.74rem', padding: '4px 10px' }}
+                              onClick={() => navigate(`/compliance/${bid.id}`)}
+                            >
+                              Review Compliance →
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
         )}
       </div>
     </AppLayout>

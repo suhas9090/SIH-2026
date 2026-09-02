@@ -4,9 +4,9 @@ import { AppLayout } from '../components/Sidebar';
 import { bidderAPI } from '../services/api';
 
 const SEV_META = {
-  HIGH: { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', label: 'HIGH SEVERITY' },
-  MEDIUM: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', label: 'MEDIUM SEVERITY' },
-  LOW: { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', label: 'LOW SEVERITY' },
+  HIGH: { color: '#dc2626', bg: '#fef2f2', border: '#fecaca', label: 'HIGH SEVERITY' },
+  MEDIUM: { color: '#d97706', bg: '#fffbeb', border: '#fde68a', label: 'MEDIUM SEVERITY' },
+  LOW: { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', label: 'LOW SEVERITY' },
 };
 
 export default function RiskAlertsPage() {
@@ -51,13 +51,13 @@ export default function RiskAlertsPage() {
     <AppLayout>
       <div className="page-header">
         <div>
-          <div style={{ fontSize: '0.75rem', color: '#f87171', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>
+          <div style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>
             RISK ENGINE & COMPLIANCE TELEMETRY
           </div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff', marginBottom: 4 }}>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.45rem', color: '#0f172a', marginBottom: 4 }}>
             Risk Flags & Discrepancy Alerts
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+          <p style={{ color: '#475569', fontSize: '0.88rem' }}>
             Non-accusatory flags categorized by severity, with direct links to verified document citations
           </p>
         </div>
@@ -67,16 +67,16 @@ export default function RiskAlertsPage() {
         {/* Severity Metrics Bar */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
-            { label: 'Total Risk Alerts', value: flags.length, color: '#ef4444' },
-            { label: 'High Severity', value: flags.filter(f => f.severity === 'HIGH').length, color: '#ef4444' },
-            { label: 'Medium Severity', value: flags.filter(f => f.severity === 'MEDIUM').length, color: '#f59e0b' },
-            { label: 'Low Severity', value: flags.filter(f => f.severity === 'LOW').length, color: '#3b82f6' },
+            { label: 'Total Risk Alerts', value: flags.length, color: '#dc2626' },
+            { label: 'High Severity', value: flags.filter(f => f.severity === 'HIGH').length, color: '#dc2626' },
+            { label: 'Medium Severity', value: flags.filter(f => f.severity === 'MEDIUM').length, color: '#d97706' },
+            { label: 'Low Severity', value: flags.filter(f => f.severity === 'LOW').length, color: '#2563eb' },
           ].map(s => (
-            <div key={s.label} className="card" style={{ padding: 18, borderLeft: `3px solid ${s.color}` }}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: '#f0f4ff', marginBottom: 2 }}>
+            <div key={s.label} className="card" style={{ padding: 18, borderLeft: `4px solid ${s.color}` }}>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: '#0f172a', marginBottom: 2 }}>
                 {s.value}
               </div>
-              <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#94a3b8' }}>{s.label}</div>
+              <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#475569' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -85,8 +85,8 @@ export default function RiskAlertsPage() {
         {filtered.length === 0 && (
           <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🛡️</div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f0f4ff', marginBottom: 6 }}>No Active Risk Alerts</h3>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', maxWidth: 420, margin: '0 auto 20px' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>No Active Risk Alerts</h3>
+            <p style={{ color: '#64748b', fontSize: '0.88rem', maxWidth: 420, margin: '0 auto 20px' }}>
               All submitted procurement bids, entity registrations, and document extractions are in clean standing.
             </p>
             <button className="btn-secondary" onClick={() => navigate('/tenders')}>
@@ -106,27 +106,27 @@ export default function RiskAlertsPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                        <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.8rem', color: '#60a5fa' }}>
+                        <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '0.82rem', color: '#2563eb' }}>
                           {flag.tenderRef}
                         </span>
                         <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>•</span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f0f4ff' }}>{flag.bidderName}</span>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0f172a' }}>{flag.bidderName}</span>
                       </div>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f0f4ff' }}>{flag.title}</h3>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>{flag.title}</h3>
                     </div>
 
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '3px 10px', borderRadius: 12, background: meta.bg, color: meta.color }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '4px 10px', borderRadius: 12, background: meta.bg, color: meta.color, border: `1px solid ${meta.border}` }}>
                       {meta.label}
                     </span>
                   </div>
 
-                  <p style={{ fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5, marginBottom: 12 }}>
+                  <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.5, marginBottom: 14 }}>
                     {flag.description}
                   </p>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--bg-border)', paddingTop: 10 }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Detected {flag.detectedAt}</span>
-                    <button className="btn-secondary" style={{ fontSize: '0.72rem', padding: '4px 10px' }} onClick={() => navigate('/bids')}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: 12 }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Detected {flag.detectedAt}</span>
+                    <button className="btn-secondary" style={{ fontSize: '0.74rem', padding: '4px 10px' }} onClick={() => navigate('/bids')}>
                       Inspect Evidence File →
                     </button>
                   </div>

@@ -1,127 +1,67 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/Sidebar';
 import { tenderAPI, bidderAPI } from '../services/api';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 const CAT_COLOR = {
-  FINANCIAL: '#3b82f6',
-  REGISTRATION: '#10b981',
-  TAX: '#06b6d4',
-  MSME_UDYAM: '#8b5cf6',
-  OEM: '#f59e0b',
-  EXPERIENCE: '#ec4899',
-  BLACKLISTING: '#ef4444',
-  OTHER: '#64748b',
+  REGISTRATION: '#2563eb',
+  TAX: '#059669',
+  FINANCIAL: '#7c3aed',
+  EXPERIENCE: '#ea580c',
+  TECHNICAL: '#0284c7',
+  OEM: '#dc2626',
 };
 
 const RISK_BADGE = {
-  LOW: { bg: 'rgba(16,185,129,0.15)', color: '#10b981', label: 'LOW RISK' },
-  MEDIUM: { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b', label: 'MEDIUM RISK' },
-  HIGH: { bg: 'rgba(239,68,68,0.15)', color: '#ef4444', label: 'HIGH RISK' },
-  CRITICAL: { bg: 'rgba(220,38,38,0.25)', color: '#dc2626', label: 'CRITICAL RISK' },
-};
-
-const DEMO_TENDER = {
-  id: 't1',
-  referenceNo: 'GEM-2026-001',
-  title: 'Supply of Industrial Safety Equipment',
-  organization: 'Ministry of Labour & Employment',
-  department: 'Central Labour Welfare Division',
-  status: 'ACTIVE',
-  estimatedValue: 50000000,
-  publishedDate: new Date(Date.now() - 3 * 86400000),
-  closingDate: new Date(Date.now() + 7 * 86400000),
-  description: 'Procurement of industrial helmets, safety harnesses, protective boots, and respiratory gear for central welfare construction projects.',
-  requirements: [
-    { id: 'r1', category: 'REGISTRATION', title: 'Valid GST Registration', mandatory: true, description: 'Active GST registration in state of operation' },
-    { id: 'r2', category: 'TAX', title: 'Valid Permanent Account Number (PAN)', mandatory: true, description: 'Verified Income Tax PAN record' },
-    { id: 'r3', category: 'FINANCIAL', title: 'Minimum Annual Turnover >= INR 5.00 Cr', mandatory: true, minValue: 50000000, currency: 'INR', description: 'Average annual turnover over preceding 3 audited financial years' },
-    { id: 'r4', category: 'MSME_UDYAM', title: 'Udyam / MSME Registration Certificate', mandatory: false, description: 'MSME purchase preference under PPP 2012' },
-    { id: 'r5', category: 'OEM', title: 'Manufacturer OEM Authorization Certificate', mandatory: true, description: 'Valid authorization specifying product scope and validity' },
-    { id: 'r6', category: 'EXPERIENCE', title: 'Minimum 3 Years Prior Supply Experience', mandatory: true, minValue: 3, description: 'Proof of minimum 3 years executing similar government orders' },
-    { id: 'r7', category: 'BLACKLISTING', title: 'Non-Debarment & Non-Blacklisting Declaration', mandatory: true, description: 'Clean record across GeM and CVC central blacklist registries' },
-  ],
-  bidders: [
-    {
-      id: 'b1',
-      organizationName: 'ABC Industries Pvt Ltd',
-      gstin: '29AABCA1234C1Z5',
-      pan: 'AABCA1234C',
-      contactName: 'Suresh Patil',
-      contactEmail: 'suresh@abcindustries.com',
-      complianceReport: { overallScore: 72, riskLevel: 'MEDIUM', compliantCount: 5, nonCompliantCount: 1, reviewCount: 1 },
-      _count: { documents: 6, verifications: 4 },
-    },
-    {
-      id: 'b2',
-      organizationName: 'Apex Safety Solutions LLP',
-      gstin: '27AAICA9988B1Z2',
-      pan: 'AAICA9988B',
-      contactName: 'Nitin Roy',
-      contactEmail: 'nitin@apexsafety.in',
-      complianceReport: { overallScore: 94, riskLevel: 'LOW', compliantCount: 7, nonCompliantCount: 0, reviewCount: 0 },
-      _count: { documents: 6, verifications: 4 },
-    },
-    {
-      id: 'b3',
-      organizationName: 'Zenith Protection Gear Co',
-      gstin: '07AABCF4455G1Z9',
-      pan: 'AABCF4455G',
-      contactName: 'Anil Gupta',
-      contactEmail: 'anil@zenithgear.com',
-      complianceReport: { overallScore: 48, riskLevel: 'HIGH', compliantCount: 3, nonCompliantCount: 3, reviewCount: 1 },
-      _count: { documents: 4, verifications: 2 },
-    },
-  ],
+  LOW: { label: 'Low Risk', color: '#059669', bg: '#ecfdf5' },
+  MEDIUM: { label: 'Medium Risk', color: '#d97706', bg: '#fffbeb' },
+  HIGH: { label: 'High Risk', color: '#dc2626', bg: '#fef2f2' },
+  CRITICAL: { label: 'Critical Risk', color: '#991b1b', bg: '#fee2e2' },
 };
 
 export default function TenderDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [tender, setTender] = useState(DEMO_TENDER);
+  const [tender, setTender] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(false);
   const [showAddBidder, setShowAddBidder] = useState(false);
   const [bidderForm, setBidderForm] = useState({
     organizationName: '',
     gstin: '',
     pan: '',
-    udyamNo: '',
-    cinNo: '',
     contactName: '',
     contactEmail: '',
-    contactPhone: '',
   });
 
+  const loadTender = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await tenderAPI.get(id);
+      setTender(res.data);
+    } catch {
+      toast.error('Failed to load tender details');
+      navigate('/tenders');
+    } finally {
+      setLoading(false);
+    }
+  }, [id, navigate]);
+
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await tenderAPI.get(id);
-        if (res.data) setTender(res.data);
-      } catch { /* use demo */ }
-    };
-    fetch();
-  }, [id]);
+    loadTender();
+  }, [loadTender]);
 
   const handleExtractRequirements = async () => {
     setLoading(true);
     try {
-      const res = await tenderAPI.extractRequirements(id);
-      toast.success(`Extracted ${res.data.count || res.data.requirements?.length || 7} requirements with Gemini AI!`);
-      if (res.data.requirements) {
-        setTender(prev => ({ ...prev, requirements: res.data.requirements }));
-      }
+      await tenderAPI.extractRequirements(id);
+      toast.success('🧠 AI extraction completed successfully');
+      await loadTender();
     } catch (err) {
-      const serverMsg = err.response?.data?.error;
-      if (serverMsg) {
-        toast.error(`AI Extraction: ${serverMsg}`);
-      } else {
-        toast.success('Extracted 7 eligibility criteria via Gemini AI pipeline!');
-        setTender(prev => ({ ...prev, requirements: DEMO_TENDER.requirements }));
-      }
+      toast.error(err.response?.data?.error || 'Extraction failed');
     } finally {
       setLoading(false);
     }
@@ -130,22 +70,28 @@ export default function TenderDetailPage() {
   const handleAddBidder = async (e) => {
     e.preventDefault();
     if (!bidderForm.organizationName) return toast.error('Organization name is required');
-    setLoading(true);
     try {
-      const res = await bidderAPI.create({ ...bidderForm, tenderId: id });
-      toast.success('Bidder added successfully!');
-      setTender(prev => ({
-        ...prev,
-        bidders: [...(prev.bidders || []), { ...res.data, _count: { documents: 0, verifications: 0 } }],
-      }));
+      await bidderAPI.create(id, bidderForm);
+      toast.success('Bidder registered successfully');
       setShowAddBidder(false);
-      setBidderForm({ organizationName: '', gstin: '', pan: '', udyamNo: '', cinNo: '', contactName: '', contactEmail: '', contactPhone: '' });
+      setBidderForm({ organizationName: '', gstin: '', pan: '', contactName: '', contactEmail: '' });
+      await loadTender();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to add bidder');
-    } finally {
-      setLoading(false);
     }
   };
+
+  if (loading && !tender) {
+    return (
+      <AppLayout>
+        <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+          ⟳ Loading tender specification...
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!tender) return null;
 
   const tabs = [
     { key: 'overview', label: 'Overview' },
@@ -161,15 +107,15 @@ export default function TenderDetailPage() {
       <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#60a5fa', fontWeight: 800 }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#2563eb', fontWeight: 800 }}>
               {tender.referenceNo}
             </span>
-            <span className="badge badge-active">{tender.status}</span>
+            <span className="badge badge-active" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}>{tender.status}</span>
           </div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff', marginBottom: 4 }}>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.45rem', color: '#0f172a', marginBottom: 4 }}>
             {tender.title}
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+          <p style={{ color: '#475569', fontSize: '0.88rem' }}>
             {tender.organization} {tender.department ? `· ${tender.department}` : ''}
           </p>
         </div>
@@ -185,7 +131,7 @@ export default function TenderDetailPage() {
 
       <div style={{ padding: '24px 32px' }}>
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid var(--bg-border)', paddingBottom: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #e2e8f0', paddingBottom: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -193,12 +139,14 @@ export default function TenderDetailPage() {
               style={{
                 padding: '8px 16px',
                 borderRadius: 8,
-                border: 'none',
                 cursor: 'pointer',
-                background: activeTab === tab.key ? '#1e3a5f' : 'transparent',
-                color: activeTab === tab.key ? '#60a5fa' : '#94a3b8',
-                fontWeight: 700,
+                background: activeTab === tab.key ? '#eff6ff' : '#ffffff',
+                color: activeTab === tab.key ? '#1d4ed8' : '#475569',
+                border: `1px solid ${activeTab === tab.key ? '#bfdbfe' : '#e2e8f0'}`,
+                fontWeight: 800,
                 fontSize: '0.82rem',
+                boxShadow: activeTab === tab.key ? '0 2px 6px rgba(37,99,235,0.1)' : 'none',
+                transition: 'all 0.15s ease'
               }}
             >
               {tab.label}
@@ -212,19 +160,19 @@ export default function TenderDetailPage() {
             {/* Top Stat Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
               {[
-                { label: 'Estimated Tender Value', value: tender.estimatedValue ? `₹${(tender.estimatedValue / 10000000).toFixed(2)} Cr` : '—', icon: '💰', color: '#10b981' },
-                { label: 'Total Bids Received', value: tender.bidders?.length || 0, icon: '📥', color: '#3b82f6' },
-                { label: 'Structured Criteria', value: tender.requirements?.length || 0, icon: '📋', color: '#8b5cf6' },
-                { label: 'Submission Deadline', value: tender.closingDate ? format(new Date(tender.closingDate), 'dd MMM yyyy') : 'N/A', icon: '⏳', color: '#fbbf24' },
+                { label: 'Estimated Tender Value', value: tender.estimatedValue ? `₹${(tender.estimatedValue / 10000000).toFixed(2)} Cr` : '—', icon: '💰', color: '#059669' },
+                { label: 'Total Bids Received', value: tender.bidders?.length || 0, icon: '📥', color: '#2563eb' },
+                { label: 'Structured Criteria', value: tender.requirements?.length || 0, icon: '📋', color: '#7c3aed' },
+                { label: 'Submission Deadline', value: tender.closingDate ? format(new Date(tender.closingDate), 'dd MMM yyyy') : 'N/A', icon: '⏳', color: '#b45309' },
               ].map((s) => (
-                <div key={s.label} className="card" style={{ padding: 18, borderLeft: `3px solid ${s.color}` }}>
+                <div key={s.label} className="card" style={{ padding: 18, borderLeft: `4px solid ${s.color}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <span style={{ fontSize: '1.2rem' }}>{s.icon}</span>
                   </div>
-                  <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.6rem', color: '#f0f4ff', marginBottom: 2 }}>
+                  <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.6rem', color: '#0f172a', marginBottom: 2 }}>
                     {s.value}
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: '0.75rem', color: '#94a3b8' }}>{s.label}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#64748b' }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -234,7 +182,7 @@ export default function TenderDetailPage() {
               <span className="section-title" style={{ display: 'block', marginBottom: 8 }}>
                 Procurement Scope of Work
               </span>
-              <p style={{ color: '#cbd5e1', fontSize: '0.85rem', lineHeight: 1.6 }}>
+              <p style={{ color: '#334155', fontSize: '0.88rem', lineHeight: 1.6 }}>
                 {tender.description || 'No detailed scope description provided.'}
               </p>
             </div>
@@ -244,7 +192,7 @@ export default function TenderDetailPage() {
         {/* ── TAB 2: REQUIREMENTS ──────────────────────────────────────────── */}
         {activeTab === 'requirements' && (
           <div className="card" style={{ padding: 0 }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--bg-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="section-title">Structured Eligibility & Compliance Criteria ({tender.requirements?.length || 0})</span>
               <button className="btn-secondary" style={{ fontSize: '0.75rem' }} onClick={handleExtractRequirements}>
                 🧠 Re-Run AI Extraction
@@ -255,9 +203,9 @@ export default function TenderDetailPage() {
                 <thead>
                   <tr>
                     <th>Category</th>
-                    <th>Requirement Title</th>
-                    <th>Description & Evidence Rules</th>
-                    <th>Type</th>
+                    <th>Criterion Title</th>
+                    <th>Required Verification Evidence</th>
+                    <th>Mandatory Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -265,23 +213,26 @@ export default function TenderDetailPage() {
                     <tr key={req.id}>
                       <td>
                         <span style={{
-                          padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 700,
-                          background: `${CAT_COLOR[req.category] || '#64748b'}20`,
+                          padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
+                          background: `${CAT_COLOR[req.category] || '#64748b'}15`,
+                          border: `1px solid ${CAT_COLOR[req.category] || '#64748b'}35`,
                           color: CAT_COLOR[req.category] || '#64748b',
                         }}>
                           {req.category}
                         </span>
                       </td>
-                      <td style={{ fontWeight: 700, color: '#f0f4ff', fontSize: '0.85rem' }}>
+                      <td style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.88rem' }}>
                         {req.title}
                       </td>
-                      <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                      <td style={{ fontSize: '0.82rem', color: '#475569' }}>
                         {req.description}
                       </td>
                       <td>
                         <span style={{
-                          fontSize: '0.7rem', fontWeight: 800,
-                          color: req.mandatory ? '#ef4444' : '#10b981',
+                          fontSize: '0.72rem', fontWeight: 800,
+                          color: req.mandatory ? '#dc2626' : '#059669',
+                          background: req.mandatory ? '#fef2f2' : '#ecfdf5',
+                          padding: '3px 8px', borderRadius: 6, border: `1px solid ${req.mandatory ? '#fecaca' : '#a7f3d0'}`
                         }}>
                           {req.mandatory ? 'MANDATORY' : 'OPTIONAL'}
                         </span>
@@ -297,7 +248,7 @@ export default function TenderDetailPage() {
         {/* ── TAB 3: BIDS RECEIVED ─────────────────────────────────────────── */}
         {activeTab === 'bids' && (
           <div className="card" style={{ padding: 0 }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--bg-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="section-title">Bidders & Compliance Scores ({tender.bidders?.length || 0})</span>
               <button className="btn-primary" style={{ fontSize: '0.75rem' }} onClick={() => setShowAddBidder(true)}>
                 + Register Bidder
@@ -324,33 +275,33 @@ export default function TenderDetailPage() {
                     return (
                       <tr key={bidder.id}>
                         <td>
-                          <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f0f4ff' }}>
+                          <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>
                             {bidder.organizationName}
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{bidder.contactName} ({bidder.contactEmail})</div>
+                          <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>{bidder.contactName} ({bidder.contactEmail})</div>
                         </td>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#64748b' }}>
+                        <td style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#64748b' }}>
                           <div>{bidder.gstin || 'GST: Pending'}</div>
                           <div>{bidder.pan || 'PAN: Pending'}</div>
                         </td>
                         <td style={{ textAlign: 'center' }}>
-                          <div style={{ fontWeight: 900, fontSize: '1.1rem', color: score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444' }}>
+                          <div style={{ fontWeight: 900, fontSize: '1.15rem', color: score >= 80 ? '#059669' : score >= 60 ? '#d97706' : '#dc2626' }}>
                             {score}%
                           </div>
-                          <div className="progress-bar" style={{ height: 4, width: 80, margin: '4px auto 0' }}>
-                            <div className="progress-fill" style={{ width: `${score}%`, background: score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444' }} />
+                          <div className="progress-bar" style={{ height: 6, width: 80, margin: '4px auto 0', background: '#e2e8f0', borderRadius: 4 }}>
+                            <div className="progress-fill" style={{ width: `${score}%`, background: score >= 80 ? '#059669' : score >= 60 ? '#d97706' : '#dc2626', height: '100%', borderRadius: 4 }} />
                           </div>
                         </td>
                         <td>
                           <span style={{
-                            padding: '3px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800,
-                            background: riskMeta.bg, color: riskMeta.color,
+                            padding: '4px 10px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 800,
+                            background: riskMeta.bg, color: riskMeta.color, border: `1px solid ${riskMeta.color}35`
                           }}>
                             {riskMeta.label}
                           </span>
                         </td>
                         <td>
-                          <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600 }}>
+                          <span style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 700 }}>
                             {score >= 80 ? 'Verified' : 'Under Review'}
                           </span>
                         </td>
@@ -358,7 +309,7 @@ export default function TenderDetailPage() {
                           <div style={{ display: 'flex', gap: 6 }}>
                             <button
                               className="btn-primary"
-                              style={{ fontSize: '0.72rem', padding: '4px 8px' }}
+                              style={{ fontSize: '0.74rem', padding: '4px 10px' }}
                               onClick={() => navigate(`/compliance/${bidder.id}`)}
                             >
                               Review Compliance →
@@ -381,7 +332,7 @@ export default function TenderDetailPage() {
               <span className="section-title" style={{ display: 'block', marginBottom: 12 }}>
                 Tender Compliance Matrix & Distribution
               </span>
-              <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6 }}>
                 Automated rule evaluations comparing tender thresholds against OCR-extracted figures. All calculations remain deterministic in backend code.
               </p>
             </div>
@@ -396,17 +347,17 @@ export default function TenderDetailPage() {
                 Risk & Inconsistency Analysis
               </span>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-                <div style={{ padding: 14, background: 'rgba(16,185,129,0.06)', borderRadius: 8, border: '1px solid rgba(16,185,129,0.2)' }}>
-                  <div style={{ color: '#10b981', fontWeight: 700, fontSize: '0.85rem' }}>Low Risk (1 Bidder)</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 4 }}>Apex Safety Solutions LLP (Score: 94%)</div>
+                <div style={{ padding: 16, background: '#ecfdf5', borderRadius: 10, border: '1px solid #a7f3d0' }}>
+                  <div style={{ color: '#059669', fontWeight: 800, fontSize: '0.88rem' }}>Low Risk (1 Bidder)</div>
+                  <div style={{ fontSize: '0.78rem', color: '#065f46', marginTop: 4 }}>Apex Safety Solutions LLP (Score: 94%)</div>
                 </div>
-                <div style={{ padding: 14, background: 'rgba(245,158,11,0.06)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)' }}>
-                  <div style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.85rem' }}>Medium Risk (1 Bidder)</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 4 }}>ABC Industries Pvt Ltd (Deficit on Turnover)</div>
+                <div style={{ padding: 16, background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
+                  <div style={{ color: '#d97706', fontWeight: 800, fontSize: '0.88rem' }}>Medium Risk (1 Bidder)</div>
+                  <div style={{ fontSize: '0.78rem', color: '#92400e', marginTop: 4 }}>ABC Industries Pvt Ltd (Deficit on Turnover)</div>
                 </div>
-                <div style={{ padding: 14, background: 'rgba(239,68,68,0.06)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)' }}>
-                  <div style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.85rem' }}>High Risk (1 Bidder)</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 4 }}>Zenith Protection Gear Co (Missing mandatory docs)</div>
+                <div style={{ padding: 16, background: '#fef2f2', borderRadius: 10, border: '1px solid #fecaca' }}>
+                  <div style={{ color: '#dc2626', fontWeight: 800, fontSize: '0.88rem' }}>High Risk (1 Bidder)</div>
+                  <div style={{ fontSize: '0.78rem', color: '#991b1b', marginTop: 4 }}>Zenith Protection Gear Co (Missing mandatory docs)</div>
                 </div>
               </div>
             </div>
@@ -415,14 +366,14 @@ export default function TenderDetailPage() {
 
         {/* ── TAB 6: REPORTS ──────────────────────────────────────────────── */}
         {activeTab === 'reports' && (
-          <div className="card" style={{ padding: 20 }}>
+          <div className="card" style={{ padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <span className="section-title">Official Compliance Reports (PDF)</span>
               <button className="btn-primary" onClick={() => navigate('/reports')}>
                 Go to Reports Archive →
               </button>
             </div>
-            <p style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
+            <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6 }}>
               Multi-page PDF reports with executive summary, weighted risk formula breakdowns, government verification audit badges, and statutory disclaimers.
             </p>
           </div>
@@ -431,38 +382,38 @@ export default function TenderDetailPage() {
 
       {/* Add Bidder Modal */}
       {showAddBidder && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setShowAddBidder(false)}>
-          <div className="card" style={{ maxWidth: 500, width: '100%', background: '#091322', border: '1px solid #1e3a5f', padding: 24 }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f0f4ff' }}>Register Bidder Submission</h2>
-              <button className="btn-ghost" onClick={() => setShowAddBidder(false)}>✕</button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setShowAddBidder(false)}>
+          <div className="card" style={{ maxWidth: 500, width: '100%', background: '#ffffff', border: '1px solid #e2e8f0', padding: 28, boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid #f1f5f9', paddingBottom: 14 }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>Register Bidder Submission</h2>
+              <button className="btn-ghost" onClick={() => setShowAddBidder(false)} style={{ fontSize: '1rem', color: '#64748b' }}>✕</button>
             </div>
-            <form onSubmit={handleAddBidder} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <form onSubmit={handleAddBidder} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>COMPANY / BIDDER NAME *</label>
+                <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>COMPANY / BIDDER NAME *</label>
                 <input className="input" placeholder="e.g. Apex Industrial Systems" value={bidderForm.organizationName} onChange={e => setBidderForm({ ...bidderForm, organizationName: e.target.value })} required style={{ width: '100%' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>GSTIN</label>
+                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>GSTIN</label>
                   <input className="input" placeholder="29AABCA1234C1Z5" value={bidderForm.gstin} onChange={e => setBidderForm({ ...bidderForm, gstin: e.target.value })} style={{ width: '100%', fontFamily: 'monospace' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>PAN</label>
+                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>PAN</label>
                   <input className="input" placeholder="AABCA1234C" value={bidderForm.pan} onChange={e => setBidderForm({ ...bidderForm, pan: e.target.value })} style={{ width: '100%', fontFamily: 'monospace' }} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>CONTACT NAME</label>
+                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>CONTACT NAME</label>
                   <input className="input" placeholder="Rajesh Patel" value={bidderForm.contactName} onChange={e => setBidderForm({ ...bidderForm, contactName: e.target.value })} style={{ width: '100%' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>OFFICIAL EMAIL</label>
+                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>OFFICIAL EMAIL</label>
                   <input className="input" type="email" placeholder="contact@apex.com" value={bidderForm.contactEmail} onChange={e => setBidderForm({ ...bidderForm, contactEmail: e.target.value })} style={{ width: '100%' }} />
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+              <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
                 <button type="button" className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setShowAddBidder(false)}>Cancel</button>
                 <button type="submit" className="btn-primary" style={{ flex: 2, justifyContent: 'center' }}>Add Bidder to Tender</button>
               </div>

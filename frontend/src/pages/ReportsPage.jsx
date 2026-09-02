@@ -6,10 +6,10 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const RISK_COLOR = {
-  LOW:      { color: '#10b981', bg: 'rgba(16,185,129,0.12)', border: '#10b981' },
-  MEDIUM:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: '#f59e0b' },
-  HIGH:     { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', border: '#ef4444' },
-  CRITICAL: { color: '#dc2626', bg: 'rgba(220,38,38,0.18)', border: '#dc2626' },
+  LOW:      { color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+  MEDIUM:   { color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+  HIGH:     { color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+  CRITICAL: { color: '#991b1b', bg: '#fee2e2', border: '#fca5a5' },
 };
 
 export default function ReportsPage() {
@@ -85,10 +85,10 @@ export default function ReportsPage() {
     <AppLayout>
       <div className="page-header">
         <div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff', marginBottom: 4 }}>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.45rem', color: '#0f172a', marginBottom: 4 }}>
             Compliance & Risk Reports
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+          <p style={{ color: '#475569', fontSize: '0.88rem' }}>
             Authoritative assessment records generated from deterministic rules and RAG evidence
           </p>
         </div>
@@ -106,139 +106,141 @@ export default function ReportsPage() {
             <p>Loading compliance reports from database...</p>
           </div>
         ) : reports.length > 0 ? (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Bidder / Organization</th>
-                  <th>Tender Document</th>
-                  <th>Compliance Score</th>
-                  <th>Risk Level</th>
-                  <th>Generated Date</th>
-                  <th>Summary</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((r) => {
-                  const bidder = r.bidder || {};
-                  const tender = bidder.tender || {};
-                  const bidderId = r.bidderId || bidder.id || r.id;
-                  const score = Math.round(r.overallScore || 0);
-                  const riskLevel = r.riskLevel || 'MEDIUM';
-                  const riskStyle = RISK_COLOR[riskLevel] || RISK_COLOR.MEDIUM;
-                  const isDownloading = downloadingId === bidderId;
-                  const isGenerating = generatingId === bidderId;
+          <div className="card" style={{ padding: 0 }}>
+            <div className="table-container" style={{ border: 'none' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Bidder / Organization</th>
+                    <th>Tender Document</th>
+                    <th>Compliance Score</th>
+                    <th>Risk Level</th>
+                    <th>Generated Date</th>
+                    <th>Summary</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.map((r) => {
+                    const bidder = r.bidder || {};
+                    const tender = bidder.tender || {};
+                    const bidderId = r.bidderId || bidder.id || r.id;
+                    const score = Math.round(r.overallScore || 0);
+                    const riskLevel = r.riskLevel || 'MEDIUM';
+                    const riskStyle = RISK_COLOR[riskLevel] || RISK_COLOR.MEDIUM;
+                    const isDownloading = downloadingId === bidderId;
+                    const isGenerating = generatingId === bidderId;
 
-                  return (
-                    <tr
-                      key={r.id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/compliance/${bidderId}`)}
-                    >
-                      <td>
-                        <div style={{ fontWeight: 700, color: '#f0f4ff' }}>
-                          {bidder.organizationName || 'Bidder Entity'}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'monospace', marginTop: 2 }}>
-                          {bidder.gstin ? `GST: ${bidder.gstin}` : bidder.pan ? `PAN: ${bidder.pan}` : ''}
-                        </div>
-                      </td>
+                    return (
+                      <tr
+                        key={r.id}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate(`/compliance/${bidderId}`)}
+                      >
+                        <td>
+                          <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>
+                            {bidder.organizationName || 'Bidder Entity'}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#64748b', fontFamily: 'monospace', marginTop: 2 }}>
+                            {bidder.gstin ? `GST: ${bidder.gstin}` : bidder.pan ? `PAN: ${bidder.pan}` : ''}
+                          </div>
+                        </td>
 
-                      <td>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#cbd5e1' }}>
-                          {tender.title || 'Tender'}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'monospace', marginTop: 2 }}>
-                          {tender.referenceNo || 'N/A'}
-                        </div>
-                      </td>
+                        <td>
+                          <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a' }}>
+                            {tender.title || 'Tender'}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#2563eb', fontFamily: 'monospace', marginTop: 2 }}>
+                            {tender.referenceNo || 'N/A'}
+                          </div>
+                        </td>
 
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span
+                              style={{
+                                fontFamily: 'Outfit, sans-serif',
+                                fontWeight: 900,
+                                fontSize: '1.15rem',
+                                color: score >= 75 ? '#059669' : score >= 50 ? '#d97706' : '#dc2626',
+                              }}
+                            >
+                              {score}%
+                            </span>
+                          </div>
+                        </td>
+
+                        <td>
                           <span
                             style={{
-                              fontFamily: 'Outfit, sans-serif',
-                              fontWeight: 900,
-                              fontSize: '1.2rem',
-                              color: score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444',
+                              color: riskStyle.color,
+                              fontWeight: 800,
+                              fontSize: '0.72rem',
+                              background: riskStyle.bg,
+                              padding: '4px 10px',
+                              borderRadius: 20,
+                              border: `1px solid ${riskStyle.border}`,
                             }}
                           >
-                            {score}%
+                            {riskLevel}
                           </span>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td>
-                        <span
-                          style={{
-                            color: riskStyle.color,
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            background: riskStyle.bg,
-                            padding: '3px 10px',
-                            borderRadius: 20,
-                            border: `1px solid ${riskStyle.border}50`,
-                          }}
-                        >
-                          {riskLevel}
-                        </span>
-                      </td>
+                        <td style={{ color: '#475569', fontSize: '0.8rem', fontWeight: 600 }}>
+                          {r.generatedAt ? format(new Date(r.generatedAt), 'dd MMM yyyy HH:mm') : 'Recently'}
+                        </td>
 
-                      <td style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
-                        {r.generatedAt ? format(new Date(r.generatedAt), 'dd MMM yyyy HH:mm') : 'Recently'}
-                      </td>
+                        <td style={{ maxWidth: 220, color: '#64748b', fontSize: '0.76rem' }}>
+                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {r.summary || 'Compliant evaluation complete.'}
+                          </div>
+                        </td>
 
-                      <td style={{ maxWidth: 220, color: '#64748b', fontSize: '0.75rem' }}>
-                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {r.summary || 'Compliant evaluation complete.'}
-                        </div>
-                      </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              className="btn-secondary"
+                              style={{ fontSize: '0.74rem', padding: '4px 10px' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/compliance/${bidderId}`);
+                              }}
+                            >
+                              Dashboard →
+                            </button>
 
-                      <td>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button
-                            className="btn-ghost"
-                            style={{ fontSize: '0.72rem', padding: '4px 8px', color: '#3b82f6' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/compliance/${bidderId}`);
-                            }}
-                          >
-                            Dashboard →
-                          </button>
+                            <button
+                              className="btn-primary"
+                              style={{ fontSize: '0.74rem', padding: '4px 10px', background: '#059669' }}
+                              disabled={isDownloading}
+                              onClick={(e) => handleDownloadPdf(bidderId, bidder.organizationName, e)}
+                            >
+                              {isDownloading ? '⟳ PDF...' : '📥 PDF'}
+                            </button>
 
-                          <button
-                            className="btn-secondary"
-                            style={{ fontSize: '0.72rem', padding: '4px 8px', borderColor: '#10b981', color: '#10b981' }}
-                            disabled={isDownloading}
-                            onClick={(e) => handleDownloadPdf(bidderId, bidder.organizationName, e)}
-                          >
-                            {isDownloading ? '⟳ PDF...' : '📥 PDF'}
-                          </button>
-
-                          <button
-                            className="btn-ghost"
-                            style={{ fontSize: '0.72rem', padding: '4px 8px', color: '#fb923c' }}
-                            disabled={isGenerating}
-                            onClick={(e) => handleRecalculateReport(bidderId, e)}
-                            title="Recalculate score from latest rules"
-                          >
-                            {isGenerating ? '⟳' : '⚡ Update'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                            <button
+                              className="btn-ghost"
+                              style={{ fontSize: '0.74rem', padding: '4px 8px', color: '#d97706' }}
+                              disabled={isGenerating}
+                              onClick={(e) => handleRecalculateReport(bidderId, e)}
+                              title="Recalculate score from latest rules"
+                            >
+                              {isGenerating ? '⟳' : '⚡ Update'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#4a6080', background: 'rgba(255,255,255,0.01)', borderRadius: 14, border: '1px dashed var(--bg-border)' }}>
+          <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: '3rem', marginBottom: 12 }}>📊</div>
-            <h3 style={{ color: '#f0f4ff', fontWeight: 700, marginBottom: 6 }}>No Compliance Reports Generated Yet</h3>
-            <p style={{ maxWidth: 450, margin: '0 auto 20px', fontSize: '0.85rem' }}>
+            <h3 style={{ color: '#0f172a', fontWeight: 800, fontSize: '1.15rem', marginBottom: 6 }}>No Compliance Reports Generated Yet</h3>
+            <p style={{ maxWidth: 450, margin: '0 auto 20px', fontSize: '0.88rem', color: '#64748b' }}>
               Run compliance verification on a bidder submission to generate an authoritative evaluation report with risk flags and PDF export.
             </p>
             <button className="btn-primary" onClick={() => navigate('/tenders')}>

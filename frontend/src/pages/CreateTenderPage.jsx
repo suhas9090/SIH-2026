@@ -119,56 +119,43 @@ export default function CreateTenderPage() {
         });
       }
 
-      if (additionalReqs.msmePreference) {
-        structuredRequirements.push({
-          category: 'MSME_UDYAM',
-          title: 'Udyam / MSME Registration Certificate',
-          description: 'MSME purchase preference applicable under Public Procurement Policy 2012.',
-          mandatory: false,
-          evidenceTypes: ['UDYAM_CERTIFICATE'],
-        });
-      }
-
-      if (additionalReqs.nonBlacklistingRequired) {
-        structuredRequirements.push({
-          category: 'BLACKLISTING',
-          title: 'Non-Debarment & Non-Blacklisting Declaration',
-          description: 'Self-declaration and clean record across GeM and CVC blacklist registries.',
-          mandatory: true,
-          evidenceTypes: ['OTHER'],
-        });
-      }
-
       const payload = {
         referenceNo: basicInfo.referenceNo,
         title: basicInfo.title,
-        organization: basicInfo.organization,
+        description: basicInfo.description || `${basicInfo.title} procurement under ${basicInfo.department}`,
         department: basicInfo.department,
+        organization: basicInfo.organization,
         category: basicInfo.category,
         estimatedValue: parseFloat(basicInfo.estimatedValue) || 0,
+        currency: 'INR',
         publishedDate: new Date(basicInfo.publishedDate),
         closingDate: new Date(basicInfo.closingDate),
-        description: basicInfo.description,
         status: isDraft ? 'DRAFT' : 'ACTIVE',
+        rules: {
+          makeInIndiaMinPercentage: parseFloat(additionalReqs.makeInIndiaPercentage) || 50,
+          msmePreference: additionalReqs.msmePreference,
+          startupExemption: additionalReqs.startupExemption,
+          earnestMoneyDeposit: parseFloat(additionalReqs.earnestMoneyDeposit) || 0,
+          mandatoryDocuments: Object.keys(mandatoryDocs).filter(k => mandatoryDocs[k]),
+        },
         requirements: structuredRequirements,
       };
 
       const res = await tenderAPI.create(payload);
-      toast.success(isDraft ? 'Tender saved as draft!' : 'Tender published successfully to GeM Portal!');
-      navigate(`/tenders/${res.data.id}`);
+      toast.success(isDraft ? 'Tender draft saved successfully' : '🚀 Tender published to GeM portal!');
+      navigate(`/tenders/${res.data.id || ''}`);
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.error || 'Failed to publish tender');
+      toast.error(err.response?.data?.error || 'Failed to create tender');
     } finally {
       setLoading(false);
     }
   };
 
   const steps = [
-    { num: 1, label: 'Basic Details' },
-    { num: 2, label: 'Eligibility' },
-    { num: 3, label: 'Mandatory Docs' },
-    { num: 4, label: 'Preferences' },
+    { num: 1, label: 'Basic Info' },
+    { num: 2, label: 'Eligibility Criteria' },
+    { num: 3, label: 'Mandatory Documents' },
+    { num: 4, label: 'Preferences & Policies' },
     { num: 5, label: 'Review & Publish' },
   ];
 
@@ -176,39 +163,46 @@ export default function CreateTenderPage() {
     <AppLayout>
       <div className="page-header">
         <div>
-          <div style={{ fontSize: '0.75rem', color: '#60a5fa', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>
-            PROCUREMENT MANAGEMENT
+          <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>
+            TENDER AUTHORING WIZARD
           </div>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#f0f4ff', marginBottom: 4 }}>
-            Create Procurement Tender
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.45rem', color: '#0f172a', marginBottom: 4 }}>
+            Create & Author Procurement Tender
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
-            Define structured eligibility rules, mandatory evidence checklists, and statutory preferences
+          <p style={{ color: '#475569', fontSize: '0.88rem' }}>
+            Define statutory criteria, turn-over thresholds, and mandatory document requirements for automated evaluation
           </p>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-secondary" onClick={() => navigate('/tenders')}>
+            Cancel
+          </button>
         </div>
       </div>
 
-      <div style={{ padding: '24px 32px', maxWidth: 900 }}>
-        {/* Stepper Navigation */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, background: 'rgba(255,255,255,0.02)', padding: '14px 20px', borderRadius: 12, border: '1px solid var(--bg-border)' }}>
+      <div style={{ padding: '24px 32px', maxWidth: 960, margin: '0 auto' }}>
+        {/* Step Progress Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 28, position: 'relative' }}>
           {steps.map((s) => (
             <div
               key={s.num}
               onClick={() => setStep(s.num)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-                opacity: step === s.num ? 1 : 0.6,
+                opacity: step === s.num ? 1 : 0.7,
               }}
             >
               <div style={{
-                width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 800, fontSize: '0.78rem',
-                background: step === s.num ? '#3b82f6' : step > s.num ? '#10b981' : 'var(--bg-border)',
-                color: '#fff',
+                width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: '0.8rem',
+                background: step === s.num ? '#2563eb' : step > s.num ? '#059669' : '#ffffff',
+                border: `2px solid ${step === s.num ? '#2563eb' : step > s.num ? '#059669' : '#cbd5e1'}`,
+                color: step >= s.num ? '#ffffff' : '#64748b',
+                boxShadow: step === s.num ? '0 2px 8px rgba(37,99,235,0.25)' : 'none'
               }}>
                 {step > s.num ? '✓' : s.num}
               </div>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: step === s.num ? '#60a5fa' : '#94a3b8' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: step === s.num ? 800 : 700, color: step === s.num ? '#1d4ed8' : '#475569' }}>
                 {s.label}
               </span>
             </div>
@@ -221,11 +215,11 @@ export default function CreateTenderPage() {
             <span className="section-title">Step 1 — Basic Tender Information</span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>TENDER REFERENCE ID</label>
-                <input className="input" value={basicInfo.referenceNo} onChange={e => setBasicInfo({ ...basicInfo, referenceNo: e.target.value })} style={{ width: '100%', fontFamily: 'monospace' }} />
+                <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>TENDER REFERENCE ID</label>
+                <input className="input" value={basicInfo.referenceNo} onChange={e => setBasicInfo({ ...basicInfo, referenceNo: e.target.value })} style={{ width: '100%', fontFamily: 'monospace', fontWeight: 700 }} />
               </div>
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>PROCUREMENT CATEGORY</label>
+                <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>PROCUREMENT CATEGORY</label>
                 <select className="input" value={basicInfo.category} onChange={e => setBasicInfo({ ...basicInfo, category: e.target.value })} style={{ width: '100%' }}>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -233,34 +227,34 @@ export default function CreateTenderPage() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>TENDER TITLE *</label>
+              <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>TENDER TITLE *</label>
               <input className="input" placeholder="e.g. Supply and Installation of Industrial Safety Equipment" value={basicInfo.title} onChange={e => setBasicInfo({ ...basicInfo, title: e.target.value })} required style={{ width: '100%' }} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>GOVERNMENT DEPARTMENT / MINISTRY</label>
+                <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>GOVERNMENT DEPARTMENT / MINISTRY</label>
                 <input className="input" value={basicInfo.department} onChange={e => setBasicInfo({ ...basicInfo, department: e.target.value })} style={{ width: '100%' }} />
               </div>
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>ESTIMATED TENDER VALUE (INR)</label>
+                <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>ESTIMATED TENDER VALUE (INR)</label>
                 <input className="input" type="number" placeholder="50000000" value={basicInfo.estimatedValue} onChange={e => setBasicInfo({ ...basicInfo, estimatedValue: e.target.value })} style={{ width: '100%' }} />
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>PUBLICATION DATE</label>
+                <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>PUBLICATION DATE</label>
                 <input className="input" type="date" value={basicInfo.publishedDate} onChange={e => setBasicInfo({ ...basicInfo, publishedDate: e.target.value })} style={{ width: '100%' }} />
               </div>
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>SUBMISSION DEADLINE</label>
+                <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>SUBMISSION DEADLINE</label>
                 <input className="input" type="date" value={basicInfo.closingDate} onChange={e => setBasicInfo({ ...basicInfo, closingDate: e.target.value })} style={{ width: '100%' }} />
               </div>
             </div>
 
             <div>
-              <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>SCOPE OF WORK & DESCRIPTION</label>
+              <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>SCOPE OF WORK & DESCRIPTION</label>
               <textarea className="input" rows={3} placeholder="Describe the procurement scope, delivery locations, and technical guidelines..." value={basicInfo.description} onChange={e => setBasicInfo({ ...basicInfo, description: e.target.value })} style={{ width: '100%' }} />
             </div>
 
@@ -276,46 +270,46 @@ export default function CreateTenderPage() {
         {step === 2 && (
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <span className="section-title">Step 2 — Structured Eligibility Criteria</span>
-            <p style={{ fontSize: '0.78rem', color: '#64748b' }}>
+            <p style={{ fontSize: '0.84rem', color: '#64748b' }}>
               Define mathematical thresholds and operator logic for automated compliance verification.
             </p>
 
             {/* Financial Turnover */}
-            <div style={{ padding: 14, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--bg-border)' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f0f4ff', marginBottom: 8 }}>
+            <div style={{ padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a', marginBottom: 10 }}>
                 1. Minimum Average Annual Turnover
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '0.7rem', color: '#64748b' }}>OPERATOR</label>
+                  <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>OPERATOR</label>
                   <select className="input" value={eligibility.turnoverOperator} onChange={e => setEligibility({ ...eligibility, turnoverOperator: e.target.value })} style={{ width: '100%' }}>
                     <option value="GREATER_THAN_OR_EQUAL">GREATER_THAN_OR_EQUAL (≥</option>
                     <option value="GREATER_THAN">GREATER_THAN (&gt;)</option>
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.7rem', color: '#64748b' }}>REQUIRED VALUE (INR)</label>
+                  <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>REQUIRED VALUE (INR)</label>
                   <input className="input" type="number" value={eligibility.minTurnover} onChange={e => setEligibility({ ...eligibility, minTurnover: e.target.value })} style={{ width: '100%' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.7rem', color: '#64748b' }}>EVIDENCE TYPE</label>
+                  <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>EVIDENCE TYPE</label>
                   <input className="input" value={eligibility.turnoverEvidence} onChange={e => setEligibility({ ...eligibility, turnoverEvidence: e.target.value })} style={{ width: '100%' }} />
                 </div>
               </div>
             </div>
 
             {/* Prior Experience */}
-            <div style={{ padding: 14, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--bg-border)' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f0f4ff', marginBottom: 8 }}>
+            <div style={{ padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a', marginBottom: 10 }}>
                 2. Prior Past Performance Experience
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '0.7rem', color: '#64748b' }}>MINIMUM YEARS REQUIRED</label>
+                  <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>MINIMUM YEARS REQUIRED</label>
                   <input className="input" type="number" value={eligibility.minExperience} onChange={e => setEligibility({ ...eligibility, minExperience: e.target.value })} style={{ width: '100%' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.7rem', color: '#64748b' }}>EVIDENCE TYPE</label>
+                  <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>EVIDENCE TYPE</label>
                   <input className="input" value={eligibility.experienceEvidence} onChange={e => setEligibility({ ...eligibility, experienceEvidence: e.target.value })} style={{ width: '100%' }} />
                 </div>
               </div>
@@ -332,7 +326,7 @@ export default function CreateTenderPage() {
         {step === 3 && (
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <span className="section-title">Step 3 — Mandatory Submission Documents Checklist</span>
-            <p style={{ fontSize: '0.78rem', color: '#64748b' }}>
+            <p style={{ fontSize: '0.84rem', color: '#64748b' }}>
               Select mandatory documents that bidders must submit for automated OCR and RAG extraction.
             </p>
 
@@ -351,10 +345,12 @@ export default function CreateTenderPage() {
                   key={doc.key}
                   onClick={() => setMandatoryDocs({ ...mandatoryDocs, [doc.key]: !mandatoryDocs[doc.key] })}
                   style={{
-                    padding: 12, borderRadius: 8, cursor: 'pointer',
-                    background: mandatoryDocs[doc.key] ? 'rgba(59,130,246,0.08)' : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${mandatoryDocs[doc.key] ? '#3b82f6' : 'var(--bg-border)'}`,
+                    padding: 14, borderRadius: 10, cursor: 'pointer',
+                    background: mandatoryDocs[doc.key] ? '#eff6ff' : '#ffffff',
+                    border: `1px solid ${mandatoryDocs[doc.key] ? '#bfdbfe' : '#e2e8f0'}`,
                     display: 'flex', alignItems: 'flex-start', gap: 10,
+                    boxShadow: mandatoryDocs[doc.key] ? '0 2px 6px rgba(37,99,235,0.06)' : 'none',
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   <input
@@ -364,10 +360,10 @@ export default function CreateTenderPage() {
                     style={{ marginTop: 3, cursor: 'pointer' }}
                   />
                   <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: mandatoryDocs[doc.key] ? '#f0f4ff' : '#94a3b8' }}>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 800, color: mandatoryDocs[doc.key] ? '#1d4ed8' : '#334155' }}>
                       {doc.label}
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 2 }}>{doc.desc}</div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>{doc.desc}</div>
                   </div>
                 </div>
               ))}
@@ -386,30 +382,30 @@ export default function CreateTenderPage() {
             <span className="section-title">Step 4 — Statutory & Public Procurement Policy Preferences</span>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--bg-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 14, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#f0f4ff' }}>MSME Purchase Preference (PPP 2012)</div>
-                  <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Exemption from prior turnover and experience for MSEs</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>MSME Purchase Preference (PPP 2012)</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Exemption from prior turnover and experience for MSEs</div>
                 </div>
                 <input type="checkbox" checked={additionalReqs.msmePreference} onChange={e => setAdditionalReqs({ ...additionalReqs, msmePreference: e.target.checked })} />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--bg-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 14, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#f0f4ff' }}>DPIIT Startup Exemption</div>
-                  <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Exemption from prior experience/turnover for recognized DPIIT startups</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>DPIIT Startup Exemption</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Exemption from prior experience/turnover for recognized DPIIT startups</div>
                 </div>
                 <input type="checkbox" checked={additionalReqs.startupExemption} onChange={e => setAdditionalReqs({ ...additionalReqs, startupExemption: e.target.checked })} />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--bg-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 14, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#f0f4ff' }}>Make in India (Class-I / Class-II Local Content)</div>
-                  <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Minimum local content requirement percentage</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>Make in India (Class-I / Class-II Local Content)</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Minimum local content requirement percentage</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <input className="input" type="number" value={additionalReqs.makeInIndiaPercentage} onChange={e => setAdditionalReqs({ ...additionalReqs, makeInIndiaPercentage: e.target.value })} style={{ width: 70, textAlign: 'center' }} />
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>%</span>
+                  <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 700 }}>%</span>
                 </div>
               </div>
             </div>
@@ -426,27 +422,27 @@ export default function CreateTenderPage() {
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <span className="section-title">Step 5 — Review Tender Specification & Publish</span>
 
-            <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: 16, border: '1px solid var(--bg-border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ background: '#f8fafc', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'monospace' }}>{basicInfo.referenceNo}</span>
-                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#f0f4ff' }}>{basicInfo.title}</div>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace', fontWeight: 800 }}>{basicInfo.referenceNo}</span>
+                  <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#0f172a', marginTop: 2 }}>{basicInfo.title}</div>
                 </div>
-                <span className="badge badge-active">Ready to Publish</span>
+                <span className="badge badge-active" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}>Ready to Publish</span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, borderTop: '1px solid var(--bg-border)', paddingTop: 12, fontSize: '0.78rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, borderTop: '1px solid #e2e8f0', paddingTop: 14, fontSize: '0.82rem' }}>
                 <div>
-                  <span style={{ color: '#64748b' }}>Department:</span>
-                  <div style={{ color: '#f0f4ff', fontWeight: 600 }}>{basicInfo.department}</div>
+                  <span style={{ color: '#64748b', fontWeight: 700 }}>Department:</span>
+                  <div style={{ color: '#0f172a', fontWeight: 800, marginTop: 2 }}>{basicInfo.department}</div>
                 </div>
                 <div>
-                  <span style={{ color: '#64748b' }}>Estimated Value:</span>
-                  <div style={{ color: '#10b981', fontWeight: 700 }}>₹{(parseFloat(basicInfo.estimatedValue) / 10000000).toFixed(2)} Crore</div>
+                  <span style={{ color: '#64748b', fontWeight: 700 }}>Estimated Value:</span>
+                  <div style={{ color: '#059669', fontWeight: 900, marginTop: 2 }}>₹{(parseFloat(basicInfo.estimatedValue) / 10000000).toFixed(2)} Crore</div>
                 </div>
                 <div>
-                  <span style={{ color: '#64748b' }}>Closing Deadline:</span>
-                  <div style={{ color: '#fbbf24', fontWeight: 600 }}>{basicInfo.closingDate}</div>
+                  <span style={{ color: '#64748b', fontWeight: 700 }}>Closing Deadline:</span>
+                  <div style={{ color: '#b45309', fontWeight: 800, marginTop: 2 }}>{basicInfo.closingDate}</div>
                 </div>
               </div>
             </div>
@@ -457,7 +453,7 @@ export default function CreateTenderPage() {
                 <button className="btn-secondary" onClick={() => handleCreateAndPublish(true)} disabled={loading}>
                   Save Draft
                 </button>
-                <button className="btn-primary" onClick={() => handleCreateAndPublish(false)} disabled={loading} style={{ background: '#10b981' }}>
+                <button className="btn-primary" onClick={() => handleCreateAndPublish(false)} disabled={loading} style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}>
                   {loading ? 'Publishing...' : '🚀 Publish Tender to GeM'}
                 </button>
               </div>

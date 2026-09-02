@@ -1,25 +1,19 @@
 import React from 'react';
 
 const STATUS_COLORS = {
-  COMPLIANT:            { bg: '#0a2e1a', border: '#166534', text: '#4ade80' },
-  NON_COMPLIANT:        { bg: '#2d0e0e', border: '#7f1d1d', text: '#fca5a5' },
-  MISSING:              { bg: '#1a1a0d', border: '#713f12', text: '#fbbf24' },
-  MISSING_EVIDENCE:     { bg: '#1f1207', border: '#9a3412', text: '#fb923c' },
-  INCONSISTENT:         { bg: '#1a0d1f', border: '#6b21a8', text: '#c084fc' },
-  NEEDS_REVIEW:         { bg: '#1c1400', border: '#92400e', text: '#fcd34d' },
-  UNVERIFIED:           { bg: '#111827', border: '#374151', text: '#9ca3af' },
-  PENDING_VERIFICATION: { bg: '#0d1b2e', border: '#1e3a5f', text: '#60a5fa' },
-  REQUIRES_HUMAN_REVIEW:{ bg: '#1c1400', border: '#92400e', text: '#fcd34d' },
+  COMPLIANT:            { bg: '#ecfdf5', border: '#a7f3d0', text: '#059669' },
+  NON_COMPLIANT:        { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' },
+  MISSING:              { bg: '#fffbeb', border: '#fde68a', text: '#d97706' },
+  MISSING_EVIDENCE:     { bg: '#fff7ed', border: '#fed7aa', text: '#ea580c' },
+  INCONSISTENT:         { bg: '#faf5ff', border: '#e9d5ff', text: '#9333ea' },
+  NEEDS_REVIEW:         { bg: '#fffbeb', border: '#fde68a', text: '#d97706' },
+  UNVERIFIED:           { bg: '#f8fafc', border: '#e2e8f0', text: '#64748b' },
+  PENDING_VERIFICATION: { bg: '#eff6ff', border: '#bfdbfe', text: '#2563eb' },
+  REQUIRES_HUMAN_REVIEW:{ bg: '#fffbeb', border: '#fde68a', text: '#d97706' },
 };
 
 /**
- * EvidenceViewer — Side panel / modal showing full evidence for a compliance item.
- * 
- * Displays:
- *  - Extracted document evidence (source, page, text excerpt)
- *  - Government verification result (with MOCK/LIVE badge)
- *  - AI assessment with mandatory disclaimer label
- *  - Reviewer decision (if reviewed)
+ * EvidenceViewer — Slide-over drawer showing full evidence for a compliance item.
  */
 export default function EvidenceViewer({ item, onClose }) {
   if (!item) return null;
@@ -33,10 +27,10 @@ export default function EvidenceViewer({ item, onClose }) {
         {/* Header */}
         <div style={styles.panelHeader}>
           <div>
-            <div style={{ color: '#f0f4ff', fontWeight: 700, fontSize: '1rem' }}>
+            <div style={{ color: '#0f172a', fontWeight: 900, fontSize: '1.1rem' }}>
               Evidence Review
             </div>
-            <div style={{ color: '#4b6278', fontSize: '0.8rem', marginTop: 2 }}>
+            <div style={{ color: '#64748b', fontSize: '0.82rem', marginTop: 2, fontWeight: 600 }}>
               {item.requirement?.title || 'Compliance Item'}
             </div>
           </div>
@@ -44,7 +38,7 @@ export default function EvidenceViewer({ item, onClose }) {
         </div>
 
         {/* Status badge */}
-        <div style={{ padding: '0 20px 16px' }}>
+        <div style={{ padding: '0 20px 16px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <span style={{
             ...styles.statusBadge,
             background: colors.bg,
@@ -77,7 +71,7 @@ export default function EvidenceViewer({ item, onClose }) {
                   <Row
                     label="Semantic Match"
                     value={`${Math.round(item.similarityScore * 100)}% confidence`}
-                    valueStyle={{ color: item.similarityScore >= 0.85 ? '#4ade80' : item.similarityScore >= 0.6 ? '#fbbf24' : '#fca5a5' }}
+                    valueStyle={{ color: item.similarityScore >= 0.85 ? '#059669' : item.similarityScore >= 0.6 ? '#d97706' : '#dc2626' }}
                   />
                 )}
               </div>
@@ -113,9 +107,9 @@ export default function EvidenceViewer({ item, onClose }) {
                   <span style={styles.sourceTag}>{item.verificationSource.source}</span>
                   <span style={{
                     ...styles.mockBadge,
-                    background: isMock ? '#1f2000' : '#0a2e1a',
-                    color: isMock ? '#fbbf24' : '#4ade80',
-                    border: `1px solid ${isMock ? '#713f12' : '#166534'}`,
+                    background: isMock ? '#fffbeb' : '#ecfdf5',
+                    color: isMock ? '#d97706' : '#059669',
+                    border: `1px solid ${isMock ? '#fde68a' : '#a7f3d0'}`,
                   }}>
                     {isMock ? '⚠ MOCK DATA' : '✅ LIVE DATA'}
                   </span>
@@ -155,40 +149,49 @@ export default function EvidenceViewer({ item, onClose }) {
                 label="Rule Confidence"
                 value={`${Math.round(item.confidence * 100)}%`}
                 valueStyle={{
-                  color: item.confidence >= 0.85 ? '#4ade80'
-                    : item.confidence >= 0.6 ? '#fbbf24' : '#fca5a5',
+                  color: item.confidence >= 0.85 ? '#059669'
+                    : item.confidence >= 0.6 ? '#d97706' : '#dc2626',
                 }}
               />
             )}
           </Section>
 
-          {/* Section 5: Reviewer Decision */}
-          {item.reviews?.length > 0 && (
-            <Section title="👤 Reviewer Decisions">
-              {item.reviews.map((review, i) => (
-                <div key={i} style={styles.reviewItem}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{
-                      ...styles.reviewAction,
-                      color: review.action === 'APPROVED' ? '#4ade80'
-                        : review.action === 'REJECTED' ? '#fca5a5' : '#fbbf24',
+          {/* Section 5: Human Review History */}
+          <Section title="👤 Human Reviewer Decision">
+            {item.reviews && item.reviews.length > 0 ? (
+              <div>
+                {item.reviews.map((rev) => (
+                  <div key={rev.id} style={styles.reviewItem}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: 4,
                     }}>
-                      [Human Decision] {review.action}
-                    </span>
-                    <span style={{ color: '#4b6278', fontSize: '0.75rem' }}>
-                      by {review.reviewer?.name || 'Reviewer'}
-                    </span>
+                      <span style={{
+                        ...styles.reviewAction,
+                        color: rev.action === 'APPROVED' ? '#059669'
+                          : rev.action === 'REJECTED' ? '#dc2626' : '#d97706',
+                      }}>
+                        {rev.action}
+                      </span>
+                      <span style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                        {new Date(rev.createdAt).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    {rev.remarks && (
+                      <div style={styles.reviewRemarks}>{rev.remarks}</div>
+                    )}
+                    <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                      Reviewed by: {rev.reviewer?.name || rev.reviewer?.email || 'Officer'}
+                    </div>
                   </div>
-                  {review.remarks && (
-                    <div style={styles.reviewRemarks}>{review.remarks}</div>
-                  )}
-                  <div style={{ color: '#4b6278', fontSize: '0.72rem' }}>
-                    {new Date(review.reviewedAt).toLocaleString('en-IN')}
-                  </div>
-                </div>
-              ))}
-            </Section>
-          )}
+                ))}
+              </div>
+            ) : (
+              <EmptyState message="Not yet reviewed by a human officer." />
+            )}
+          </Section>
         </div>
       </div>
     </div>
@@ -208,7 +211,12 @@ function Row({ label, value, highlight, valueStyle }) {
   return (
     <div style={sStyles.row}>
       <span style={sStyles.rowLabel}>{label}</span>
-      <span style={{ ...sStyles.rowValue, ...(highlight && { color: '#f0f4ff' }), ...valueStyle }}>
+      <span style={{
+        ...sStyles.rowValue,
+        fontWeight: highlight ? 700 : 500,
+        color: highlight ? '#0f172a' : '#334155',
+        ...valueStyle,
+      }}>
         {value}
       </span>
     </div>
@@ -222,7 +230,8 @@ function EmptyState({ message }) {
 const styles = {
   overlay: {
     position: 'fixed', inset: 0,
-    background: 'rgba(0,0,0,0.7)',
+    background: 'rgba(15,23,42,0.6)',
+    backdropFilter: 'blur(4px)',
     zIndex: 1000,
     display: 'flex',
     justifyContent: 'flex-end',
@@ -231,8 +240,9 @@ const styles = {
     width: 480,
     maxWidth: '95vw',
     height: '100vh',
-    background: '#080f1e',
-    borderLeft: '1px solid #1e2d4a',
+    background: '#ffffff',
+    borderLeft: '1px solid #e2e8f0',
+    boxShadow: '-10px 0 25px -5px rgba(0,0,0,0.1)',
     display: 'flex',
     flexDirection: 'column',
     fontFamily: "'Inter', sans-serif",
@@ -243,17 +253,17 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     padding: '20px 20px 16px',
-    borderBottom: '1px solid #1e2d4a',
+    borderBottom: '1px solid #f1f5f9',
     position: 'sticky',
     top: 0,
-    background: '#080f1e',
+    background: '#ffffff',
     zIndex: 10,
   },
   closeBtn: {
     background: 'transparent',
     border: 'none',
-    color: '#4b6278',
-    fontSize: '1.1rem',
+    color: '#64748b',
+    fontSize: '1.2rem',
     cursor: 'pointer',
     padding: 4,
   },
@@ -263,92 +273,96 @@ const styles = {
   },
   statusBadge: {
     display: 'inline-block',
-    borderRadius: 6,
-    padding: '3px 10px',
+    borderRadius: 8,
+    padding: '4px 10px',
     fontSize: '0.75rem',
-    fontWeight: 700,
-    letterSpacing: '0.05em',
+    fontWeight: 800,
+    letterSpacing: '0.04em',
     marginRight: 6,
   },
   categoryTag: {
     display: 'inline-block',
-    background: '#0d1b2e',
-    border: '1px solid #1e3a5f',
-    color: '#60a5fa',
-    borderRadius: 6,
-    padding: '3px 8px',
+    background: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    color: '#1d4ed8',
+    borderRadius: 8,
+    padding: '4px 8px',
     fontSize: '0.72rem',
+    fontWeight: 700,
     marginRight: 6,
   },
   mandatoryTag: {
     display: 'inline-block',
-    background: '#2d0e0e',
-    border: '1px solid #7f1d1d',
-    color: '#fca5a5',
-    borderRadius: 6,
-    padding: '3px 8px',
+    background: '#fef2f2',
+    border: '1px solid #fecaca',
+    color: '#dc2626',
+    borderRadius: 8,
+    padding: '4px 8px',
     fontSize: '0.72rem',
+    fontWeight: 800,
   },
   aiDisclaimer: {
-    background: '#1c1400',
-    border: '1px solid #92400e',
-    borderRadius: 8,
+    background: '#fffbeb',
+    border: '1px solid #fde68a',
+    borderRadius: 10,
     padding: '10px 12px',
-    color: '#fcd34d',
+    color: '#b45309',
     fontSize: '0.78rem',
     lineHeight: 1.5,
     marginBottom: 12,
   },
   aiText: {
-    color: '#c0cfe0',
+    color: '#334155',
     fontSize: '0.85rem',
     lineHeight: 1.6,
   },
   sourceTag: {
-    background: '#0d1b2e',
-    border: '1px solid #1e3a5f',
-    color: '#93c5fd',
-    borderRadius: 6,
-    padding: '3px 8px',
-    fontSize: '0.75rem',
-    fontWeight: 600,
-  },
-  mockBadge: {
-    borderRadius: 6,
-    padding: '3px 8px',
+    background: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    color: '#1d4ed8',
+    borderRadius: 8,
+    padding: '4px 8px',
     fontSize: '0.75rem',
     fontWeight: 700,
   },
+  mockBadge: {
+    borderRadius: 8,
+    padding: '4px 8px',
+    fontSize: '0.75rem',
+    fontWeight: 800,
+  },
   mockWarning: {
-    color: '#fbbf24',
+    color: '#b45309',
     fontSize: '0.78rem',
-    background: '#1f1200',
-    borderRadius: 6,
+    background: '#fffbeb',
+    border: '1px solid #fde68a',
+    borderRadius: 8,
     padding: '8px 10px',
     marginBottom: 10,
     marginTop: 4,
   },
   ruleText: {
-    color: '#c0cfe0',
+    color: '#334155',
     fontSize: '0.85rem',
     lineHeight: 1.6,
-    background: '#0d1b2e',
-    borderRadius: 8,
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: 10,
     padding: '10px 12px',
   },
   reviewItem: {
-    background: '#0d1b2e',
-    border: '1px solid #1e2d4a',
-    borderRadius: 8,
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: 10,
     padding: '10px 12px',
     marginBottom: 8,
   },
   reviewAction: {
-    fontWeight: 700,
+    fontWeight: 800,
     fontSize: '0.82rem',
   },
   reviewRemarks: {
-    color: '#c0cfe0',
+    color: '#334155',
     fontSize: '0.82rem',
     marginTop: 4,
     marginBottom: 4,
@@ -357,14 +371,14 @@ const styles = {
 
 const sStyles = {
   sectionTitle: {
-    color: '#93c5fd',
-    fontSize: '0.8rem',
-    fontWeight: 700,
-    letterSpacing: '0.06em',
+    color: '#0f172a',
+    fontSize: '0.82rem',
+    fontWeight: 800,
+    letterSpacing: '0.04em',
     textTransform: 'uppercase',
     marginBottom: 10,
     paddingBottom: 6,
-    borderBottom: '1px solid #1e2d4a',
+    borderBottom: '1px solid #f1f5f9',
   },
   sectionBody: {
     paddingLeft: 4,
@@ -377,19 +391,20 @@ const sStyles = {
     gap: 8,
   },
   rowLabel: {
-    color: '#4b6278',
+    color: '#64748b',
     fontSize: '0.8rem',
+    fontWeight: 700,
     flexShrink: 0,
     minWidth: 120,
   },
   rowValue: {
-    color: '#8ba3bb',
+    color: '#0f172a',
     fontSize: '0.82rem',
     textAlign: 'right',
     wordBreak: 'break-word',
   },
   emptyState: {
-    color: '#2e3f50',
+    color: '#94a3b8',
     fontSize: '0.8rem',
     fontStyle: 'italic',
     margin: 0,
