@@ -92,6 +92,28 @@ export default function VerifyCompanyProfilesPage() {
     }
   };
 
+  // Handler: Download Official Audit Report PDF (For Procurement Officers)
+  const handleDownloadOfficerPdf = async (profileId, compName) => {
+    try {
+      toast.loading('Generating Official Statutory Audit Report PDF...', { id: 'pdf-toast' });
+      const res = await api.get(`/bidder-onboarding/verification-report/pdf/${profileId}`, {
+        responseType: 'blob'
+      });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ComplyGeM_Statutory_Audit_Report_${(compName || 'Bidder').replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('✓ Official Audit Report PDF downloaded successfully!', { id: 'pdf-toast' });
+    } catch (err) {
+      toast.error('Failed to generate PDF audit report.', { id: 'pdf-toast' });
+    }
+  };
+
   // Filtered profiles
   const filteredProfiles = profiles.filter(p => {
     const compName = (p.company?.legalName || p.fullName || '').toLowerCase();
@@ -372,7 +394,7 @@ export default function VerifyCompanyProfilesPage() {
                         <th>Company & Signatory</th>
                         <th>Company PAN</th>
                         <th>GSTIN</th>
-                        <th>Uploaded Docs</th>
+                        <th>Compliance Match Rate</th>
                         <th>Verification Status</th>
                         <th style={{ textAlign: 'right' }}>Actions</th>
                       </tr>
@@ -381,10 +403,16 @@ export default function VerifyCompanyProfilesPage() {
                       {filteredProfiles.map((p) => {
                         const isApproved = p.lifecycleStatus === 'APPROVED_TO_BID';
                         const isReview = p.lifecycleStatus === 'REVIEW_REQUIRED';
+                        const matchPct = p.autoVerificationReport?.complianceMatchPercentage !== undefined
+                          ? p.autoVerificationReport.complianceMatchPercentage
+                          : (isApproved ? 100 : 0);
+                        const mismatchesCount = p.autoVerificationReport?.mismatchesCount || 0;
+                        const compName = p.company?.legalName || p.fullName || 'Registered Enterprise';
+
                         return (
                           <tr key={p.id}>
                             <td>
-                              <div style={{ fontWeight: 800, color: '#0f172a' }}>{p.company?.legalName || p.fullName || 'Registered Enterprise'}</div>
+                              <div style={{ fontWeight: 800, color: '#0f172a' }}>{compName}</div>
                               <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Signatory: {p.fullName || 'N/A'} • {p.email || 'N/A'}</div>
                             </td>
                             <td style={{ fontFamily: 'monospace', fontWeight: 800, color: '#2563eb' }}>
@@ -394,8 +422,16 @@ export default function VerifyCompanyProfilesPage() {
                               {p.company?.gstin || '—'}
                             </td>
                             <td>
-                              <span style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: 8, fontSize: '0.74rem', color: '#334155', fontWeight: 700 }}>
-                                📁 {p.documents?.length || 0} Files
+                              <span style={{
+                                padding: '3px 10px',
+                                borderRadius: 12,
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                background: matchPct === 100 ? '#ecfdf5' : matchPct >= 50 ? '#fffbeb' : '#fef2f2',
+                                color: matchPct === 100 ? '#059669' : matchPct >= 50 ? '#d97706' : '#dc2626',
+                                border: `1px solid ${matchPct === 100 ? '#a7f3d0' : matchPct >= 50 ? '#fde68a' : '#fecaca'}`
+                              }}>
+                                {matchPct}% Match {mismatchesCount > 0 ? `(${mismatchesCount} Flags)` : ''}
                               </span>
                             </td>
                             <td>
@@ -412,18 +448,28 @@ export default function VerifyCompanyProfilesPage() {
                               </span>
                             </td>
                             <td style={{ textAlign: 'right' }}>
-                              <button
-                                className="btn-primary"
-                                style={{ padding: '6px 14px', fontSize: '0.76rem', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}
-                                onClick={() => {
-                                  setSelectedProfile(p);
-                                  if (p.company?.panNumber) {
-                                    setSearchPan(p.company.panNumber);
-                                  }
-                                }}
-                              >
-                                Inspect & Verify 🔍
-                              </button>
+                              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                                <button
+                                  className="btn-secondary"
+                                  style={{ padding: '6px 10px', fontSize: '0.74rem', fontWeight: 700 }}
+                                  title="Download Official Audit Report PDF"
+                                  onClick={() => handleDownloadOfficerPdf(p.id, compName)}
+                                >
+                                  📥 PDF
+                                </button>
+                                <button
+                                  className="btn-primary"
+                                  style={{ padding: '6px 14px', fontSize: '0.76rem', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}
+                                  onClick={() => {
+                                    setSelectedProfile(p);
+                                    if (p.company?.panNumber) {
+                                      setSearchPan(p.company.panNumber);
+                                    }
+                                  }}
+                                >
+                                  Inspect & Verify 🔍
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -439,22 +485,46 @@ export default function VerifyCompanyProfilesPage() {
         {/* ─── DETAILED COMPANY INSPECTION MODAL ─── */}
         {selectedProfile && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 16, width: '100%', maxWidth: 900, maxHeight: '90vh', overflowY: 'auto', padding: 28, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 16, width: '100%', maxWidth: 940, maxHeight: '90vh', overflowY: 'auto', padding: 28, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
               
               {/* Modal Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, borderBottom: '1px solid #e2e8f0', paddingBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 800, letterSpacing: '0.05em' }}>OFFICER VERIFICATION INSPECTION</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 800, letterSpacing: '0.05em' }}>OFFICER VERIFICATION INSPECTION</span>
+                    {selectedProfile.autoVerificationReport?.complianceMatchPercentage !== undefined && (
+                      <span style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: 10,
+                        background: selectedProfile.autoVerificationReport.complianceMatchPercentage === 100 ? '#ecfdf5' : '#fef2f2',
+                        color: selectedProfile.autoVerificationReport.complianceMatchPercentage === 100 ? '#059669' : '#dc2626',
+                        border: `1px solid ${selectedProfile.autoVerificationReport.complianceMatchPercentage === 100 ? '#a7f3d0' : '#fecaca'}`
+                      }}>
+                        {selectedProfile.autoVerificationReport.complianceMatchPercentage}% Compliance Match Rate
+                      </span>
+                    )}
+                  </div>
                   <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', margin: '4px 0 0' }}>
                     {selectedProfile.company?.legalName || selectedProfile.fullName || 'Company Profile'}
                   </h2>
                 </div>
-                <button
-                  style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: '1.1rem', fontWeight: 800 }}
-                  onClick={() => setSelectedProfile(null)}
-                >
-                  ✕
-                </button>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <button
+                    className="btn-secondary"
+                    style={{ padding: '7px 14px', fontSize: '0.78rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}
+                    onClick={() => handleDownloadOfficerPdf(selectedProfile.id, selectedProfile.company?.legalName || selectedProfile.fullName)}
+                  >
+                    📥 Download Audit Report (PDF)
+                  </button>
+                  <button
+                    style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: '1.1rem', fontWeight: 800 }}
+                    onClick={() => setSelectedProfile(null)}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               {/* 1. Submitted Company Data */}

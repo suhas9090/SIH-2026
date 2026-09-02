@@ -935,7 +935,7 @@ router.get('/auto-verification-report', authenticate, authorize('BIDDER', 'ADMIN
 // ─────────────────────────────────────────────────────────────────────────────
 const { generateBidderVerificationPdf } = require('../services/report/bidderOnboardingPdfService');
 
-router.get('/verification-report/pdf', authenticate, authorize('BIDDER', 'ADMIN', 'PROCUREMENT_OFFICER'), async (req, res) => {
+router.get('/verification-report/pdf', authenticate, authorize('ADMIN', 'PROCUREMENT_OFFICER'), async (req, res) => {
   try {
     const profile = await resolveProfile(req.user.id);
     const company = profile.company || memoryStore.companies.get(profile.id) || {};
@@ -959,6 +959,38 @@ router.get('/verification-report/pdf', authenticate, authorize('BIDDER', 'ADMIN'
   } catch (err) {
     logger.error('PDF generation error:', err);
     res.status(500).json({ error: 'Failed to generate PDF verification audit report.', details: err.message });
+  }
+});
+
+router.get('/verification-report/pdf/:profileId', authenticate, authorize('PROCUREMENT_OFFICER', 'REVIEWER', 'ADMIN'), async (req, res) => {
+  try {
+    const profileId = req.params.profileId;
+    let profile = memoryStore.profiles.get(profileId) || Array.from(memoryStore.profiles.values()).find(p => p.id === profileId || p.userId === profileId);
+    if (!profile) {
+      return res.status(404).json({ error: 'Bidder profile not found.' });
+    }
+
+    const company = memoryStore.companies.get(profile.id) || profile.company || {};
+    const docs = Array.from(memoryStore.documents.values()).filter(d => d.bidderProfileId === profile.id);
+    const autoReport = profile.autoVerificationReport || {};
+
+    const pdfBuffer = await generateBidderVerificationPdf({
+      profile,
+      company,
+      documents: docs,
+      autoReport
+    });
+
+    const safeName = (company.panNumber || profile.fullName || 'Bidder').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `ComplyGeM_Officer_Audit_Report_${safeName}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.end(pdfBuffer);
+  } catch (err) {
+    logger.error('Officer PDF generation error:', err);
+    res.status(500).json({ error: 'Failed to generate PDF audit report for officer.', details: err.message });
   }
 });
 

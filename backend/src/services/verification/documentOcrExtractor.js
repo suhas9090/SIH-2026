@@ -18,7 +18,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const pdfParse = require('pdf-parse');
 const {
   SYNTHETIC_PAN_RECORDS,
   SYNTHETIC_GST_RECORDS,
@@ -31,6 +30,23 @@ const {
   findMcaRecord,
   findMcaByPan
 } = require('../../../../Govt_Data');
+
+let pdfParserFn = null;
+try {
+  const pkg = require('pdf-parse');
+  if (typeof pkg === 'function') {
+    pdfParserFn = pkg;
+  } else if (pkg.PDFParse) {
+    pdfParserFn = async (buf) => {
+      const p = new pkg.PDFParse({ data: buf });
+      await p.load();
+      const text = await p.getText();
+      return { text: typeof text === 'string' ? text : JSON.stringify(text) };
+    };
+  }
+} catch (e) {
+  // pdf-parse optional fallback
+}
 
 // Regex patterns
 const PAN_REGEX = /\b[A-Z]{5}[0-9]{4}[A-Z]\b/g;
@@ -52,27 +68,28 @@ function normaliseText(str = '') {
 async function extractTextFromFile(filePath) {
   if (!filePath || !fs.existsSync(filePath)) return '';
 
+  let extracted = '';
   try {
+    const dataBuffer = fs.readFileSync(filePath);
     const ext = path.extname(filePath).toLowerCase();
-    if (ext === '.pdf') {
-      const dataBuffer = fs.readFileSync(filePath);
-      const parsed = await pdfParse(dataBuffer);
-      return parsed.text || '';
+
+    if (ext === '.pdf' && pdfParserFn) {
+      try {
+        const parsed = await pdfParserFn(dataBuffer);
+        extracted = parsed.text || '';
+      } catch (err) {
+        // Fallback to binary buffer string scanning
+      }
     }
 
-    // For text, markdown, or json files
-    if (['.txt', '.json', '.csv', '.xml'].includes(ext)) {
-      return fs.readFileSync(filePath, 'utf8');
+    if (!extracted) {
+      // Buffer string scanning for ASCII and UTF-8 sequences
+      extracted = dataBuffer.toString('utf8') + ' ' + dataBuffer.toString('latin1');
     }
-
-    // For image or binary files, scan file buffer for ascii / utf-8 text sequences
-    const buf = fs.readFileSync(filePath);
-    const textChunk = buf.toString('latin1');
-    return textChunk;
   } catch (err) {
     console.warn(`[OCR-EXTRACTOR] Warning parsing file ${filePath}:`, err.message);
-    return '';
   }
+  return extracted;
 }
 
 /**

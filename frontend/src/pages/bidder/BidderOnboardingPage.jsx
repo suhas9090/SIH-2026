@@ -1875,11 +1875,8 @@ export default function BidderOnboardingPage() {
                 )}
 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={handleDownloadPdfReport} disabled={downloadingPdf}>
-                    📥 {downloadingPdf ? 'Generating PDF...' : 'Download Official Audit Report (PDF)'}
-                  </button>
-                  <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#10b981,#059669)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={() => navigate('/bidder/dashboard')}>
-                    🏠 Go to Dashboard →
+                  <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#10b981,#059669)', padding: '12px 28px', fontSize: '0.9rem', fontWeight: 800 }} onClick={() => navigate('/bidder/dashboard')}>
+                    🏠 Go to Bidder Dashboard →
                   </button>
                 </div>
 
@@ -1901,14 +1898,19 @@ export default function BidderOnboardingPage() {
                   Under Review by Procurement Officer
                 </h2>
                 <p style={{ color: '#475569', maxWidth: 540, margin: '0 auto 24px', lineHeight: 1.7, fontSize: '0.92rem' }}>
-                  The AI automated inspection detected discrepancies between your uploaded documents, entered identity numbers, and Master Government Database records. Your application has been routed to the Procurement Officer for manual profile inspection.
+                  The AI automated inspection detected discrepancies between your uploaded documents, entered identity numbers, and Master Government Database records. Your application and detailed discrepancy report have been routed to the Procurement Officer for review.
                 </p>
 
                 {/* 3-Way Triangulation Comparison Table with Red Mismatches */}
                 {autoVerify.report?.triangulationComparison && (
                   <div style={{ textAlign: 'left', marginBottom: 28, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20 }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#dc2626', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      ⚠️ Cross-Source Verification & Discrepancy Breakdown
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        ⚠️ Cross-Source Verification & Discrepancy Breakdown
+                      </div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, background: '#fef2f2', color: '#dc2626', padding: '3px 10px', borderRadius: 12, border: '1px solid #fecaca' }}>
+                        Match Rate: {autoVerify.report.complianceMatchPercentage || 0}%
+                      </span>
                     </div>
                     <div className="table-container" style={{ border: 'none', background: '#ffffff' }}>
                       <table>
@@ -1954,11 +1956,8 @@ export default function BidderOnboardingPage() {
                 )}
 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={handleDownloadPdfReport} disabled={downloadingPdf}>
-                    📥 {downloadingPdf ? 'Generating PDF...' : 'Download Submission Audit Report (PDF)'}
-                  </button>
-                  <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#10b981,#059669)', padding: '12px 24px', fontSize: '0.88rem' }} onClick={() => navigate('/bidder/dashboard')}>
-                    🏠 Go to Dashboard →
+                  <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#10b981,#059669)', padding: '12px 28px', fontSize: '0.9rem', fontWeight: 800 }} onClick={() => navigate('/bidder/dashboard')}>
+                    🏠 Go to Bidder Dashboard →
                   </button>
                 </div>
 
