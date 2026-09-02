@@ -308,7 +308,7 @@ const ComplianceDashboard = ({ profile, navigate }) => {
 // =============================================================================
 // 4. 🏢 BIDDER / VENDOR DASHBOARD
 // =============================================================================
-const BidderDashboard = ({ profile, bidderOnboardingProfile, tenders, navigate }) => {
+const BidderDashboard = ({ profile, bidderOnboardingProfile, myBidsCount = 0, tenders, navigate }) => {
   const isRejected = bidderOnboardingProfile?.lifecycleStatus === 'REJECTED';
   const isUnderReview = ['REVIEW_REQUIRED', 'UNDER_OFFICER_REVIEW'].includes(bidderOnboardingProfile?.lifecycleStatus);
 
@@ -500,7 +500,7 @@ const BidderDashboard = ({ profile, bidderOnboardingProfile, tenders, navigate }
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
             { label: 'Available Tenders', value: tenders.length || 0, color: '#2563eb', onClick: () => navigate('/bidder/tenders') },
-            { label: 'My Active Bids', value: 0, color: '#7c3aed', onClick: () => navigate('/bidder/my-bids') },
+            { label: 'My Active Bids', value: myBidsCount, color: '#7c3aed', onClick: () => navigate('/bidder/my-bids') },
             {
               label: 'Verification Status',
               value: isRejected ? 'Rejected ❌' : isUnderReview ? 'In Review ⏳' : 'Verified ✓',
@@ -592,6 +592,7 @@ export default function DashboardPage() {
 
   const [tenders, setTenders] = useState([]);
   const [bidderOnboardingProfile, setBidderOnboardingProfile] = useState(null);
+  const [myBidsCount, setMyBidsCount] = useState(0);
   const [stats, setStats] = useState({
     totalTenders: 0,
     activeTenders: 0,
@@ -618,11 +619,18 @@ export default function DashboardPage() {
         setStats((prev) => ({ ...prev, ...statsRes.data }));
       }
 
-      // Fetch bidder onboarding profile if role is BIDDER
+      // Fetch bidder onboarding profile and bids count if role is BIDDER
       if (role === 'BIDDER') {
-        const profRes = await api.get('/bidder-onboarding/profile').catch(() => null);
+        const [profRes, bidsRes] = await Promise.all([
+          api.get('/bidder-onboarding/profile').catch(() => null),
+          api.get('/bidders').catch(() => null)
+        ]);
         if (profRes?.data) {
           setBidderOnboardingProfile(profRes.data);
+        }
+        if (bidsRes?.data) {
+          const arr = Array.isArray(bidsRes.data) ? bidsRes.data : (bidsRes.data?.bidders || []);
+          setMyBidsCount(arr.length);
         }
       }
     } catch (err) {
@@ -639,7 +647,7 @@ export default function DashboardPage() {
       {role === 'ADMIN' && <AdminDashboard profile={profile} stats={stats} navigate={navigate} />}
       {role === 'PROCUREMENT_OFFICER' && <OfficerDashboard profile={profile} tenders={tenders} stats={stats} navigate={navigate} />}
       {role === 'REVIEWER' && <ComplianceDashboard profile={profile} navigate={navigate} />}
-      {role === 'BIDDER' && <BidderDashboard profile={profile} bidderOnboardingProfile={bidderOnboardingProfile} tenders={tenders} navigate={navigate} />}
+      {role === 'BIDDER' && <BidderDashboard profile={profile} bidderOnboardingProfile={bidderOnboardingProfile} myBidsCount={myBidsCount} tenders={tenders} navigate={navigate} />}
       {role === 'AUDITOR' && <AuditorDashboard profile={profile} navigate={navigate} />}
     </AppLayout>
   );
