@@ -123,28 +123,14 @@ const AdminDashboard = ({ profile, stats, navigate }) => {
 const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: 0 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '1.2rem' }}>🏛️</span>
             <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#0f172a' }}>
               Welcome, {profile?.name?.split(' ')[0] || 'Procurement Officer'}
             </h1>
           </div>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
-            Procurement Management & Compliance Verification — {profile?.organization || 'Central Procurement Division'}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#059669,#047857)' }} onClick={() => navigate('/procurement/verify-company-profiles')}>
-            🔍 Verify Company Profiles
-          </button>
-          <button className="btn-secondary" onClick={() => navigate('/reports')}>
-            📊 Compliance Reports
-          </button>
-          <button className="btn-primary" onClick={() => navigate('/tenders/create')}>
-            + Create New Tender
-          </button>
         </div>
       </div>
 

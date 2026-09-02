@@ -24,8 +24,6 @@ const ROLE_NAV_ITEMS = {
     { path: '/bids',           label: 'Bids Received' },
     { path: '/risk-alerts',    label: 'Risk & Alerts' },
     { path: '/reports',        label: 'Compliance Reports' },
-    { path: '/audit',          label: 'Audit Trail' },
-    { path: '/notifications',  label: 'Notifications' },
     { path: '/profile',        label: 'Officer Profile' },
   ],
   REVIEWER: [
