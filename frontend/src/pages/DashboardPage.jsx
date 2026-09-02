@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AppLayout } from '../components/Sidebar';
-import { tenderAPI, complianceAPI } from '../services/api';
+import api, { tenderAPI, complianceAPI } from '../services/api';
 
 const STATUS_COLOR = {
   ACTIVE: '#10b981',
@@ -322,7 +322,10 @@ const ComplianceDashboard = ({ profile, navigate }) => {
 // =============================================================================
 // 4. 🏢 BIDDER / VENDOR DASHBOARD
 // =============================================================================
-const BidderDashboard = ({ profile, tenders, navigate }) => {
+const BidderDashboard = ({ profile, bidderOnboardingProfile, tenders, navigate }) => {
+  const isRejected = bidderOnboardingProfile?.lifecycleStatus === 'REJECTED';
+  const isUnderReview = ['REVIEW_REQUIRED', 'UNDER_OFFICER_REVIEW'].includes(bidderOnboardingProfile?.lifecycleStatus);
+
   return (
     <div>
       <div className="page-header">
@@ -330,27 +333,197 @@ const BidderDashboard = ({ profile, tenders, navigate }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: '1.2rem' }}>🏢</span>
             <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#0f172a' }}>
-              Supplier Dashboard — {profile?.organization || 'My Organization'}
+              Supplier Dashboard — {profile?.organization || bidderOnboardingProfile?.company?.legalName || 'My Organization'}
             </h1>
           </div>
           <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
             Find government procurement opportunities, check eligibility, and submit bids
           </p>
         </div>
-        <button className="btn-primary" onClick={() => navigate('/bidder/tenders')}>
-          🔎 Browse Open Tenders
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-secondary" onClick={() => navigate('/bidder/onboarding')}>
+            📋 Verification Dossier
+          </button>
+          <button className="btn-primary" onClick={() => navigate('/bidder/tenders')}>
+            🔎 Browse Open Tenders
+          </button>
+        </div>
       </div>
 
       <div style={{ padding: '24px 32px' }}>
+        {/* ── HIGH PRIORITY: OFFICER REJECTION ALERT ── */}
+        {isRejected && (
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '2px solid #f87171',
+              borderRadius: 14,
+              padding: 24,
+              marginBottom: 24,
+              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.08)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 16 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: '#fee2e2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  flexShrink: 0
+                }}
+              >
+                ❌
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.72rem', color: '#b91c1c', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  STATUTORY VERIFICATION STATUS: REJECTED BY OFFICER
+                </div>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#991b1b', margin: '2px 0 6px' }}>
+                  Company Profile Verification Rejected
+                </h2>
+                <p style={{ color: '#7f1d1d', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>
+                  Your statutory company profile verification was reviewed and rejected by the designated Government Procurement Officer due to the following reason:
+                </p>
+              </div>
+            </div>
+
+            {/* Rejection Notes Box */}
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #fca5a5',
+                borderRadius: 10,
+                padding: '14px 18px',
+                marginBottom: 18,
+                fontSize: '0.88rem',
+                color: '#991b1b',
+                fontWeight: 700
+              }}
+            >
+              <span style={{ color: '#b91c1c', fontWeight: 900, fontSize: '0.74rem', display: 'block', marginBottom: 4, textTransform: 'uppercase' }}>
+                Officer Audit Finding / Reason for Rejection:
+              </span>
+              "{bidderOnboardingProfile.rejectionReason || bidderOnboardingProfile.officerNotes || 'Discrepancies identified between uploaded certificates and registered government database records.'}"
+            </div>
+
+            {/* Officer Contact Information Card */}
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #fecaca',
+                borderRadius: 10,
+                padding: '16px 20px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: 14,
+                marginBottom: 18
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800 }}>REVIEWING OFFICER</div>
+                <div style={{ fontSize: '0.88rem', color: '#0f172a', fontWeight: 800, marginTop: 2 }}>
+                  {bidderOnboardingProfile.reviewedByOfficer || 'Senior Procurement Officer'}
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                  {bidderOnboardingProfile.officerDesignation || 'Procurement Verification Officer'}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800 }}>OFFICIAL EMAIL</div>
+                <a
+                  href={`mailto:${bidderOnboardingProfile.officerEmail || 'officer@complygem.gov.in'}`}
+                  style={{ fontSize: '0.88rem', color: '#2563eb', fontWeight: 800, marginTop: 2, display: 'inline-block', textDecoration: 'none' }}
+                >
+                  ✉️ {bidderOnboardingProfile.officerEmail || 'officer@complygem.gov.in'}
+                </a>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800 }}>CONTACT PHONE</div>
+                <a
+                  href={`tel:${bidderOnboardingProfile.officerPhone || '+91 80 2345 6789'}`}
+                  style={{ fontSize: '0.88rem', color: '#059669', fontWeight: 800, marginTop: 2, display: 'inline-block', textDecoration: 'none' }}
+                >
+                  📞 {bidderOnboardingProfile.officerPhone || '+91 80 2345 6789'}
+                </a>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800 }}>MINISTRY / ORGANIZATION</div>
+                <div style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700, marginTop: 2 }}>
+                  🏛️ {bidderOnboardingProfile.officerOrganization || 'Ministry of Commerce & Industry / GeM'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button
+                className="btn-primary"
+                style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', padding: '10px 22px', fontSize: '0.85rem' }}
+                onClick={() => navigate('/bidder/onboarding')}
+              >
+                📁 Update Documents & Re-submit Profile →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── PENDING OFFICER REVIEW BANNER ── */}
+        {isUnderReview && (
+          <div
+            style={{
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: 12,
+              padding: '16px 20px',
+              marginBottom: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 12
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: '1.6rem' }}>⏳</span>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#b45309' }}>
+                  Company Profile Under Procurement Officer Review
+                </div>
+                <div style={{ fontSize: '0.78rem', color: '#92400e' }}>
+                  Your statutory verification dossier is currently queued for manual officer evaluation.
+                </div>
+              </div>
+            </div>
+            <button
+              className="btn-secondary"
+              style={{ fontSize: '0.78rem', padding: '6px 14px' }}
+              onClick={() => navigate('/bidder/onboarding')}
+            >
+              View Verification Status →
+            </button>
+          </div>
+        )}
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
             { label: 'Available Tenders', value: tenders.length || 0, color: '#2563eb', onClick: () => navigate('/bidder/tenders') },
             { label: 'My Active Bids', value: 0, color: '#7c3aed', onClick: () => navigate('/bidder/my-bids') },
-            { label: 'Company Documents', value: 'Verified', color: '#059669', onClick: () => navigate('/bidder/profile') },
+            {
+              label: 'Verification Status',
+              value: isRejected ? 'Rejected ❌' : isUnderReview ? 'In Review ⏳' : 'Verified ✓',
+              color: isRejected ? '#dc2626' : isUnderReview ? '#d97706' : '#059669',
+              onClick: () => navigate('/bidder/onboarding')
+            },
           ].map((c) => (
             <div key={c.label} className="card" style={{ padding: 20, borderLeft: `4px solid ${c.color}`, cursor: 'pointer' }} onClick={c.onClick}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: '#0f172a' }}>{c.value}</div>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.6rem', color: '#0f172a' }}>{c.value}</div>
               <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#475569', marginTop: 2 }}>{c.label}</div>
             </div>
           ))}
@@ -432,6 +605,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   const [tenders, setTenders] = useState([]);
+  const [bidderOnboardingProfile, setBidderOnboardingProfile] = useState(null);
   const [stats, setStats] = useState({
     totalTenders: 0,
     activeTenders: 0,
@@ -457,10 +631,18 @@ export default function DashboardPage() {
       if (statsRes.data) {
         setStats((prev) => ({ ...prev, ...statsRes.data }));
       }
+
+      // Fetch bidder onboarding profile if role is BIDDER
+      if (role === 'BIDDER') {
+        const profRes = await api.get('/bidder-onboarding/profile').catch(() => null);
+        if (profRes?.data) {
+          setBidderOnboardingProfile(profRes.data);
+        }
+      }
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);
     }
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     loadDashboardData();
@@ -471,7 +653,7 @@ export default function DashboardPage() {
       {role === 'ADMIN' && <AdminDashboard profile={profile} stats={stats} navigate={navigate} />}
       {role === 'PROCUREMENT_OFFICER' && <OfficerDashboard profile={profile} tenders={tenders} stats={stats} navigate={navigate} />}
       {role === 'REVIEWER' && <ComplianceDashboard profile={profile} navigate={navigate} />}
-      {role === 'BIDDER' && <BidderDashboard profile={profile} tenders={tenders} navigate={navigate} />}
+      {role === 'BIDDER' && <BidderDashboard profile={profile} bidderOnboardingProfile={bidderOnboardingProfile} tenders={tenders} navigate={navigate} />}
       {role === 'AUDITOR' && <AuditorDashboard profile={profile} navigate={navigate} />}
     </AppLayout>
   );

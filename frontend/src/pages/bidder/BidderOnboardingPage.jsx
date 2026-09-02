@@ -893,7 +893,66 @@ export default function BidderOnboardingPage() {
           </p>
         </div>
 
-        {/* Correction banner */}
+        {/* Rejection / Correction banner */}
+        {lifecycleStatus === 'REJECTED' && (
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '2px solid #f87171',
+              borderRadius: 14,
+              padding: 20,
+              marginBottom: 28,
+              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.08)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+              <span style={{ fontSize: '1.6rem' }}>❌</span>
+              <div>
+                <div style={{ fontSize: '0.72rem', color: '#b91c1c', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  STATUTORY VERIFICATION STATUS: REJECTED BY PROCUREMENT OFFICER
+                </div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#991b1b', margin: '2px 0 4px' }}>
+                  Company Profile Verification Rejected
+                </h3>
+                <p style={{ color: '#7f1d1d', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
+                  Your company profile was reviewed and rejected by the designated Government Procurement Officer due to the following reason:
+                </p>
+              </div>
+            </div>
+
+            <div style={{ background: '#ffffff', border: '1px solid #fca5a5', borderRadius: 8, padding: '12px 16px', marginBottom: 14, fontSize: '0.86rem', color: '#991b1b', fontWeight: 700 }}>
+              <span style={{ color: '#b91c1c', fontWeight: 900, fontSize: '0.72rem', display: 'block', marginBottom: 4, textTransform: 'uppercase' }}>
+                Officer Rejection Reason / Audit Notes:
+              </span>
+              "{profile.rejectionReason || profile.officerNotes || 'Statutory discrepancies flagged between uploaded documents and government master databases.'}"
+            </div>
+
+            <div style={{ background: '#ffffff', border: '1px solid #fecaca', borderRadius: 8, padding: '12px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 800 }}>REVIEWING OFFICER</div>
+                <div style={{ fontSize: '0.84rem', color: '#0f172a', fontWeight: 800 }}>{profile.reviewedByOfficer || 'Senior Procurement Officer'}</div>
+                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{profile.officerDesignation || 'Procurement Verification Officer'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 800 }}>OFFICIAL EMAIL</div>
+                <a href={`mailto:${profile.officerEmail || 'officer@complygem.gov.in'}`} style={{ fontSize: '0.84rem', color: '#2563eb', fontWeight: 800, textDecoration: 'none' }}>
+                  ✉️ {profile.officerEmail || 'officer@complygem.gov.in'}
+                </a>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 800 }}>CONTACT PHONE</div>
+                <a href={`tel:${profile.officerPhone || '+91 80 2345 6789'}`} style={{ fontSize: '0.84rem', color: '#059669', fontWeight: 800, textDecoration: 'none' }}>
+                  📞 {profile.officerPhone || '+91 80 2345 6789'}
+                </a>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 800 }}>MINISTRY / ORGANIZATION</div>
+                <div style={{ fontSize: '0.8rem', color: '#334155', fontWeight: 700 }}>🏛️ {profile.officerOrganization || 'Ministry of Commerce & Industry / GeM'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {lifecycleStatus === 'CORRECTION_REQUIRED' && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '14px 18px', marginBottom: 24 }}>
             <div style={{ fontWeight: 800, color: '#dc2626', marginBottom: 4 }}>⚠️ Correction Required</div>

@@ -1039,32 +1039,65 @@ router.post('/officer-decision', authenticate, authorize('PROCUREMENT_OFFICER', 
       return res.status(400).json({ error: 'profileId and decision are required.' });
     }
 
-    const prof = memoryStore.profiles.get(profileId);
-    if (!prof) return res.status(404).json({ error: 'Bidder profile not found.' });
+    // Lookup profile by profileId, id, or userId
+    let prof = memoryStore.profiles.get(profileId) || Array.from(memoryStore.profiles.values()).find(p => p.id === profileId || p.userId === profileId);
+    
+    // Check if profileId matches a company record
+    if (!prof) {
+      const comp = memoryStore.companies.get(profileId) || Array.from(memoryStore.companies.values()).find(c => c.id === profileId || c.bidderProfileId === profileId);
+      if (comp) {
+        prof = Array.from(memoryStore.profiles.values()).find(p => p.id === comp.bidderProfileId || p.userId === comp.bidderProfileId);
+      }
+    }
+
+    if (!prof) {
+      return res.status(404).json({ error: 'Bidder profile not found.' });
+    }
+
+    const officerName = req.user.name || 'Official Procurement Officer';
+    const officerEmail = req.user.email || 'officer@complygem.gov.in';
+    const officerPhone = req.user.phone || req.user.mobileNumber || '+91 80 2345 6789';
+    const officerDesignation = req.user.designation || 'Senior Procurement Officer';
+    const officerOrg = req.user.organization || 'Ministry of Commerce & Industry / GeM';
 
     const newStatus = decision === 'APPROVE' ? 'APPROVED_TO_BID' : decision === 'REJECT' ? 'REJECTED' : 'REVIEW_REQUIRED';
 
-    memoryStore.saveProfile(prof.userId, {
+    const updatedProfile = memoryStore.saveProfile(prof.userId, {
       lifecycleStatus: newStatus,
-      reviewedByOfficer: req.user.name || req.user.email,
+      approvalStatus: newStatus === 'APPROVED_TO_BID' ? 'APPROVED' : 'REJECTED',
+      reviewedByOfficer: officerName,
+      officerEmail,
+      officerPhone,
+      officerDesignation,
+      officerOrganization: officerOrg,
       reviewedAt: new Date(),
-      officerNotes: notes || ''
+      officerNotes: notes || '',
+      rejectionReason: decision === 'REJECT' ? (notes || 'Discrepancies flagged during statutory cross-source verification.') : null
     });
 
     memoryStore.addAuditLog(
-      profileId,
+      prof.id,
       decision === 'APPROVE' ? 'OFFICER_APPROVED' : 'OFFICER_REJECTED',
       'BIDDER_PROFILE',
-      profileId,
-      { decision, notes, officer: req.user.email },
+      prof.id,
+      {
+        decision,
+        notes,
+        officer: officerName,
+        officerEmail,
+        officerPhone,
+        officerDesignation,
+        officerOrganization: officerOrg
+      },
       req.user.id,
       req.user.role
     );
 
     res.json({
       success: true,
-      message: `Profile marked as ${newStatus}.`,
-      lifecycleStatus: newStatus
+      message: `Company Profile successfully marked as ${newStatus}.`,
+      lifecycleStatus: newStatus,
+      profile: updatedProfile
     });
   } catch (err) {
     logger.error('officer-decision error:', err);
