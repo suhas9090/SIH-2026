@@ -38,6 +38,7 @@ import BidderVerificationStatusPage from './pages/bidder/BidderVerificationStatu
 
 // Verification Officer Pages
 import VerificationQueuePage from './pages/reviewer/VerificationQueuePage';
+import BidVerificationPage from './pages/officer/BidVerificationPage';
 import BidderDossierPage from './pages/reviewer/BidderDossierPage';
 import VerifyCompanyProfilesPage from './pages/officer/VerifyCompanyProfilesPage';
 
@@ -162,6 +163,7 @@ const AppRoutes = () => {
       <Route path="/reviewer/verification-queue" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN', 'PROCUREMENT_OFFICER']}><VerificationQueuePage /></ProtectedRoute>} />
       <Route path="/reviewer/bidder/:profileId" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN', 'PROCUREMENT_OFFICER']}><BidderDossierPage /></ProtectedRoute>} />
       <Route path="/procurement/verify-company-profiles" element={<ProtectedRoute roles={['PROCUREMENT_OFFICER', 'ADMIN', 'REVIEWER']}><VerifyCompanyProfilesPage /></ProtectedRoute>} />
+      <Route path="/verify-bid/:bidderId" element={<ProtectedRoute roles={['ADMIN', 'PROCUREMENT_OFFICER', 'REVIEWER', 'AUDITOR']}><BidVerificationPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

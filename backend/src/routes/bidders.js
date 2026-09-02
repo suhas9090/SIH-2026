@@ -567,3 +567,4 @@ router.post('/:id/compliance/:itemId/review', authenticate, authorize('ADMIN', '
 });
 
 module.exports = router;
+module.exports.IN_MEMORY_BIDDERS = IN_MEMORY_BIDDERS;

@@ -93,6 +93,8 @@ export const complianceAPI = {
   getBidderCompliance: (bidderId) => api.get(`/compliance/bidder/${bidderId}`),
   reviewItem: (itemId, data) => api.post(`/compliance/review/${itemId}`, data),
   getDashboardStats: () => api.get('/compliance/dashboard-stats'),
+  verifySession: (bidderId) => api.post(`/compliance/verify-session/${bidderId}`),
+  getSession: (bidderId) => api.get(`/compliance/verify-session/${bidderId}`),
 };
 
 export const reportAPI = {
