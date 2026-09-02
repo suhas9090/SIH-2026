@@ -1003,12 +1003,14 @@ router.get('/all-company-profiles', authenticate, authorize('PROCUREMENT_OFFICER
     const allProfiles = Array.from(memoryStore.profiles.values()).map(p => {
       const comp = memoryStore.companies.get(p.id) || p.company || {};
       const docs = Array.from(memoryStore.documents.values()).filter(d => d.bidderProfileId === p.id);
+      const user = memoryStore.getUserById(p.userId) || (p.email ? memoryStore.getUserByEmail(p.email) : null) || {};
+      const createdDate = p.createdAt || user.createdAt || p.submittedForVerificationAt || p.updatedAt || new Date();
       return {
         id: p.id,
         userId: p.userId,
-        fullName: p.fullName,
-        email: p.email,
-        mobileNumber: p.mobileNumber,
+        fullName: p.fullName || user.name,
+        email: p.email || user.email,
+        mobileNumber: p.mobileNumber || user.phone,
         residentialAddress: p.residentialAddress,
         aadhaarNumber: p.aadhaarRefId || p.aadhaarNumber,
         panNumber: p.panNumber,
@@ -1017,8 +1019,17 @@ router.get('/all-company-profiles', authenticate, authorize('PROCUREMENT_OFFICER
         autoVerifiedAt: p.autoVerifiedAt || null,
         company: comp,
         documents: docs,
-        submittedAt: p.submittedForVerificationAt || p.createdAt || new Date()
+        submittedAt: p.submittedForVerificationAt || createdDate,
+        createdAt: createdDate,
+        approvalStatus: p.approvalStatus || (p.lifecycleStatus === 'APPROVED_TO_BID' ? 'APPROVED' : p.lifecycleStatus === 'REJECTED' ? 'REJECTED' : 'PENDING')
       };
+    });
+
+    // Queue order: newly registered companies appear at the top (front line of the queue)
+    allProfiles.sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.submittedAt || 0).getTime();
+      const timeB = new Date(b.createdAt || b.submittedAt || 0).getTime();
+      return timeB - timeA;
     });
 
     res.json(allProfiles);

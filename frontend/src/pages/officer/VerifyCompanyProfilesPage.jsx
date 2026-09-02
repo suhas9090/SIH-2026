@@ -114,18 +114,24 @@ export default function VerifyCompanyProfilesPage() {
     }
   };
 
-  // Filtered profiles
-  const filteredProfiles = profiles.filter(p => {
-    const compName = (p.company?.legalName || p.fullName || '').toLowerCase();
-    const pan = (p.company?.panNumber || p.panNumber || '').toLowerCase();
-    const gstin = (p.company?.gstin || '').toLowerCase();
-    const q = searchTerm.toLowerCase();
+  // Filtered and sorted profiles (newest registrations first / top of queue)
+  const filteredProfiles = profiles
+    .filter(p => {
+      const compName = (p.company?.legalName || p.fullName || '').toLowerCase();
+      const pan = (p.company?.panNumber || p.panNumber || '').toLowerCase();
+      const gstin = (p.company?.gstin || '').toLowerCase();
+      const q = searchTerm.toLowerCase();
 
-    const matchesSearch = compName.includes(q) || pan.includes(q) || gstin.includes(q);
-    const matchesFilter = filterStatus === 'ALL' || p.lifecycleStatus === filterStatus;
+      const matchesSearch = compName.includes(q) || pan.includes(q) || gstin.includes(q);
+      const matchesFilter = filterStatus === 'ALL' || p.lifecycleStatus === filterStatus;
 
-    return matchesSearch && matchesFilter;
-  });
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.submittedAt || 0).getTime();
+      const timeB = new Date(b.createdAt || b.submittedAt || 0).getTime();
+      return timeB - timeA;
+    });
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a' }}>
@@ -355,8 +361,8 @@ export default function VerifyCompanyProfilesPage() {
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
-                {['ALL', 'APPROVED_TO_BID', 'REVIEW_REQUIRED', 'DOCUMENTS_SUBMITTED'].map(status => (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {['ALL', 'APPROVED_TO_BID', 'REVIEW_REQUIRED', 'REJECTED', 'DOCUMENTS_SUBMITTED'].map(status => (
                   <button
                     key={status}
                     style={{
@@ -401,7 +407,16 @@ export default function VerifyCompanyProfilesPage() {
                     </thead>
                     <tbody>
                       {filteredProfiles.map((p) => {
-                        const isApproved = p.lifecycleStatus === 'APPROVED_TO_BID';
+                        const isApproved = p.lifecycleStatus === 'APPROVED_TO_BID' ||
+                                           p.lifecycleStatus === 'VERIFIED' ||
+                                           p.approvalStatus === 'APPROVED' ||
+                                           p.autoVerificationReport?.decision === 'APPROVED_TO_BID';
+
+                        const isRejected = p.lifecycleStatus === 'REJECTED' ||
+                                           p.lifecycleStatus === 'OFFICER_REJECTED' ||
+                                           p.approvalStatus === 'REJECTED' ||
+                                           p.lifecycleStatus === 'CORRECTION_REQUIRED';
+
                         const isReview = p.lifecycleStatus === 'REVIEW_REQUIRED';
                         const matchPct = p.autoVerificationReport?.complianceMatchPercentage !== undefined
                           ? p.autoVerificationReport.complianceMatchPercentage
@@ -440,15 +455,15 @@ export default function VerifyCompanyProfilesPage() {
                                 fontWeight: 800,
                                 padding: '3px 10px',
                                 borderRadius: 12,
-                                background: isApproved ? '#ecfdf5' : isReview ? '#fffbeb' : '#eff6ff',
-                                color: isApproved ? '#059669' : isReview ? '#d97706' : '#2563eb',
-                                border: `1px solid ${isApproved ? '#a7f3d0' : isReview ? '#fde68a' : '#bfdbfe'}`
+                                background: isApproved ? '#ecfdf5' : isRejected ? '#fef2f2' : isReview ? '#fffbeb' : '#eff6ff',
+                                color: isApproved ? '#059669' : isRejected ? '#dc2626' : isReview ? '#d97706' : '#2563eb',
+                                border: `1px solid ${isApproved ? '#a7f3d0' : isRejected ? '#fecaca' : isReview ? '#fde68a' : '#bfdbfe'}`
                               }}>
                                 {p.lifecycleStatus || 'DRAFT'}
                               </span>
                             </td>
                             <td style={{ textAlign: 'right' }}>
-                              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
                                 <button
                                   className="btn-secondary"
                                   style={{ padding: '6px 10px', fontSize: '0.74rem', fontWeight: 700 }}
@@ -457,18 +472,52 @@ export default function VerifyCompanyProfilesPage() {
                                 >
                                   📥 PDF
                                 </button>
-                                <button
-                                  className="btn-primary"
-                                  style={{ padding: '6px 14px', fontSize: '0.76rem', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}
-                                  onClick={() => {
-                                    setSelectedProfile(p);
-                                    if (p.company?.panNumber) {
-                                      setSearchPan(p.company.panNumber);
-                                    }
-                                  }}
-                                >
-                                  Inspect & Verify 🔍
-                                </button>
+                                {isApproved ? (
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    padding: '6px 12px',
+                                    borderRadius: 8,
+                                    fontSize: '0.74rem',
+                                    fontWeight: 800,
+                                    background: '#ecfdf5',
+                                    color: '#059669',
+                                    border: '1px solid #a7f3d0',
+                                    whiteSpace: 'nowrap'
+                                  }}>
+                                    ✓ Approved
+                                  </span>
+                                ) : isRejected ? (
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    padding: '6px 12px',
+                                    borderRadius: 8,
+                                    fontSize: '0.74rem',
+                                    fontWeight: 800,
+                                    background: '#fef2f2',
+                                    color: '#dc2626',
+                                    border: '1px solid #fecaca',
+                                    whiteSpace: 'nowrap'
+                                  }}>
+                                    ✕ Rejected
+                                  </span>
+                                ) : (
+                                  <button
+                                    className="btn-primary"
+                                    style={{ padding: '6px 14px', fontSize: '0.76rem', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', whiteSpace: 'nowrap' }}
+                                    onClick={() => {
+                                      setSelectedProfile(p);
+                                      if (p.company?.panNumber) {
+                                        setSearchPan(p.company.panNumber);
+                                      }
+                                    }}
+                                  >
+                                    Inspect & Verify 🔍
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>

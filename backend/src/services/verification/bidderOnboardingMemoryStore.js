@@ -380,6 +380,7 @@ secondDocs.forEach(d => documents.set(d.id, d));
 
 // Export store helper functions
 module.exports = {
+  users,
   profiles,
   companies,
   documents,
