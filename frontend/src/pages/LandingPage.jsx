@@ -75,8 +75,29 @@ export default function LandingPage() {
         background: 'linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%)',
         padding: '70px 24px 80px',
         borderBottom: '1px solid #e2e8f0',
+        position: 'relative',
+        overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: 840, margin: '0 auto', textAlign: 'center' }}>
+        {/* Background watermark icon */}
+        <img
+          src="/complygem_logo.png"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            right: '-60px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 520,
+            height: 520,
+            objectFit: 'contain',
+            opacity: 0.06,
+            pointerEvents: 'none',
+            userSelect: 'none',
+            filter: 'grayscale(100%)',
+          }}
+        />
+        <div style={{ maxWidth: 840, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '6px 16px', borderRadius: 30,
