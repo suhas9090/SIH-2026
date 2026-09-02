@@ -18,6 +18,8 @@ const auditRoutes = require('./routes/audit');
 const adminRoutes = require('./routes/admin');
 const mockVerificationRoutes = require('./routes/mockVerificationRoutes');
 const govtDataRoutes = require('./routes/govtData');
+const bidderOnboardingRoutes = require('./routes/bidderOnboarding');
+const verificationOfficerRoutes = require('./routes/verificationOfficer');
 
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/requestLogger');
@@ -28,9 +30,9 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => callback(null, true),
   credentials: true
 }));
 
@@ -87,6 +89,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/govt-data', govtDataRoutes);
+app.use('/api/bidder-onboarding', bidderOnboardingRoutes);
+app.use('/api/verification-officer', verificationOfficerRoutes);
 
 // 404 handler
 app.use((req, res) => {

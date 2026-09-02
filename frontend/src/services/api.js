@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const backendHost = window.location.hostname === '127.0.0.1' ? 'http://127.0.0.1:5000' : (import.meta.env.VITE_API_URL || 'http://localhost:5000');
 
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: `${backendHost}/api`,
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000
 });
@@ -17,11 +17,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — handle errors
+// Response interceptor — handle errors cleanly without aborting auth flows
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isAuthRequest = error.config?.url?.includes('/auth/');
+    const isLoginPage = typeof window !== 'undefined' && (window.location.pathname.includes('/login') || window.location.pathname.includes('/register'));
+
+    if (error.response?.status === 401 && !isAuthRequest && !isLoginPage) {
       localStorage.removeItem('authToken');
       window.location.href = '/login';
     }
@@ -113,3 +116,48 @@ export const govtDataAPI = {
   getScenarios: () => api.get('/govt-data/scenarios'),
   getScenario: (id) => api.get(`/govt-data/scenarios/${id}`),
 };
+
+// ── Bidder Onboarding API ──────────────────────────────────────────────────
+export const bidderOnboardingAPI = {
+  // Personal Profile
+  getProfile: () => api.get('/bidder-onboarding/profile'),
+  saveProfile: (data) => api.post('/bidder-onboarding/profile', data),
+
+  // Identity Verification & Auto-Fill from Govt Gateway
+  fetchPanDetails: (pan) => api.post('/bidder-onboarding/fetch-pan-details', { pan }),
+  verifyPAN: (pan, expectedName) => api.post('/bidder-onboarding/verify-pan', { pan, expectedName }),
+  sendAadhaarOTP: (aadhaarRef) => api.post('/bidder-onboarding/verify-aadhaar', { aadhaarRef }),
+  verifyOTP: (otp) => api.post('/bidder-onboarding/verify-otp', { otp }),
+
+  // Company
+  getCompany: () => api.get('/bidder-onboarding/company'),
+  saveCompany: (data) => api.post('/bidder-onboarding/company', data),
+
+  // Company Government Verifications
+  verifyGST: (gstin, expectedName, expectedPan) => api.post('/bidder-onboarding/verify-gst', { gstin, expectedName, expectedPan }),
+  verifyUdyam: (udyamNumber, expectedName, expectedPan) => api.post('/bidder-onboarding/verify-udyam', { udyamNumber, expectedName, expectedPan }),
+  verifyMCA: (cinOrLlpin, expectedName) => api.post('/bidder-onboarding/verify-mca', { cinOrLlpin, expectedName }),
+  verifyStartup: (recognitionNumber, expectedPan) => api.post('/bidder-onboarding/verify-startup', { recognitionNumber, expectedPan }),
+  verifyNSIC: (registrationNumber) => api.post('/bidder-onboarding/verify-nsic', { registrationNumber }),
+  verifyBlacklist: (identifier) => api.post('/bidder-onboarding/verify-blacklist', { identifier }),
+
+  // Document Vault
+  uploadDocument: (formData) => api.post('/bidder-onboarding/documents/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getDocuments: () => api.get('/bidder-onboarding/documents'),
+  deleteDocument: (id) => api.delete(`/bidder-onboarding/documents/${id}`),
+
+  // Status & Eligibility
+  getVerificationStatus: () => api.get('/bidder-onboarding/verification-status'),
+  getTenderEligibility: (tenderId) => api.get(`/bidder-onboarding/eligibility/${tenderId}`),
+  getAuditLog: () => api.get('/bidder-onboarding/audit-log'),
+};
+
+// ── Verification Officer API ───────────────────────────────────────────────
+export const verificationOfficerAPI = {
+  getQueue: () => api.get('/verification-officer/queue'),
+  getBidderDossier: (profileId) => api.get(`/verification-officer/bidder/${profileId}`),
+  reviewDocument: (docId, action, remarks) => api.post(`/verification-officer/document/${docId}/review`, { action, remarks }),
+  approveBidder: (profileId, remarks) => api.post(`/verification-officer/bidder/${profileId}/approve`, { remarks }),
+  rejectBidder: (profileId, reason) => api.post(`/verification-officer/bidder/${profileId}/reject`, { reason }),
+};
+

@@ -173,41 +173,9 @@ export default function BidSubmissionPage() {
           ))}
         </div>
 
-        {/* STEP 1: Company Info with Demo Preset Selector */}
+        {/* STEP 1: Statutory Company & Regulatory Info */}
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Judge / Evaluator Demo Preset Selector */}
-            {scenarios.length > 0 && (
-              <div className="card" style={{ border: '1px solid rgba(139,92,246,0.4)', background: 'linear-gradient(145deg, rgba(124,58,237,0.08), rgba(15,22,41,0.9))', padding: 18 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: '1.2rem' }}>🧪</span>
-                    <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#c084fc' }}>
-                      DEMO PRESET SELECTOR (FOR LIVE TESTING)
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.68rem', color: '#a78bfa', fontWeight: 700, background: 'rgba(124,58,237,0.2)', padding: '2px 8px', borderRadius: 10 }}>
-                    10 TEST SCENARIOS
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.75rem', color: '#cbd5e1', marginBottom: 12 }}>
-                  Select any synthetic profile to simulate compliance results (Compliant, Name Mismatches, Suspended GST, Debarred entities, etc.):
-                </p>
-                <select
-                  className="input"
-                  value={selectedScenarioId}
-                  onChange={e => handleApplyScenario(e.target.value)}
-                  style={{ width: '100%', fontSize: '0.82rem', borderColor: '#7c3aed', color: '#f0f4ff', background: '#091322' }}
-                >
-                  {scenarios.map(s => (
-                    <option key={s.scenarioId} value={s.scenarioId}>
-                      {s.title} — Expected: {s.expectedOutcome?.riskLevel} RISK ({s.expectedOutcome?.complianceScore}%)
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <div className="card">
               <span className="section-title" style={{ display: 'block', marginBottom: 16 }}>
                 Statutory Bidder Profile & Regulatory Credentials

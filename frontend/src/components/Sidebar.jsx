@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth, DEMO_PROFILES } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import DemoBanner from './DemoBanner';
+import api from '../services/api';
 
 // 5-Role Distinct Navigation Menus
 const ROLE_NAV_ITEMS = {
@@ -28,25 +28,28 @@ const ROLE_NAV_ITEMS = {
     { path: '/profile',        icon: '👤', label: 'Officer Profile' },
   ],
   REVIEWER: [
-    { path: '/dashboard',             icon: '⊞', label: 'Verification Dashboard' },
-    { path: '/auditor/queue',         icon: '🔍', label: 'Verification Queue' },
+    { path: '/dashboard',                    icon: '⊞',  label: 'Verification Dashboard' },
+    { path: '/reviewer/verification-queue',  icon: '🪪',  label: 'Bidder Verification Queue', badge: 'NEW' },
+    { path: '/auditor/queue',                icon: '🔍',  label: 'Document Review Queue' },
     { path: '/compliance/4c57ba4b-7854-4dbf-b0fc-ac987e46f9bf', icon: '⚖️', label: '3-Panel Workspace' },
-    { path: '/auditor/comparison',    icon: '📑', label: 'Cross-Doc Matrix' },
-    { path: '/auditor/disputed',      icon: '💡', label: 'Disputed Results' },
-    { path: '/auditor/completed',     icon: '✓', label: 'Completed Reviews' },
-    { path: '/risk-alerts',           icon: '⚠️', label: 'Risk Flags & Alerts' },
-    { path: '/audit',                 icon: '📜', label: 'Audit Trail' },
-    { path: '/reports',               icon: '📊', label: 'Official Reports' },
+    { path: '/auditor/comparison',           icon: '📑',  label: 'Cross-Doc Matrix' },
+    { path: '/auditor/disputed',             icon: '💡',  label: 'Disputed Results' },
+    { path: '/auditor/completed',            icon: '✓',   label: 'Completed Reviews' },
+    { path: '/risk-alerts',                  icon: '⚠️',  label: 'Risk Flags & Alerts' },
+    { path: '/audit',                        icon: '📜',  label: 'Audit Trail' },
+    { path: '/reports',                      icon: '📊',  label: 'Official Reports' },
   ],
   BIDDER: [
-    { path: '/dashboard',             icon: '⊞', label: 'Supplier Dashboard' },
-    { path: '/bidder/tenders',        icon: '🔎', label: 'Browse Tenders' },
-    { path: '/bidder/my-bids',        icon: '📤', label: 'My Bids & Tracking' },
-    { path: '/bidder/documents',      icon: '📁', label: 'Company Documents' },
-    { path: '/bidder/compliance',     icon: '📊', label: 'Compliance Status' },
-    { path: '/bidder/clarifications', icon: '✍️', label: 'Clarification Requests' },
-    { path: '/notifications',         icon: '🔔', label: 'Notifications' },
-    { path: '/bidder/profile',        icon: '🏢', label: 'Company Profile' },
+    { path: '/dashboard',              icon: '⊞',  label: 'Supplier Dashboard' },
+    { path: '/bidder/onboarding',      icon: '🪪',  label: 'Get Verified', badge: 'REQUIRED' },
+    { path: '/bidder/verification-status', icon: '✅', label: 'Verification Status' },
+    { path: '/bidder/tenders',         icon: '🔎',  label: 'Browse Tenders' },
+    { path: '/bidder/my-bids',         icon: '📤',  label: 'My Bids & Tracking' },
+    { path: '/bidder/documents',       icon: '📁',  label: 'Document Vault' },
+    { path: '/bidder/compliance',      icon: '📊',  label: 'Compliance Status' },
+    { path: '/bidder/clarifications',  icon: '✍️',  label: 'Clarification Requests' },
+    { path: '/notifications',          icon: '🔔',  label: 'Notifications' },
+    { path: '/bidder/profile',         icon: '🏢',  label: 'Company Profile' },
   ],
   AUDITOR: [
     { path: '/dashboard',             icon: '⊞', label: 'Auditor Overview' },
@@ -72,6 +75,16 @@ const Sidebar = () => {
   const { profile, logout, role, switchDemoRole } = useAuth();
   const navigate = useNavigate();
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
+  const [bidderLifecycle, setBidderLifecycle] = useState(null);
+
+  // Fetch bidder lifecycle status to show onboarding banner
+  useEffect(() => {
+    if (role === 'BIDDER') {
+      api.get('/bidder-onboarding/verification-status')
+        .then(r => setBidderLifecycle(r.data?.lifecycleStatus || 'REGISTERED'))
+        .catch(() => setBidderLifecycle('REGISTERED'));
+    }
+  }, [role]);
 
   const handleLogout = async () => {
     try {
@@ -83,7 +96,12 @@ const Sidebar = () => {
     }
   };
 
-  const navItems = ROLE_NAV_ITEMS[role] || ROLE_NAV_ITEMS.PROCUREMENT_OFFICER;
+  // For bidder: hide REQUIRED badge once approved
+  const isApproved = bidderLifecycle === 'APPROVED_TO_BID';
+  const navItems = (ROLE_NAV_ITEMS[role] || ROLE_NAV_ITEMS.PROCUREMENT_OFFICER).map(item => {
+    if (item.badge === 'REQUIRED' && isApproved) return { ...item, badge: undefined };
+    return item;
+  });
   const currentRoleMeta = ROLE_META[role] || ROLE_META.PROCUREMENT_OFFICER;
 
   return (
@@ -142,6 +160,34 @@ const Sidebar = () => {
         <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#4a6080', padding: '0 10px 8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Navigation
         </div>
+
+        {/* Bidder Onboarding Nudge Banner */}
+        {role === 'BIDDER' && bidderLifecycle && bidderLifecycle !== 'APPROVED_TO_BID' && (
+          <div
+            onClick={() => navigate('/bidder/onboarding')}
+            style={{
+              margin: '0 4px 12px', padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+              background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.1))',
+              border: '1px solid rgba(139,92,246,0.35)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.6)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)'}
+          >
+            <div style={{ fontSize: '0.68rem', fontWeight: 900, color: '#a78bfa', marginBottom: 3 }}>⚠ Verification Required</div>
+            <div style={{ fontSize: '0.65rem', color: '#64748b', lineHeight: 1.4 }}>
+              Complete your identity & company verification to bid on tenders.
+            </div>
+            <div style={{ marginTop: 6, fontSize: '0.65rem', fontWeight: 800, color: '#8b5cf6' }}>Start Verification →</div>
+          </div>
+        )}
+        {role === 'BIDDER' && bidderLifecycle === 'APPROVED_TO_BID' && (
+          <div style={{ margin: '0 4px 12px', padding: '8px 12px', borderRadius: 10, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
+            <div style={{ fontSize: '0.68rem', fontWeight: 900, color: '#10b981' }}>✓ Verified Bidder</div>
+            <div style={{ fontSize: '0.62rem', color: '#64748b', marginTop: 2 }}>Eligible to participate in tenders</div>
+          </div>
+        )}
+
         {navItems.map((item) => (
           <NavLink
             key={item.path + item.label}
@@ -154,7 +200,16 @@ const Sidebar = () => {
             }}
           >
             <span style={{ fontSize: '1rem', width: 20, textAlign: 'center' }}>{item.icon}</span>
-            <span>{item.label}</span>
+            <span style={{ flex: 1 }}>{item.label}</span>
+            {item.badge && (
+              <span style={{
+                fontSize: '0.55rem', fontWeight: 900, padding: '2px 5px', borderRadius: 6,
+                color: item.badge === 'REQUIRED' ? '#f59e0b' : '#3b82f6',
+                background: item.badge === 'REQUIRED' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
+                border: `1px solid ${item.badge === 'REQUIRED' ? 'rgba(245,158,11,0.3)' : 'rgba(59,130,246,0.3)'}`,
+                letterSpacing: '0.04em',
+              }}>{item.badge}</span>
+            )}
           </NavLink>
         ))}
       </div>
@@ -203,8 +258,6 @@ export const AppLayout = ({ children }) => {
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)' }}>
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
-        <DemoBanner />
-        
         {/* Universal Top Action & Back Navigation Bar */}
         <div style={{
           padding: '10px 24px',

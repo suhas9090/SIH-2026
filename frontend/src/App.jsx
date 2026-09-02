@@ -33,6 +33,12 @@ import BidderDocumentsPage from './pages/bidder/BidderDocumentsPage';
 import BidderCompliancePage from './pages/bidder/BidderCompliancePage';
 import BidderClarificationsPage from './pages/bidder/BidderClarificationsPage';
 import BidderProfilePage from './pages/bidder/BidderProfilePage';
+import BidderOnboardingPage from './pages/bidder/BidderOnboardingPage';
+import BidderVerificationStatusPage from './pages/bidder/BidderVerificationStatusPage';
+
+// Verification Officer Pages
+import VerificationQueuePage from './pages/reviewer/VerificationQueuePage';
+import BidderDossierPage from './pages/reviewer/BidderDossierPage';
 
 // Dedicated Compliance & Auditor Pages
 import AuditorQueuePage from './pages/auditor/AuditorQueuePage';
@@ -125,6 +131,8 @@ const AppRoutes = () => {
       <Route path="/admin" element={<ProtectedRoute roles={['ADMIN']}><AdminPage /></ProtectedRoute>} />
 
       {/* Dedicated Bidder / Supplier Workflows */}
+      <Route path="/bidder/onboarding" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderOnboardingPage /></ProtectedRoute>} />
+      <Route path="/bidder/verification-status" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderVerificationStatusPage /></ProtectedRoute>} />
       <Route path="/bidder/tenders" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderTendersPage /></ProtectedRoute>} />
       <Route path="/bidder/tenders/:id" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderTenderDetailPage /></ProtectedRoute>} />
       <Route path="/bidder/submit/:tenderId" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidSubmissionPage /></ProtectedRoute>} />
@@ -139,6 +147,10 @@ const AppRoutes = () => {
       <Route path="/auditor/comparison" element={<ProtectedRoute roles={['REVIEWER', 'AUDITOR', 'ADMIN', 'PROCUREMENT_OFFICER']}><CrossDocumentComparisonPage /></ProtectedRoute>} />
       <Route path="/auditor/disputed" element={<ProtectedRoute roles={['REVIEWER', 'AUDITOR', 'ADMIN', 'PROCUREMENT_OFFICER']}><DisputedResultsPage /></ProtectedRoute>} />
       <Route path="/auditor/completed" element={<ProtectedRoute roles={['REVIEWER', 'AUDITOR', 'ADMIN', 'PROCUREMENT_OFFICER']}><CompletedReviewsPage /></ProtectedRoute>} />
+
+      {/* Verification Officer Workflows */}
+      <Route path="/reviewer/verification-queue" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN', 'PROCUREMENT_OFFICER']}><VerificationQueuePage /></ProtectedRoute>} />
+      <Route path="/reviewer/bidder/:profileId" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN', 'PROCUREMENT_OFFICER']}><BidderDossierPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [accessDeniedData, setAccessDeniedData] = useState(null);
 
   // Sync with query param if present
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function LoginPage() {
         setSelectedPortal(match);
         setEmail(match.defaultEmail || '');
         setPassword('');
+        setAccessDeniedData(null);
       }
     }
   }, [portalParam]);
@@ -44,8 +46,9 @@ export default function LoginPage() {
 
   const handlePortalSelect = (portal) => {
     setSelectedPortal(portal);
-    setEmail(portal.defaultEmail || '');
+    setEmail('');
     setPassword('');
+    setAccessDeniedData(null);
     setSearchParams({ portal: portal.roleKey });
   };
 
@@ -53,15 +56,8 @@ export default function LoginPage() {
     setSelectedPortal(null);
     setEmail('');
     setPassword('');
+    setAccessDeniedData(null);
     setSearchParams({});
-  };
-
-  const handleFillDemo = () => {
-    if (selectedPortal) {
-      setEmail(selectedPortal.defaultEmail);
-      setPassword('Admin@123456');
-      toast.success(`Loaded credentials for ${selectedPortal.demoName}`);
-    }
   };
 
   const handleLogin = async (e) => {
@@ -75,8 +71,9 @@ export default function LoginPage() {
     }
 
     setLoading(true);
+    setAccessDeniedData(null);
     try {
-      const userRes = await login(email.trim().toLowerCase(), password);
+      const userRes = await login(email.trim().toLowerCase(), password, selectedPortal?.roleKey);
       toast.success('Signed in successfully!');
       
       const role = userRes?.role || selectedPortal?.roleKey || 'PROCUREMENT_OFFICER';
@@ -90,11 +87,12 @@ export default function LoginPage() {
         navigate('/procurement/dashboard');
       }
     } catch (err) {
-      const msg = err.message || '';
-      if (msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
-        toast.error('Invalid email or password. You can use the quick demo fill button.');
+      if (err.code === 'ROLE_PORTAL_MISMATCH' && err.data) {
+        setAccessDeniedData(err.data);
+        toast.error(err.message, { duration: 6000 });
       } else {
-        toast.error(msg.replace('Firebase: ', '') || 'Sign-in failed.');
+        const msg = err.message || 'Login failed. Please check your credentials.';
+        toast.error(msg);
       }
     } finally {
       setLoading(false);
@@ -270,6 +268,58 @@ export default function LoginPage() {
               </p>
             </div>
 
+            {/* Access Denied / Role Mismatch Alert Card */}
+            {accessDeniedData && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(15,23,42,0.9) 100%)',
+                border: '1px solid rgba(239,68,68,0.45)',
+                borderRadius: 12,
+                padding: '16px 18px',
+                marginBottom: 20,
+                boxShadow: '0 4px 20px rgba(239,68,68,0.25)',
+                animation: 'shake 0.4s ease-in-out'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f87171', fontWeight: 800, fontSize: '0.88rem', marginBottom: 6 }}>
+                  <span>🚫</span>
+                  <span>Portal Access Denied</span>
+                </div>
+                <p style={{ color: '#f0f4ff', fontSize: '0.82rem', lineHeight: 1.5, margin: '0 0 12px 0' }}>
+                  {accessDeniedData.error || `You have a ${accessDeniedData.userRoleLabel || 'different'} account. You cannot log in through this portal.`}
+                </p>
+                {accessDeniedData.correctPortalKey && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const match = PORTAL_ROLES.find(p => p.roleKey === accessDeniedData.correctPortalKey);
+                      if (match) {
+                        setSelectedPortal(match);
+                        setSearchParams({ portal: match.roleKey });
+                        setAccessDeniedData(null);
+                        setPassword('');
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6
+                    }}
+                  >
+                    <span>⚡ Switch to {accessDeniedData.correctPortalLabel || 'Your Designated Portal'} →</span>
+                  </button>
+                )}
+              </div>
+            )}
+
             <form onSubmit={handleLogin} noValidate>
               {/* Email */}
               <div style={{ marginBottom: 14 }}>
@@ -365,29 +415,6 @@ export default function LoginPage() {
               >
                 {loading ? '⟳ Signing in...' : `Sign In as ${selectedPortal.title} →`}
               </button>
-
-              {/* Quick Fill Demo Button */}
-              <div style={{ marginTop: 16, textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={handleFillDemo}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    padding: '6px 14px',
-                    color: '#94a3b8',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'; }}
-                >
-                  ⚡ Fill Demo Credentials ({selectedPortal.demoName.split(' ')[0]})
-                </button>
-              </div>
             </form>
 
             <p style={{ textAlign: 'center', marginTop: 22, fontSize: '0.8rem', color: '#64748b' }}>

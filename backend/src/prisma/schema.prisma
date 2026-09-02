@@ -66,6 +66,38 @@ enum ApprovalStatus {
   REJECTED
 }
 
+enum BidderLifecycleStatus {
+  REGISTERED
+  IDENTITY_PENDING
+  IDENTITY_VERIFIED
+  COMPANY_VERIFICATION_PENDING
+  COMPANY_VERIFIED
+  DOCUMENT_VERIFICATION_PENDING
+  UNDER_OFFICER_REVIEW
+  CORRECTION_REQUIRED
+  VERIFIED
+  APPROVED_TO_BID
+  VERIFICATION_FAILED
+  SUSPENDED
+}
+
+enum DocumentVerificationStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
+  MISMATCH_DETECTED
+  EXPIRED
+  REUPLOAD_REQUIRED
+}
+
+enum GenderType {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
 enum VerificationStatus {
   VERIFIED
   NOT_VERIFIED
@@ -125,6 +157,7 @@ model User {
   tenders              Tender[]
   auditLogs            AuditLog[]
   reviews              ComplianceReview[]
+  bidderProfile        BidderProfile?
 }
 
 model Tender {
@@ -326,4 +359,217 @@ model KnowledgeDocument {
   fileUrl     String?
   isIndexed   Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BIDDER ONBOARDING & VERIFICATION MODELS
+// These are USER-ACCOUNT-SCOPED (linked to User via userId).
+// Separate from the tender-scoped `Bidder` model above.
+// ═══════════════════════════════════════════════════════════════════
+
+model BidderProfile {
+  id                    String                @id @default(uuid())
+  userId                String                @unique
+  user                  User                  @relation(fields: [userId], references: [id])
+
+  // Personal Identity
+  fullName              String?
+  dateOfBirth           String?               // stored as string "YYYY-MM-DD" — no sensitive date parsing
+  gender                GenderType?
+  fatherName            String?
+  nationality           String?               @default("Indian")
+
+  // Contact
+  mobileNumber          String?
+  mobileVerified        Boolean               @default(false)
+  alternatePhone        String?
+  residentialAddress    String?
+  city                  String?
+  state                 String?
+  district              String?
+  pincode               String?
+
+  // Identity Verification
+  panNumber             String?               // plaintext, no Aadhaar stored
+  panVerified           Boolean               @default(false)
+  panVerificationData   Json?                 // data returned from MockVerificationProvider
+  aadhaarRefId          String?               // reference token only — never real Aadhaar
+  aadhaarVerified       Boolean               @default(false)
+  aadhaarMasked         String?               // e.g. "XXXX XXXX 1234"
+
+  // Lifecycle
+  lifecycleStatus       BidderLifecycleStatus @default(REGISTERED)
+  rejectionReason       String?
+  approvedBy            String?               // reviewer userId
+  approvedAt            DateTime?
+
+  // Timestamps
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  company               BidderCompany?
+  documents             BidderDocument[]
+  govtVerifications     BidderGovernmentVerification[]
+  otpRecords            BidderOTPRecord[]
+  bidderAuditLogs       BidderAuditLog[]
+}
+
+model BidderCompany {
+  id                        String         @id @default(uuid())
+  bidderProfileId           String         @unique
+  bidderProfile             BidderProfile  @relation(fields: [bidderProfileId], references: [id])
+
+  // Company Identity
+  legalName                 String?
+  tradeName                 String?
+  companyType               String?        // Private Limited, LLP, Proprietorship, etc.
+  dateOfIncorporation       String?
+  natureOfBusiness          String?
+  businessCategory          String?
+  website                   String?
+
+  // Government Registrations
+  companyPan                String?
+  companyPanVerified        Boolean        @default(false)
+  companyPanData            Json?
+
+  gstin                     String?
+  gstVerified               Boolean        @default(false)
+  gstData                   Json?
+
+  udyamNumber               String?
+  udyamVerified             Boolean        @default(false)
+  udyamData                 Json?
+
+  cinNumber                 String?
+  mcaVerified               Boolean        @default(false)
+  mcaData                   Json?
+
+  startupRegNumber          String?
+  startupVerified           Boolean        @default(false)
+  startupData               Json?
+
+  nsicNumber                String?
+  nsicVerified              Boolean        @default(false)
+  nsicData                  Json?
+
+  epfoId                    String?
+  epfoVerified              Boolean        @default(false)
+
+  esicId                    String?
+  esicVerified              Boolean        @default(false)
+
+  blacklistChecked          Boolean        @default(false)
+  blacklistClear            Boolean?
+  blacklistData             Json?
+
+  // Registered Address
+  registeredAddress         String?
+  registeredCity            String?
+  registeredState           String?
+  registeredDistrict        String?
+  registeredPincode         String?
+
+  // Contact
+  companyEmail              String?
+  companyPhone              String?
+
+  // Authorized Representative
+  authorizedRepName         String?
+  authorizedRepDesignation  String?
+  authorizedRepEmail        String?
+  authorizedRepPhone        String?
+
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+}
+
+model BidderDocument {
+  id                  String                     @id @default(uuid())
+  bidderProfileId     String
+  bidderProfile       BidderProfile              @relation(fields: [bidderProfileId], references: [id])
+
+  // Document Identity
+  documentName        String
+  documentType        String                     // GST_CERTIFICATE, PAN_CARD, UDYAM_CERTIFICATE, etc.
+  documentCategory    String                     // PERSONAL, COMPANY, REGISTRATION, FINANCIAL, COMPLIANCE
+  originalFileName    String
+  fileUrl             String
+  fileSize            Int?
+  mimeType            String?
+
+  // Verification Status
+  verificationStatus  DocumentVerificationStatus @default(PENDING)
+  rejectionReason     String?
+  reviewedBy          String?                    // reviewer userId
+  reviewedAt          DateTime?
+  expiryDate          DateTime?
+
+  // OCR & AI Processing
+  ocrStatus           String                     @default("PENDING") // PENDING, PROCESSING, DONE, FAILED
+  extractedText       String?
+  extractedData       Json?                      // key-value pairs extracted by OCR
+  aiAnalysis          Json?                      // AI compliance analysis result
+  governmentMatch     String?                    // MATCHED, MISMATCH, UNVERIFIABLE
+  confidence          Float?
+
+  // Upload metadata
+  uploadedBy          String?
+  uploadedAt          DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+
+  verificationHistory BidderDocumentVerification[]
+}
+
+model BidderDocumentVerification {
+  id              String         @id @default(uuid())
+  documentId      String
+  document        BidderDocument @relation(fields: [documentId], references: [id])
+  reviewerId      String         // REVIEWER userId
+  action          String         // APPROVED, REJECTED, REQUESTED_CORRECTION
+  remarks         String?
+  reviewedAt      DateTime       @default(now())
+}
+
+model BidderGovernmentVerification {
+  id                  String        @id @default(uuid())
+  bidderProfileId     String
+  bidderProfile       BidderProfile @relation(fields: [bidderProfileId], references: [id])
+
+  source              String        // PAN, GST, UDYAM, MCA, STARTUP, NSIC, EPFO, ESIC, BLACKLIST
+  inputIdentifier     String?       // The value queried (PAN number, GSTIN, etc.)
+  status              String        // VERIFIED, FAILED, NOT_FOUND, MISMATCH
+  result              String?       // MATCH, NAME_MISMATCH, PAN_INACTIVE, etc.
+  confidence          Float?
+  isSynthetic         Boolean       @default(true)
+  verifiedData        Json?
+  disclaimer          String?
+  verifiedAt          DateTime      @default(now())
+}
+
+model BidderOTPRecord {
+  id              String        @id @default(uuid())
+  bidderProfileId String
+  bidderProfile   BidderProfile @relation(fields: [bidderProfileId], references: [id])
+  purpose         String        // AADHAAR_VERIFICATION, MOBILE_VERIFICATION
+  target          String        // mobile number or masked Aadhaar ref
+  otpHash         String?       // demo: just "123456" hash
+  isVerified      Boolean       @default(false)
+  attemptsLeft    Int           @default(3)
+  expiresAt       DateTime
+  verifiedAt      DateTime?
+  createdAt       DateTime      @default(now())
+}
+
+model BidderAuditLog {
+  id              String        @id @default(uuid())
+  bidderProfileId String
+  bidderProfile   BidderProfile @relation(fields: [bidderProfileId], references: [id])
+  action          String        // e.g. IDENTITY_VERIFIED, DOCUMENT_UPLOADED, BID_SUBMITTED
+  entityType      String?       // DOCUMENT, COMPANY, VERIFICATION, BID
+  entityId        String?
+  details         Json?
+  performedBy     String?       // userId who performed the action
+  ipAddress       String?
+  timestamp       DateTime      @default(now())
 }
