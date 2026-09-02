@@ -344,12 +344,14 @@ router.post('/register-officer', registerLimiter, async (req, res) => {
   try {
     const { name, email, phone, organization, department, employeeId, designation, password } = req.body;
 
-    if (!name || !email || !organization || !employeeId) {
-      return res.status(400).json({ error: 'Name, email, organization, and Employee ID are required.' });
+    if (!name || !email || !employeeId) {
+      return res.status(400).json({ error: 'Name, email, and Employee / Officer ID are required.' });
     }
 
     // 1. Check against Synthetic Officer Directory
     const officerRecord = findOfficerRecord(employeeId);
+    const finalOrg = organization?.trim() || officerRecord?.organization || 'Government Procurement Authority';
+    const finalDesignation = designation?.trim() || officerRecord?.designation || 'Procurement Officer';
 
     const firebaseUid = `uid-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     let user = null;
@@ -362,7 +364,7 @@ router.post('/register-officer', registerLimiter, async (req, res) => {
           name: name.trim(),
           phone: phone || null,
           role: 'PROCUREMENT_OFFICER',
-          organization: organization.trim(),
+          organization: finalOrg,
           organizationId: employeeId.trim(),
           isActive: false, // Requires Administrator approval
           approvalStatus: 'PENDING',
@@ -375,7 +377,7 @@ router.post('/register-officer', registerLimiter, async (req, res) => {
         password: password || 'Admin@123456',
         name: name.trim(),
         role: 'PROCUREMENT_OFFICER',
-        organization: organization.trim(),
+        organization: finalOrg,
         organizationId: employeeId.trim(),
         phone: phone || null,
         isActive: false,
@@ -402,13 +404,16 @@ router.post('/register-officer', registerLimiter, async (req, res) => {
 // ── POST /api/auth/register-auditor ──────────────────────────────────────────
 router.post('/register-auditor', registerLimiter, async (req, res) => {
   try {
-    const { name, email, phone, organization, auditorId, designation, password } = req.body;
+    const { name, email, phone, organization, auditorId, employeeId, designation, password } = req.body;
+    const effectiveAuditorId = auditorId || employeeId;
 
-    if (!name || !email || !organization || !auditorId) {
-      return res.status(400).json({ error: 'Name, email, organization, and Auditor ID are required.' });
+    if (!name || !email || !effectiveAuditorId) {
+      return res.status(400).json({ error: 'Name, email, and Auditor ID are required.' });
     }
 
-    const auditorRecord = findAuditorRecord(auditorId);
+    const auditorRecord = findAuditorRecord(effectiveAuditorId);
+    const finalOrg = organization?.trim() || auditorRecord?.organization || 'Office of Comptroller & Auditor General (CAG)';
+
     const firebaseUid = `uid-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     let user = null;
 
@@ -420,8 +425,8 @@ router.post('/register-auditor', registerLimiter, async (req, res) => {
           name: name.trim(),
           phone: phone || null,
           role: 'REVIEWER', // Compliance Auditor / Reviewer
-          organization: organization.trim(),
-          organizationId: auditorId.trim(),
+          organization: finalOrg,
+          organizationId: effectiveAuditorId.trim(),
           isActive: false, // Requires Administrator approval
           approvalStatus: 'PENDING',
           emailVerified: true,
@@ -433,15 +438,15 @@ router.post('/register-auditor', registerLimiter, async (req, res) => {
         password: password || 'Admin@123456',
         name: name.trim(),
         role: 'REVIEWER',
-        organization: organization.trim(),
-        organizationId: auditorId.trim(),
+        organization: finalOrg,
+        organizationId: effectiveAuditorId.trim(),
         phone: phone || null,
         isActive: false,
         approvalStatus: 'PENDING'
       });
     }
 
-    logger.info(`New Auditor Registered: ${name} (${auditorId}) | Directory Match: ${!!auditorRecord}`);
+    logger.info(`New Auditor Registered: ${name} (${effectiveAuditorId}) | Directory Match: ${!!auditorRecord}`);
 
     res.status(201).json({
       user,
