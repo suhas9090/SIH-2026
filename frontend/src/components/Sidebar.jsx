@@ -22,7 +22,6 @@ const ROLE_NAV_ITEMS = {
     { path: '/tenders',        label: 'Tenders (All / Active)' },
     { path: '/tenders/create', label: 'Create Tender' },
     { path: '/bids',           label: 'Bids Received' },
-    { path: '/risk-alerts',    label: 'Risk & Alerts' },
     { path: '/reports',        label: 'Compliance Reports' },
     { path: '/profile',        label: 'Officer Profile' },
   ],
@@ -96,32 +95,35 @@ const Sidebar = () => {
     if (item.badge === 'REQUIRED' && isApproved) return { ...item, badge: undefined };
     return item;
   });
+
+  const user = profile;
   const currentRoleMeta = ROLE_META[role] || ROLE_META.PROCUREMENT_OFFICER;
 
   return (
     <div className="sidebar" style={{ background: '#ffffff', borderRight: '1px solid #e2e8f0' }}>
       {/* Logo */}
-      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #e2e8f0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img
             src="/complygem_logo.png"
             alt="ComplyGeM Logo"
             style={{
-              width: 36, height: 36, borderRadius: 8,
+              width: 46, height: 46, borderRadius: 10,
               objectFit: 'contain',
               flexShrink: 0,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
             }}
           />
           <div>
-            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: '#0f172a', letterSpacing: '-0.02em' }}>
+            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.25rem', color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
               COMPLYGEM <span style={{ color: '#2563eb' }}>AI</span>
             </div>
-            <div style={{ fontSize: '0.62rem', color: '#2563eb', fontWeight: 800, letterSpacing: '0.06em' }}>
+            <div style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 800, letterSpacing: '0.06em', marginTop: 2 }}>
               PUBLIC PROCUREMENT AI
             </div>
           </div>
         </div>
-
+        
         {/* User Identity Profile Card */}
         <div style={{ marginTop: 14 }}>
           <div
@@ -324,13 +326,22 @@ export const AppLayout = ({ children }) => {
             <span style={{ fontSize: '0.9rem' }}>←</span> Back
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            padding: '6px 16px',
+            borderRadius: 12,
+            boxShadow: '0 1px 3px rgba(37, 99, 235, 0.08)'
+          }}>
             <img
               src="/complygem_logo.png"
               alt="ComplyGeM Logo"
-              style={{ width: 22, height: 22, borderRadius: 6, objectFit: 'contain' }}
+              style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'contain' }}
             />
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', letterSpacing: '0.04em' }}>
+            <span style={{ fontSize: '0.98rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.01em' }}>
               COMPLYGEM <span style={{ color: '#2563eb' }}>AI</span> VERIFICATION
             </span>
           </div>
