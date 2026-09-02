@@ -73,126 +73,68 @@ export default function LandingPage() {
       {/* ─── 2. HERO SECTION ───────────────────────────────────────────── */}
       <section style={{
         background: 'linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%)',
-        padding: '60px 24px 70px',
+        padding: '70px 24px 80px',
         borderBottom: '1px solid #e2e8f0',
       }}>
-        <div style={{ maxWidth: 1240, margin: '0 auto', display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 48, alignItems: 'center' }}>
-
-          {/* Left Column */}
-          <div>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '6px 14px', borderRadius: 30,
-              background: '#dbeafe',
-              border: '1px solid #bfdbfe',
-              color: '#1d4ed8', fontSize: '0.78rem', fontWeight: 700,
-              letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 20,
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb', display: 'inline-block' }} />
-              AI-POWERED PUBLIC PROCUREMENT INTELLIGENCE
-            </div>
-
-            <h1 style={{
-              fontFamily: 'Outfit, sans-serif',
-              fontWeight: 900,
-              fontSize: 'clamp(2.2rem, 3.8vw, 3.2rem)',
-              lineHeight: 1.15,
-              color: '#0f172a',
-              letterSpacing: '-0.03em',
-              marginBottom: 18,
-            }}>
-              Intelligent Public Procurement Compliance & Verification
-            </h1>
-
-            <p style={{
-              fontSize: '1.05rem',
-              lineHeight: 1.65,
-              color: '#475569',
-              maxWidth: 540,
-              marginBottom: 32,
-            }}>
-              Verify bidder eligibility, cross-check statutory registrations against live Government databases, and automate tender pre-qualification audits through one unified platform.
-            </p>
-
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 36 }}>
-              <a href="#portals" className="btn-primary" style={{ padding: '12px 28px', fontSize: '0.95rem' }}>
-                Access Your Portal ↗
-              </a>
-              <Link to="/bidder/tenders" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.95rem' }}>
-                Browse Open Tenders
-              </Link>
-            </div>
-
-            {/* Quick Metrics Bar */}
-            <div style={{ display: 'flex', gap: 32, paddingTop: 20, borderTop: '1px solid #e2e8f0' }}>
-              {[
-                { val: '100%', label: 'Deterministic Audit' },
-                { val: '6+',   label: 'Gov. Data Gateways' },
-                { val: '0',    label: 'Arbitrary Discrepancies' },
-              ].map(m => (
-                <div key={m.label}>
-                  <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', color: '#2563eb' }}>
-                    {m.val}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 2, fontWeight: 600 }}>{m.label}</div>
-                </div>
-              ))}
-            </div>
+        <div style={{ maxWidth: 840, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '6px 16px', borderRadius: 30,
+            background: '#dbeafe',
+            border: '1px solid #bfdbfe',
+            color: '#1d4ed8', fontSize: '0.78rem', fontWeight: 800,
+            letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 20,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb', display: 'inline-block' }} />
+            AI-POWERED PUBLIC PROCUREMENT INTELLIGENCE
           </div>
 
-          {/* Right Column: Clean White Dashboard Card */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div style={{
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 20,
-              padding: 28,
-              boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02)',
-              width: '100%',
-              maxWidth: 440,
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, borderBottom: '1px solid #f1f5f9', paddingBottom: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.9rem' }}>
-                    ✓
-                  </div>
-                  <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a' }}>
-                    Statutory Verification Dossier
-                  </span>
-                </div>
-                <span style={{ fontSize: '0.68rem', background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: 10, fontWeight: 700 }}>
-                  LIVE VERIFIED
-                </span>
-              </div>
+          <h1 style={{
+            fontFamily: 'Outfit, sans-serif',
+            fontWeight: 900,
+            fontSize: 'clamp(2.4rem, 4.2vw, 3.4rem)',
+            lineHeight: 1.18,
+            color: '#0f172a',
+            letterSpacing: '-0.03em',
+            marginBottom: 20,
+          }}>
+            Intelligent Public Procurement Compliance & Verification
+          </h1>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
-                {[
-                  { label: 'Company PAN', val: 'SYNPA0001C', authority: 'CBDT Direct Taxes', ok: true },
-                  { label: 'GST Registration', val: '29SYNPA0001C1Z5', authority: 'GSTN Network', ok: true },
-                  { label: 'MSME Udyam', val: 'UDYAM-KR-03-0012345', authority: 'Ministry of MSME', ok: true },
-                  { label: 'MCA21 ROC', val: 'U29100KA2018PTC112233', authority: 'Ministry of Corp. Affairs', ok: true },
-                  { label: 'Debarment Check', val: '0 Adverse Hits', authority: 'CVC / GeM Blacklist', ok: true },
-                ].map((item, idx) => (
-                  <div key={idx} style={{ background: '#f8fafc', borderRadius: 10, padding: '10px 12px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>{item.label}</div>
-                      <div style={{ fontSize: '0.65rem', color: '#64748b' }}>{item.authority}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: 700, fontFamily: 'monospace', color: '#2563eb' }}>{item.val}</div>
-                      <div style={{ fontSize: '0.62rem', color: '#059669', fontWeight: 700 }}>✓ 100% MATCH</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <p style={{
+            fontSize: '1.1rem',
+            lineHeight: 1.7,
+            color: '#475569',
+            maxWidth: 640,
+            margin: '0 auto 36px',
+          }}>
+            Verify bidder eligibility, cross-check statutory registrations against live Government databases, and automate tender pre-qualification audits through one unified platform.
+          </p>
 
-              <div style={{ background: '#eff6ff', borderRadius: 10, padding: '10px 14px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1e40af' }}>Risk Score: 0 / 20 (Clean Record)</span>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#16a34a' }}>APPROVED TO BID</span>
-              </div>
-            </div>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 44 }}>
+            <a href="#portals" className="btn-primary" style={{ padding: '14px 32px', fontSize: '0.98rem' }}>
+              Access Your Portal ↗
+            </a>
+            <Link to="/bidder/tenders" className="btn-secondary" style={{ padding: '14px 28px', fontSize: '0.98rem' }}>
+              Browse Open Tenders
+            </Link>
           </div>
 
+          {/* Quick Metrics Bar */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 48, paddingTop: 28, borderTop: '1px solid #e2e8f0' }}>
+            {[
+              { val: '100%', label: 'Deterministic Audit' },
+              { val: '6+',   label: 'Gov. Data Gateways' },
+              { val: '0',    label: 'Arbitrary Discrepancies' },
+            ].map(m => (
+              <div key={m.label}>
+                <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.6rem', color: '#2563eb' }}>
+                  {m.val}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 3, fontWeight: 700 }}>{m.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
