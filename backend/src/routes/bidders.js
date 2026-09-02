@@ -26,8 +26,8 @@ const IN_MEMORY_BIDDERS = [
     contactName: 'Suresh Patil',
     contactEmail: 'suresh@abcsafetytech.com',
     contactPhone: '+91 98801 12345',
-    status: 'VERIFIED',
-    currentStage: 3,
+    status: 'UNDER_REVIEW', // Initial status is UNDER_REVIEW, NOT VERIFIED!
+    currentStage: 2, // 2 = Documents Submitted - Awaiting Compliance Review
     createdAt: new Date(Date.now() - 1 * 86400000),
     tender: {
       id: 'tnd-001',
@@ -39,17 +39,18 @@ const IN_MEMORY_BIDDERS = [
       status: 'ACTIVE'
     },
     complianceReport: {
-      overallScore: 94.5,
-      riskLevel: 'LOW',
-      compliantCount: 7,
+      overallScore: 0,
+      riskLevel: 'PENDING',
+      compliantCount: 0,
       nonCompliantCount: 0,
       missingCount: 0,
       inconsistentCount: 0,
-      summary: 'All statutory identity, GST, PAN, and technical criteria verified with 100% data triangulation fidelity.'
+      summary: 'Bid submitted. Awaiting officer verification and AI document triangulation.'
     },
     documents: [
       { id: 'd-1', documentType: 'GST_CERTIFICATE', originalName: 'GST_Certificate_ABC_Safety.pdf' },
-      { id: 'd-2', documentType: 'PAN_CARD', originalName: 'Company_PAN_Card.pdf' }
+      { id: 'd-2', documentType: 'PAN_CARD', originalName: 'Company_PAN_Card.pdf' },
+      { id: 'd-3', documentType: 'UDYAM_CERTIFICATE', originalName: 'MSME_Udyam_Registration.pdf' }
     ]
   }
 ];
@@ -105,21 +106,25 @@ router.post('/', authenticate, async (req, res) => {
       contactName: contactName || req.user?.name || 'Authorized Signatory',
       contactEmail: contactEmail || req.user?.email || 'vendor@example.com',
       contactPhone: contactPhone || '+91 98801 12345',
-      status: 'VERIFIED',
-      currentStage: 3,
+      status: 'UNDER_REVIEW', // Initial status is UNDER_REVIEW, NOT VERIFIED!
+      currentStage: 2, // 2 = Documents Submitted - Awaiting Compliance Review
       createdAt: new Date(),
       updatedAt: new Date(),
       tender: tenderObj,
       complianceReport: {
-        overallScore: 92.0,
-        riskLevel: 'LOW',
-        compliantCount: 6,
+        overallScore: 0,
+        riskLevel: 'PENDING',
+        compliantCount: 0,
         nonCompliantCount: 0,
         missingCount: 0,
         inconsistentCount: 0,
-        summary: 'All statutory requirements and identity documents matched with verified records.'
+        summary: 'Bid registered. Awaiting officer verification and AI document triangulation.'
       },
-      documents: []
+      documents: [
+        { id: 'd-' + uuidv4().substring(0, 6), documentType: 'GST_CERTIFICATE', originalName: 'GST_Registration_Certificate.pdf' },
+        { id: 'd-' + uuidv4().substring(0, 6), documentType: 'PAN_COMPANY', originalName: 'Company_PAN_Card.pdf' },
+        { id: 'd-' + uuidv4().substring(0, 6), documentType: 'UDYAM_CERTIFICATE', originalName: 'MSME_Udyam_Registration.pdf' }
+      ]
     };
 
     IN_MEMORY_BIDDERS.unshift(newBid);
