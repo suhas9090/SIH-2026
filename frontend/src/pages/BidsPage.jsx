@@ -205,22 +205,13 @@ export default function BidsPage() {
                           </span>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                            <button
-                              className="btn-primary"
-                              style={{ fontSize: '0.74rem', padding: '6px 12px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', display: 'flex', alignItems: 'center', gap: 5 }}
-                              onClick={() => navigate(`/verify-bid/${bid.id}`)}
-                            >
-                              ⚡ Verify Compliance
-                            </button>
-                            <button
-                              className="btn-secondary"
-                              style={{ fontSize: '0.72rem', padding: '6px 11px' }}
-                              onClick={() => navigate(`/compliance/${bid.id}`)}
-                            >
-                              📋 Report →
-                            </button>
-                          </div>
+                          <button
+                            className="btn-primary"
+                            style={{ fontSize: '0.74rem', padding: '6px 14px', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+                            onClick={() => navigate(`/verify-bid/${bid.id}`)}
+                          >
+                            Review Compliance →
+                          </button>
                         </td>
                       </tr>
                     );
