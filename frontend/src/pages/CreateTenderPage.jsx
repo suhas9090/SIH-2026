@@ -142,8 +142,13 @@ export default function CreateTenderPage() {
       };
 
       const res = await tenderAPI.create(payload);
-      toast.success(isDraft ? 'Tender draft saved successfully' : '🚀 Tender published to GeM portal!');
-      navigate(`/tenders/${res.data.id || ''}`);
+      if (isDraft) {
+        toast.success('✓ Tender specification saved as Draft. (Not published to GeM)');
+        navigate('/tenders');
+      } else {
+        toast.success('🚀 Tender published to GeM Portal! Active for public bidding.');
+        navigate(`/tenders/${res.data.id || ''}`);
+      }
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to create tender');
     } finally {

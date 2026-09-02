@@ -67,6 +67,19 @@ export default function TenderDetailPage() {
     }
   };
 
+  const handlePublishDraft = async () => {
+    setLoading(true);
+    try {
+      await tenderAPI.update(id, { status: 'ACTIVE' });
+      toast.success('🚀 Tender published to GeM Portal! Active for public bidding.');
+      await loadTender();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to publish tender');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddBidder = async (e) => {
     e.preventDefault();
     if (!bidderForm.organizationName) return toast.error('Organization name is required');
@@ -93,6 +106,8 @@ export default function TenderDetailPage() {
 
   if (!tender) return null;
 
+  const isDraft = tender.status === 'DRAFT';
+
   const tabs = [
     { key: 'overview', label: 'Overview' },
     { key: 'requirements', label: `Requirements (${tender.requirements?.length || 0})` },
@@ -110,7 +125,17 @@ export default function TenderDetailPage() {
             <span style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#2563eb', fontWeight: 800 }}>
               {tender.referenceNo}
             </span>
-            <span className="badge badge-active" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}>{tender.status}</span>
+            <span
+              className="badge"
+              style={{
+                background: isDraft ? '#fffbeb' : '#ecfdf5',
+                color: isDraft ? '#d97706' : '#059669',
+                border: `1px solid ${isDraft ? '#fde68a' : '#a7f3d0'}`,
+                fontWeight: 800
+              }}
+            >
+              {isDraft ? '📝 DRAFT TENDER' : '✓ ACTIVE / PUBLISHED'}
+            </span>
           </div>
           <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.45rem', color: '#0f172a', marginBottom: 4 }}>
             {tender.title}
@@ -120,6 +145,16 @@ export default function TenderDetailPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
+          {isDraft && (
+            <button
+              className="btn-primary"
+              style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}
+              onClick={handlePublishDraft}
+              disabled={loading}
+            >
+              🚀 Publish Tender to GeM
+            </button>
+          )}
           <button className="btn-secondary" onClick={handleExtractRequirements} disabled={loading}>
             {loading ? '⟳ Processing...' : '🧠 AI Extract Requirements'}
           </button>
