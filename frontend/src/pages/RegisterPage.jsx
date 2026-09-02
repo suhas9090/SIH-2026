@@ -18,7 +18,7 @@ const ACCOUNT_TYPES = [
     icon: '🏛️',
     title: 'Procurement Officer',
     desc: 'Publish tenders, manage submissions, and make authorized compliance decisions',
-    badge: 'Requires Admin Approval',
+    badge: 'Instant Access & Verified',
     badgeColor: '#2563eb',
   },
   {
@@ -26,7 +26,7 @@ const ACCOUNT_TYPES = [
     icon: '🔍',
     title: 'Compliance Auditor',
     desc: 'Independent evaluation of AI findings, evidence inspection, and decision sign-offs',
-    badge: 'Requires Admin Approval',
+    badge: 'Instant Access & Verified',
     badgeColor: '#0891b2',
   },
   {
@@ -963,7 +963,7 @@ export default function RegisterPage() {
                 onClick={handleOfficerSubmit}
                 disabled={loading || !officerEmailOtp.verified || !officerPhoneOtp.verified}
               >
-                {loading ? '⟳ Submitting...' : (!officerEmailOtp.verified || !officerPhoneOtp.verified) ? '🔒 Verify Email & Mobile to Submit' : 'Submit for Administrative Approval →'}
+                {loading ? '⟳ Creating Account...' : (!officerEmailOtp.verified || !officerPhoneOtp.verified) ? '🔒 Verify Email & Mobile to Continue' : selectedRole === 'PROCUREMENT_OFFICER' ? '🚀 Create Officer Account →' : '🚀 Create Auditor Account →'}
               </button>
             </div>
 
@@ -992,15 +992,23 @@ export default function RegisterPage() {
               </>
             ) : (
               <>
-                <div style={{ fontSize: '3rem', marginBottom: 12 }}>⏳</div>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', marginBottom: 6 }}>Registration Submitted!</h2>
-                <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 20, background: '#fffbeb', color: '#d97706', fontWeight: 800, fontSize: '0.8rem', marginBottom: 16, border: '1px solid #fde68a' }}>
-                  PENDING ADMINISTRATIVE APPROVAL
+                <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎉</div>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', marginBottom: 6 }}>
+                  {selectedRole === 'PROCUREMENT_OFFICER' ? 'Procurement Officer Account Created!' : 'Compliance Auditor Account Created!'}
+                </h2>
+                <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 20, background: '#ecfdf5', color: '#059669', fontWeight: 800, fontSize: '0.8rem', marginBottom: 16, border: '1px solid #a7f3d0' }}>
+                  ACCOUNT ACTIVE & VERIFIED
                 </div>
                 <p style={{ color: '#475569', fontSize: '0.88rem', maxWidth: 440, margin: '0 auto 24px', lineHeight: 1.5 }}>
-                  Your credentials and regulatory verification records have been submitted for administrator review. You will be notified once platform access is authorised.
+                  Your account has been verified and activated immediately. You can now sign in to access the {selectedRole === 'PROCUREMENT_OFFICER' ? 'Procurement Officer' : 'Compliance Auditor'} portal.
                 </p>
-                <button className="btn-primary" onClick={() => navigate('/login')}>Return to Login Screen</button>
+                <button
+                  className="btn-primary"
+                  style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', padding: '12px 28px' }}
+                  onClick={() => navigate(selectedRole === 'PROCUREMENT_OFFICER' ? '/login?portal=OFFICER' : '/login?portal=AUDITOR')}
+                >
+                  Sign In to {selectedRole === 'PROCUREMENT_OFFICER' ? 'Procurement' : 'Auditor'} Portal →
+                </button>
               </>
             )}
           </div>

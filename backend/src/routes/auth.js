@@ -366,8 +366,8 @@ router.post('/register-officer', registerLimiter, async (req, res) => {
           role: 'PROCUREMENT_OFFICER',
           organization: finalOrg,
           organizationId: employeeId.trim(),
-          isActive: false, // Requires Administrator approval
-          approvalStatus: 'PENDING',
+          isActive: true, // Immediate direct access
+          approvalStatus: 'ACTIVE',
           emailVerified: true,
         }
       });
@@ -380,18 +380,18 @@ router.post('/register-officer', registerLimiter, async (req, res) => {
         organization: finalOrg,
         organizationId: employeeId.trim(),
         phone: phone || null,
-        isActive: false,
-        approvalStatus: 'PENDING'
+        isActive: true,
+        approvalStatus: 'ACTIVE'
       });
     }
 
-    logger.info(`New Officer Registered: ${name} (${employeeId}) | Directory Match: ${!!officerRecord}`);
+    logger.info(`New Officer Registered & Activated: ${name} (${employeeId}) | Directory Match: ${!!officerRecord}`);
 
     res.status(201).json({
       user,
-      accountStatus: 'PENDING_APPROVAL',
+      accountStatus: 'ACTIVE',
       directoryMatch: !!officerRecord,
-      message: 'Procurement Officer credentials submitted. Requires administrative verification before platform access is granted.',
+      message: 'Procurement Officer account created and activated. You can sign in immediately.',
     });
   } catch (error) {
     if (error.code === 'P2002' || error.message?.includes('already exists')) {
@@ -427,8 +427,8 @@ router.post('/register-auditor', registerLimiter, async (req, res) => {
           role: 'REVIEWER', // Compliance Auditor / Reviewer
           organization: finalOrg,
           organizationId: effectiveAuditorId.trim(),
-          isActive: false, // Requires Administrator approval
-          approvalStatus: 'PENDING',
+          isActive: true, // Immediate direct access
+          approvalStatus: 'ACTIVE',
           emailVerified: true,
         }
       });
@@ -441,18 +441,18 @@ router.post('/register-auditor', registerLimiter, async (req, res) => {
         organization: finalOrg,
         organizationId: effectiveAuditorId.trim(),
         phone: phone || null,
-        isActive: false,
-        approvalStatus: 'PENDING'
+        isActive: true,
+        approvalStatus: 'ACTIVE'
       });
     }
 
-    logger.info(`New Auditor Registered: ${name} (${effectiveAuditorId}) | Directory Match: ${!!auditorRecord}`);
+    logger.info(`New Auditor Registered & Activated: ${name} (${effectiveAuditorId}) | Directory Match: ${!!auditorRecord}`);
 
     res.status(201).json({
       user,
-      accountStatus: 'PENDING_APPROVAL',
+      accountStatus: 'ACTIVE',
       directoryMatch: !!auditorRecord,
-      message: 'Compliance Auditor registration submitted. Requires administrative verification before audit privileges are activated.',
+      message: 'Compliance Auditor account created and activated. You can sign in immediately.',
     });
   } catch (error) {
     if (error.code === 'P2002' || error.message?.includes('already exists')) {
