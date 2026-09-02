@@ -347,6 +347,8 @@ export default function RegisterPage() {
           email: officerForm.email.trim(),
           phone: officerForm.phone.trim(),
           employeeId: officerForm.employeeId.trim(),
+          organization: 'Government Procurement Authority',
+          department: 'Public Procurement Division',
           designation: officerForm.designation.trim() || 'Procurement Officer',
           password: officerForm.password,
         });
@@ -357,6 +359,8 @@ export default function RegisterPage() {
           phone: officerForm.phone.trim(),
           auditorId: officerForm.employeeId.trim(),
           employeeId: officerForm.employeeId.trim(),
+          organization: 'Office of Comptroller & Auditor General (CAG)',
+          department: 'Compliance Audit Division',
           designation: officerForm.designation.trim() || 'Compliance Auditor',
           password: officerForm.password,
         });
