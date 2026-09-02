@@ -7,57 +7,55 @@ import api from '../services/api';
 // 5-Role Distinct Navigation Menus
 const ROLE_NAV_ITEMS = {
   ADMIN: [
-    { path: '/dashboard',      icon: '⊞', label: 'Platform Dashboard' },
-    { path: '/admin',          icon: '👥', label: 'User Management' },
-    { path: '/admin?tab=rbac', icon: '🛡️', label: 'Roles & Permissions' },
-    { path: '/admin?tab=integrations', icon: '🔌', label: 'Integrations (GST/PAN)' },
-    { path: '/admin?tab=ai',   icon: '🧠', label: 'AI & Verification Ops' },
-    { path: '/tenders',        icon: '📋', label: 'Tender Monitoring' },
-    { path: '/audit',          icon: '📜', label: 'System Audit Logs' },
-    { path: '/admin?tab=security', icon: '🔒', label: 'Security & Access' },
+    { path: '/dashboard',      label: 'Platform Dashboard' },
+    { path: '/admin',          label: 'User Management' },
+    { path: '/admin?tab=rbac', label: 'Roles & Permissions' },
+    { path: '/admin?tab=integrations', label: 'Integrations (GST/PAN)' },
+    { path: '/admin?tab=ai',   label: 'AI & Verification Ops' },
+    { path: '/tenders',        label: 'Tender Monitoring' },
+    { path: '/audit',          label: 'System Audit Logs' },
+    { path: '/admin?tab=security', label: 'Security & Access' },
   ],
   PROCUREMENT_OFFICER: [
-    { path: '/dashboard',      icon: '⊞', label: 'Dashboard' },
-    { path: '/procurement/verify-company-profiles', icon: '🔍', label: 'Verify Company Profiles' },
-    { path: '/tenders',        icon: '📋', label: 'Tenders (All / Active)' },
-    { path: '/tenders/create', icon: '＋', label: 'Create Tender' },
-    { path: '/bids',           icon: '📥', label: 'Bids Received' },
-    { path: '/risk-alerts',    icon: '⚠️', label: 'Risk & Alerts' },
-    { path: '/reports',        icon: '📊', label: 'Compliance Reports' },
-    { path: '/audit',          icon: '📜', label: 'Audit Trail' },
-    { path: '/notifications',  icon: '🔔', label: 'Notifications' },
-    { path: '/profile',        icon: '👤', label: 'Officer Profile' },
+    { path: '/dashboard',      label: 'Dashboard' },
+    { path: '/procurement/verify-company-profiles', label: 'Verify Company Profiles' },
+    { path: '/tenders',        label: 'Tenders (All / Active)' },
+    { path: '/tenders/create', label: 'Create Tender' },
+    { path: '/bids',           label: 'Bids Received' },
+    { path: '/risk-alerts',    label: 'Risk & Alerts' },
+    { path: '/reports',        label: 'Compliance Reports' },
+    { path: '/audit',          label: 'Audit Trail' },
+    { path: '/notifications',  label: 'Notifications' },
+    { path: '/profile',        label: 'Officer Profile' },
   ],
   REVIEWER: [
-    { path: '/dashboard',                    icon: '⊞',  label: 'Verification Dashboard' },
-    { path: '/reviewer/verification-queue',  icon: '🪪',  label: 'Bidder Verification Queue', badge: 'NEW' },
-    { path: '/auditor/queue',                icon: '🔍',  label: 'Document Review Queue' },
-    { path: '/compliance/4c57ba4b-7854-4dbf-b0fc-ac987e46f9bf', icon: '⚖️', label: '3-Panel Workspace' },
-    { path: '/auditor/comparison',           icon: '📑',  label: 'Cross-Doc Matrix' },
-    { path: '/auditor/disputed',             icon: '💡',  label: 'Disputed Results' },
-    { path: '/auditor/completed',            icon: '✓',   label: 'Completed Reviews' },
-    { path: '/risk-alerts',                  icon: '⚠️',  label: 'Risk Flags & Alerts' },
-    { path: '/audit',                        icon: '📜',  label: 'Audit Trail' },
-    { path: '/reports',                      icon: '📊',  label: 'Official Reports' },
+    { path: '/dashboard',                    label: 'Verification Dashboard' },
+    { path: '/reviewer/verification-queue',  label: 'Bidder Verification Queue', badge: 'NEW' },
+    { path: '/auditor/queue',                label: 'Document Review Queue' },
+    { path: '/compliance/4c57ba4b-7854-4dbf-b0fc-ac987e46f9bf', label: '3-Panel Workspace' },
+    { path: '/auditor/comparison',           label: 'Cross-Doc Matrix' },
+    { path: '/auditor/disputed',             label: 'Disputed Results' },
+    { path: '/auditor/completed',            label: 'Completed Reviews' },
+    { path: '/risk-alerts',                  label: 'Risk Flags & Alerts' },
+    { path: '/audit',                        label: 'Audit Trail' },
+    { path: '/reports',                      label: 'Official Reports' },
   ],
   BIDDER: [
-    { path: '/dashboard',              icon: '⊞',  label: 'Supplier Dashboard' },
-    { path: '/bidder/profile',         icon: '🏢',  label: 'Company Profile & Documents' },
-    { path: '/bidder/tenders',         icon: '🔎',  label: 'Browse Tenders' },
-    { path: '/bidder/my-bids',         icon: '📤',  label: 'My Bids & Tracking' },
-    { path: '/bidder/compliance',      icon: '📊',  label: 'Compliance Status' },
-    { path: '/bidder/clarifications',  icon: '✍️',  label: 'Clarification Requests' },
-    { path: '/notifications',          icon: '🔔',  label: 'Notifications' },
+    { path: '/dashboard',              label: 'Supplier Dashboard' },
+    { path: '/bidder/profile',         label: 'Company Profile & Documents' },
+    { path: '/bidder/tenders',         label: 'Browse Tenders' },
+    { path: '/bidder/my-bids',         label: 'My Bids & Tracking' },
+    { path: '/notifications',          label: 'Notifications' },
   ],
   AUDITOR: [
-    { path: '/dashboard',             icon: '⊞', label: 'Auditor Overview' },
-    { path: '/auditor/queue',         icon: '🔍', label: 'Verification Queue' },
-    { path: '/compliance/4c57ba4b-7854-4dbf-b0fc-ac987e46f9bf', icon: '⚖️', label: '3-Panel Evidence Viewer' },
-    { path: '/auditor/comparison',    icon: '📑', label: 'Cross-Doc Matrix' },
-    { path: '/auditor/disputed',      icon: '💡', label: 'Disputed Results' },
-    { path: '/auditor/completed',     icon: '✓', label: 'Completed Reviews' },
-    { path: '/reports',               icon: '📊', label: 'Compliance Records' },
-    { path: '/audit',                 icon: '📜', label: 'Decision Traceability' },
+    { path: '/dashboard',             label: 'Auditor Overview' },
+    { path: '/auditor/queue',         label: 'Verification Queue' },
+    { path: '/compliance/4c57ba4b-7854-4dbf-b0fc-ac987e46f9bf', label: '3-Panel Evidence Viewer' },
+    { path: '/auditor/comparison',    label: 'Cross-Doc Matrix' },
+    { path: '/auditor/disputed',      label: 'Disputed Results' },
+    { path: '/auditor/completed',     label: 'Completed Reviews' },
+    { path: '/reports',               label: 'Compliance Records' },
+    { path: '/audit',                 label: 'Decision Traceability' },
   ],
 };
 
@@ -197,31 +195,28 @@ const Sidebar = () => {
               }}
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
               style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px',
                 borderRadius: 8, textDecoration: 'none',
-                color: isActive ? '#1d4ed8' : isLocked ? '#94a3b8' : '#475569',
+                color: isActive ? '#1d4ed8' : isLocked ? '#94a3b8' : '#334155',
                 background: isActive ? '#eff6ff' : 'transparent',
                 border: `1px solid ${isActive ? '#bfdbfe' : 'transparent'}`,
-                fontSize: '0.84rem',
+                fontSize: '0.85rem',
                 fontWeight: isActive ? 700 : 600,
-                marginBottom: 2, transition: 'all 0.15s',
+                marginBottom: 3, transition: 'all 0.15s',
                 opacity: isLocked ? 0.6 : 1,
                 cursor: isLocked ? 'not-allowed' : 'pointer'
               })}
             >
-              <span style={{ fontSize: '1rem', width: 20, textAlign: 'center' }}>
-                {isLocked ? '🔒' : item.icon}
-              </span>
               <span style={{ flex: 1 }}>{item.label}</span>
               {isLocked ? (
                 <span style={{
-                  fontSize: '0.52rem', fontWeight: 900, padding: '2px 5px', borderRadius: 6,
+                  fontSize: '0.55rem', fontWeight: 900, padding: '2px 6px', borderRadius: 6,
                   color: '#64748b', background: '#f1f5f9',
                   border: '1px solid #e2e8f0', letterSpacing: '0.04em'
                 }}>LOCKED</span>
               ) : item.badge ? (
                 <span style={{
-                  fontSize: '0.55rem', fontWeight: 900, padding: '2px 5px', borderRadius: 6,
+                  fontSize: '0.55rem', fontWeight: 900, padding: '2px 6px', borderRadius: 6,
                   color: item.badge === 'REQUIRED' ? '#b45309' : '#1d4ed8',
                   background: item.badge === 'REQUIRED' ? '#fef3c7' : '#dbeafe',
                   border: `1px solid ${item.badge === 'REQUIRED' ? '#fde68a' : '#bfdbfe'}`,

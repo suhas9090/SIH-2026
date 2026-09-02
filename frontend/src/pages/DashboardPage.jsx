@@ -343,12 +343,11 @@ const BidderDashboard = ({ profile, tenders, navigate }) => {
       </div>
 
       <div style={{ padding: '24px 32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
-            { label: 'Available Tenders', value: tenders.length || 0, color: '#7c3aed', onClick: () => navigate('/bidder/tenders') },
-            { label: 'My Active Bids', value: 0, color: '#2563eb', onClick: () => navigate('/bidder/my-bids') },
-            { label: 'Company Documents', value: '5 Verified', color: '#059669', onClick: () => navigate('/bidder/profile') },
-            { label: 'Compliance Standing', value: 'ELIGIBLE', color: '#0284c7', onClick: () => navigate('/bidder/compliance') },
+            { label: 'Available Tenders', value: tenders.length || 0, color: '#2563eb', onClick: () => navigate('/bidder/tenders') },
+            { label: 'My Active Bids', value: 0, color: '#7c3aed', onClick: () => navigate('/bidder/my-bids') },
+            { label: 'Company Documents', value: 'Verified', color: '#059669', onClick: () => navigate('/bidder/profile') },
           ].map((c) => (
             <div key={c.label} className="card" style={{ padding: 20, borderLeft: `4px solid ${c.color}`, cursor: 'pointer' }} onClick={c.onClick}>
               <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.8rem', color: '#0f172a' }}>{c.value}</div>
