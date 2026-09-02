@@ -1,10 +1,31 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticate, authorize } = require('../middleware/auth');
+const memoryStore = require('../services/verification/bidderOnboardingMemoryStore');
 const logger = require('../utils/logger');
 
 const router = express.Router();
 const prisma = new PrismaClient();
+
+// Helper: Get users from memoryStore
+function getMemoryUsers() {
+  const users = Array.from(memoryStore.users.values()).map(u => ({
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    role: u.role,
+    organization: u.organization,
+    organizationId: u.organizationId,
+    phone: u.phone,
+    isActive: u.isActive !== false,
+    approvalStatus: u.approvalStatus || 'APPROVED',
+    emailVerified: u.emailVerified ?? true,
+    createdAt: u.createdAt || new Date(),
+    lastLoginAt: u.lastLoginAt || null,
+  }));
+  users.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  return users;
+}
 
 // GET /api/admin/users
 router.get('/users', authenticate, authorize('ADMIN'), async (req, res) => {
@@ -28,14 +49,16 @@ router.get('/users', authenticate, authorize('ADMIN'), async (req, res) => {
     });
     res.json(users);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Fallback to memoryStore when Prisma is offline
+    const memoryUsers = getMemoryUsers();
+    res.json(memoryUsers);
   }
 });
 
 // POST /api/admin/users/:id/approve
 router.post('/users/:id/approve', authenticate, authorize('ADMIN'), async (req, res) => {
+  const { remarks } = req.body;
   try {
-    const { remarks } = req.body;
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: {
@@ -57,16 +80,25 @@ router.post('/users/:id/approve', authenticate, authorize('ADMIN'), async (req, 
     }).catch(() => {});
 
     logger.info(`Admin approved user: ${user.email} (${user.role})`);
-    res.json({ user, message: `Account for ${user.name} approved successfully.` });
+    return res.json({ user, message: `Account for ${user.name} approved successfully.` });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Fallback memoryStore update
+    const memUser = memoryStore.getUserById(req.params.id);
+    if (memUser) {
+      memUser.approvalStatus = 'APPROVED';
+      memUser.isActive = true;
+      memUser.approvedBy = req.user.id;
+      memUser.approvalRemarks = remarks || 'Approved by administrator';
+      return res.json({ user: memUser, message: `Account for ${memUser.name} approved successfully.` });
+    }
+    res.status(404).json({ error: 'User not found in store.' });
   }
 });
 
 // POST /api/admin/users/:id/reject
 router.post('/users/:id/reject', authenticate, authorize('ADMIN'), async (req, res) => {
+  const { remarks } = req.body;
   try {
-    const { remarks } = req.body;
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: {
@@ -88,16 +120,23 @@ router.post('/users/:id/reject', authenticate, authorize('ADMIN'), async (req, r
     }).catch(() => {});
 
     logger.info(`Admin rejected user: ${user.email}`);
-    res.json({ user, message: `Registration for ${user.name} rejected.` });
+    return res.json({ user, message: `Registration for ${user.name} rejected.` });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const memUser = memoryStore.getUserById(req.params.id);
+    if (memUser) {
+      memUser.approvalStatus = 'REJECTED';
+      memUser.isActive = false;
+      memUser.approvalRemarks = remarks || 'Rejected by administrator';
+      return res.json({ user: memUser, message: `Registration for ${memUser.name} rejected.` });
+    }
+    res.status(404).json({ error: 'User not found.' });
   }
 });
 
 // POST /api/admin/users/:id/suspend
 router.post('/users/:id/suspend', authenticate, authorize('ADMIN'), async (req, res) => {
+  const { remarks } = req.body;
   try {
-    const { remarks } = req.body;
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: {
@@ -117,9 +156,15 @@ router.post('/users/:id/suspend', authenticate, authorize('ADMIN'), async (req, 
     }).catch(() => {});
 
     logger.info(`Admin suspended user: ${user.email}`);
-    res.json({ user, message: `Account for ${user.name} suspended.` });
+    return res.json({ user, message: `Account for ${user.name} suspended.` });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const memUser = memoryStore.getUserById(req.params.id);
+    if (memUser) {
+      memUser.isActive = false;
+      memUser.approvalRemarks = remarks || 'Suspended by administrator';
+      return res.json({ user: memUser, message: `Account for ${memUser.name} suspended.` });
+    }
+    res.status(404).json({ error: 'User not found.' });
   }
 });
 
@@ -144,9 +189,15 @@ router.post('/users/:id/reactivate', authenticate, authorize('ADMIN'), async (re
       }
     }).catch(() => {});
 
-    res.json({ user, message: `Account for ${user.name} reactivated.` });
+    return res.json({ user, message: `Account for ${user.name} reactivated.` });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const memUser = memoryStore.getUserById(req.params.id);
+    if (memUser) {
+      memUser.isActive = true;
+      memUser.approvalStatus = 'APPROVED';
+      return res.json({ user: memUser, message: `Account for ${memUser.name} reactivated.` });
+    }
+    res.status(404).json({ error: 'User not found.' });
   }
 });
 
@@ -160,7 +211,12 @@ router.put('/users/:id/role', authenticate, authorize('ADMIN'), async (req, res)
     });
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const memUser = memoryStore.getUserById(req.params.id);
+    if (memUser) {
+      memUser.role = req.body.role;
+      return res.json(memUser);
+    }
+    res.status(404).json({ error: 'User not found.' });
   }
 });
 

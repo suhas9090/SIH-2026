@@ -9,12 +9,8 @@ const ROLE_NAV_ITEMS = {
   ADMIN: [
     { path: '/dashboard',      label: 'Platform Dashboard' },
     { path: '/admin',          label: 'User Management' },
-    { path: '/admin?tab=rbac', label: 'Roles & Permissions' },
-    { path: '/admin?tab=integrations', label: 'Integrations (GST/PAN)' },
-    { path: '/admin?tab=ai',   label: 'AI & Verification Ops' },
     { path: '/tenders',        label: 'Tender Monitoring' },
-    { path: '/audit',          label: 'System Audit Logs' },
-    { path: '/admin?tab=security', label: 'Security & Access' },
+    { path: '/profile',        label: 'Administrator Profile' },
   ],
   PROCUREMENT_OFFICER: [
     { path: '/dashboard',      label: 'Dashboard' },

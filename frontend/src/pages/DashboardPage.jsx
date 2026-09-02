@@ -31,11 +31,11 @@ const AdminDashboard = ({ profile, stats, navigate }) => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn-secondary" onClick={() => navigate('/audit')}>
-            📜 View System Audit Logs
+          <button className="btn-secondary" onClick={() => navigate('/tenders')}>
+            📋 Tender Monitoring
           </button>
           <button className="btn-primary" onClick={() => navigate('/admin')}>
-            👥 Manage Users & RBAC
+            👥 User Management
           </button>
         </div>
       </div>
