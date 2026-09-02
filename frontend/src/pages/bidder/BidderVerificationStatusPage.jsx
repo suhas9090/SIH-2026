@@ -4,18 +4,21 @@ import { AppLayout } from '../../components/Sidebar';
 import api from '../../services/api';
 
 const LIFECYCLE_MAP = {
-  REGISTERED: { label: 'Not Started', color: '#64748b', bg: 'rgba(100,116,139,0.12)', pct: 5 },
-  IDENTITY_PENDING: { label: 'Identity In Progress', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', pct: 20 },
-  IDENTITY_VERIFIED: { label: 'Identity Verified', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', pct: 40 },
-  COMPANY_VERIFICATION_PENDING: { label: 'Company Verification In Progress', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', pct: 50 },
-  COMPANY_VERIFIED: { label: 'Company Verified', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', pct: 65 },
-  DOCUMENT_VERIFICATION_PENDING: { label: 'Documents Submitted — Awaiting Review', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', pct: 80 },
-  UNDER_OFFICER_REVIEW: { label: 'Under Officer Review', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', pct: 88 },
-  CORRECTION_REQUIRED: { label: 'Correction Required', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', pct: 60 },
-  VERIFIED: { label: 'Verified', color: '#10b981', bg: 'rgba(16,185,129,0.12)', pct: 95 },
-  APPROVED_TO_BID: { label: 'Approved — Eligible to Bid', color: '#10b981', bg: 'rgba(16,185,129,0.12)', pct: 100 },
-  VERIFICATION_FAILED: { label: 'Verification Failed', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', pct: 0 },
-  SUSPENDED: { label: 'Account Suspended', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', pct: 0 },
+  REGISTERED:                     { label: 'Not Started', color: '#64748b', bg: 'rgba(100,116,139,0.12)', pct: 5 },
+  IDENTITY_PENDING:               { label: 'Identity In Progress', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', pct: 20 },
+  IDENTITY_VERIFIED:              { label: 'Identity Verified', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', pct: 40 },
+  COMPANY_VERIFICATION_PENDING:   { label: 'Company Verification In Progress', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', pct: 50 },
+  COMPANY_VERIFIED:               { label: 'Company Verified', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', pct: 65 },
+  DOCUMENT_VERIFICATION_PENDING:  { label: 'Documents Submitted', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', pct: 75 },
+  DOCUMENTS_SUBMITTED:            { label: 'Documents Submitted', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', pct: 75 },
+  AUTO_VERIFICATION_IN_PROGRESS:  { label: '🤖 AI Verification Running…', color: '#6366f1', bg: 'rgba(99,102,241,0.12)', pct: 88 },
+  UNDER_OFFICER_REVIEW:           { label: 'Under Officer Review', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', pct: 90 },
+  REVIEW_REQUIRED:                { label: '⚠ Routed for Manual Review', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', pct: 88 },
+  CORRECTION_REQUIRED:            { label: 'Correction Required', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', pct: 60 },
+  VERIFIED:                       { label: 'Verified', color: '#10b981', bg: 'rgba(16,185,129,0.12)', pct: 95 },
+  APPROVED_TO_BID:                { label: '✅ Automatically Verified — Eligible to Bid', color: '#10b981', bg: 'rgba(16,185,129,0.12)', pct: 100 },
+  VERIFICATION_FAILED:            { label: 'Verification Failed', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', pct: 0 },
+  SUSPENDED:                      { label: 'Account Suspended', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', pct: 0 },
 };
 
 function CheckRow({ label, verified, pending, detail }) {

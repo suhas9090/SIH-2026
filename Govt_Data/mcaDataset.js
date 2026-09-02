@@ -48,6 +48,27 @@ const SYNTHETIC_MCA_RECORDS = [
     lastVerifiedAt: new Date().toISOString(),
   },
   {
+    cinOrLlpin: 'U29299DL2015PTC281944',
+    legalName: 'Zenith Protection Gear & Safety Works Private Limited',
+    companyType: 'Private Limited Company',
+    incorporationDate: '2015-03-10',
+    registeredAddress: 'Shop 12, Okhla Industrial Area, Phase I, New Delhi 110020',
+    companyStatus: 'ACTIVE',
+    authorisedCapital: 25000000,
+    paidUpCapital: 10000000,
+    directors: [
+      { din: '07112233', name: 'Rajesh Malhotra (Synthetic)', appointmentDate: '2015-03-10', designation: 'Director' },
+      { din: '07112234', name: 'Sunil Verma (Synthetic)', appointmentDate: '2015-03-10', designation: 'Director' }
+    ],
+    annualFilingStatus: 'COMPLIANT_FY24_25',
+    financialStatementFilingStatus: 'FILED_AOC4',
+    lastFilingDate: '2025-10-28',
+    registeredState: 'Delhi',
+    rocLocation: 'ROC Delhi',
+    verificationSource: 'SYNTHETIC_MCA21_REGISTRY',
+    lastVerifiedAt: new Date().toISOString(),
+  },
+  {
     cinOrLlpin: 'U18101TG2020PTC367890',
     legalName: 'Paramount Defence Gear Private Limited',
     companyType: 'Private Limited Company',

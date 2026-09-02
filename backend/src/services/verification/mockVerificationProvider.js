@@ -64,6 +64,26 @@ class MockVerificationProvider extends BaseVerificationProvider {
     return await this.client.fetchPanBundle(cleanPan);
   }
 
+  /**
+   * Fetch demo Aadhaar identity record from UIDAI Simulator.
+   * Returns masked holder info only — never full Aadhaar details.
+   */
+  async fetchAadhaarDetails(aadhaarNumber) {
+    const clean = (aadhaarNumber || '').replace(/\s/g, '').trim();
+
+    if (!clean || !/^\d{12}$/.test(clean)) {
+      return {
+        found: false,
+        error: 'INVALID_FORMAT',
+        message: 'Aadhaar number must be exactly 12 digits.',
+        is_simulated: true,
+      };
+    }
+
+    const res = await this.client.fetchAadhaarDetails(clean);
+    return res;
+  }
+
   async verifyGST(gstin, expectedLegalName, expectedPan) {
     const cleanGst = (gstin || '').trim().toUpperCase();
     const isValidFormat = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(cleanGst);

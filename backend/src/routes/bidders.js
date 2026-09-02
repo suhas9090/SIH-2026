@@ -5,13 +5,26 @@ const multer = require('multer');
 const axios = require('axios');
 const path = require('path');
 
+const memoryStore = require('../services/verification/bidderOnboardingMemoryStore');
+
 const router = express.Router();
 const prisma = new PrismaClient();
 const upload = multer({ dest: 'uploads/bidders/', limits: { fileSize: 50 * 1024 * 1024 } });
 
-// POST /api/bidders (add bidder to tender)
+// POST /api/bidders (add bidder to tender / submit bid)
 router.post('/', authenticate, async (req, res) => {
   try {
+    // Verification Gate: Bidders must be fully verified before participating in tenders
+    if (req.user?.role === 'BIDDER') {
+      const prof = memoryStore.getProfileByUserId(req.user.id);
+      if (!prof || prof.lifecycleStatus !== 'APPROVED_TO_BID') {
+        return res.status(403).json({
+          error: 'VERIFICATION_REQUIRED',
+          message: 'You must complete statutory identity, company, and document verification before participating or submitting bids to tenders.'
+        });
+      }
+    }
+
     const { tenderId, organizationName, gstin, pan, udyamNo, cinNo, contactName, contactEmail, contactPhone } = req.body;
 
     const bidder = await prisma.bidder.create({

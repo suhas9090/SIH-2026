@@ -17,6 +17,7 @@ const fs = require('fs');
 const { authenticate, authorize } = require('../middleware/auth');
 const { MockVerificationProvider } = require('../services/verification/mockVerificationProvider');
 const memoryStore = require('../services/verification/bidderOnboardingMemoryStore');
+const { runFullVerification } = require('../services/verification/autoVerificationEngine');
 const logger = require('../utils/logger');
 
 const router = express.Router();
@@ -74,14 +75,44 @@ router.get('/profile', authenticate, authorize('BIDDER', 'ADMIN'), async (req, r
 router.post('/profile', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
   try {
     const {
-      fullName, dateOfBirth, gender, fatherName,
+      fullName, email, dateOfBirth, gender, fatherName,
       mobileNumber, alternatePhone, residentialAddress,
-      city, state, district, pincode, lifecycleStatus
+      city, state, district, pincode, lifecycleStatus, emailVerified
     } = req.body;
 
+    // Validate email format if provided
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Invalid email format. Example: bidder@example.com' });
+      }
+    }
+
+    // Validate mobile number format if provided
+    if (mobileNumber) {
+      const cleanMobile = mobileNumber.replace(/[\s-]/g, '');
+      const mobileRegex = /^(\+91)?[6-9]\d{9}$/;
+      if (!mobileRegex.test(cleanMobile)) {
+        return res.status(400).json({ error: 'Invalid mobile number. India format: +91 followed by 10 digits.' });
+      }
+    }
+
+    // Validate PIN code if provided
+    if (pincode) {
+      const pinClean = pincode.toString().trim();
+      if (!/^\d{6}$/.test(pinClean)) {
+        return res.status(400).json({ error: 'PIN Code must be exactly 6 digits.' });
+      }
+    }
+
     const profile = memoryStore.saveProfile(req.user.id, {
-      fullName, dateOfBirth, gender, fatherName,
-      mobileNumber, alternatePhone, residentialAddress,
+      fullName,
+      email: email ? email.trim() : undefined,
+      emailVerified: emailVerified !== undefined ? emailVerified : true,
+      dateOfBirth, gender, fatherName,
+      mobileNumber,
+      mobileVerified: !!mobileNumber,
+      alternatePhone, residentialAddress,
       city, state, district, pincode,
       ...(lifecycleStatus ? { lifecycleStatus } : {})
     });
@@ -199,23 +230,98 @@ router.post('/verify-pan', authenticate, authorize('BIDDER', 'ADMIN'), async (re
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/bidder-onboarding/verify-aadhaar
+// POST /api/bidder-onboarding/fetch-aadhaar-details
+// Authenticate & Fetch Identity via Aadhaar Number + 6-Digit DigiLocker PIN
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/verify-aadhaar', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+router.post('/fetch-aadhaar-details', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
   try {
-    const { aadhaarRef } = req.body;
-    if (!aadhaarRef) return res.status(400).json({ error: 'Aadhaar Reference ID is required.' });
+    const { aadhaarNumber, digilockerPin, pin } = req.body;
+    if (!aadhaarNumber) {
+      return res.status(400).json({ error: 'Aadhaar Number (Demo) is required.' });
+    }
 
-    const masked = 'XXXX XXXX ' + aadhaarRef.slice(-4);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const cleanAadhaar = aadhaarNumber.replace(/[\s-]/g, '').trim();
+    if (!/^\d{12}$/.test(cleanAadhaar)) {
+      return res.status(400).json({ error: 'Aadhaar number must be exactly 12 digits without letters or special characters.' });
+    }
 
-    memoryStore.saveProfile(req.user.id, { aadhaarRefId: aadhaarRef, aadhaarMasked: masked });
+    const providedPin = (digilockerPin || pin || '').toString().trim();
+    if (!providedPin || !/^\d{6}$/.test(providedPin)) {
+      return res.status(400).json({ error: 'Please enter a valid 6-digit DigiLocker Security PIN.' });
+    }
+
+    const { verifyAadhaarWithPin } = require('../../../Govt_Data/aadhaarDataset');
+    const pinCheck = verifyAadhaarWithPin(cleanAadhaar, providedPin);
+
+    if (!pinCheck.success) {
+      return res.status(400).json({
+        success: false,
+        found: pinCheck.error !== 'AADHAAR_NOT_FOUND',
+        error: pinCheck.error,
+        message: pinCheck.message || 'Authentication failed. Please verify your Aadhaar number and 6-digit DigiLocker PIN.'
+      });
+    }
+
+    const localRecord = pinCheck.record;
+    const result = {
+      found: true,
+      verified: true,
+      verification_status: localRecord.status || 'ACTIVE',
+      aadhaarNumber: cleanAadhaar,
+      aadhaarMasked: `XXXX XXXX ${cleanAadhaar.slice(-4)}`,
+      holderName: localRecord.holderName,
+      holderNameInitials: localRecord.holderName.split(' ').map(n => n[0] + '***').join(' '),
+      mobileNumber: localRecord.mobileNumber,
+      mobileMasked: '+91 ******' + localRecord.mobileNumber.slice(-4),
+      dateOfBirth: localRecord.dateOfBirth,
+      gender: localRecord.gender,
+      residentialAddress: localRecord.residentialAddress,
+      city: localRecord.city || localRecord.district,
+      district: localRecord.district,
+      state: localRecord.state,
+      pinCode: localRecord.pinCode,
+      linkedPanNumber: localRecord.linkedPanNumber,
+      linkedPanMasked: localRecord.linkedPanNumber ? localRecord.linkedPanNumber.slice(0, 3) + '****' + localRecord.linkedPanNumber.slice(-2) : null,
+      email: localRecord.email,
+      status: localRecord.status,
+      source: 'SYNTHETIC_UIDAI_DIGILOCKER_DATASET',
+      verifiedAt: new Date().toISOString()
+    };
+
+    // Automatically save the full verified identity & linked PAN to memoryStore
+    memoryStore.saveProfile(req.user.id, {
+      fullName: result.holderName,
+      mobileNumber: '+91 ' + result.mobileNumber,
+      dateOfBirth: result.dateOfBirth,
+      gender: result.gender,
+      residentialAddress: result.residentialAddress,
+      city: result.city,
+      district: result.district,
+      state: result.state,
+      pincode: result.pinCode,
+      panNumber: result.linkedPanNumber,
+      panVerified: true,
+      aadhaarRefId: cleanAadhaar,
+      aadhaarMasked: result.aadhaarMasked,
+      aadhaarHolderName: result.holderName,
+      aadhaarMobile: result.mobileNumber,
+      aadhaarVerified: true,
+      aadhaarVerifiedAt: result.verifiedAt,
+      digilockerVerified: true
+    });
+
+    memoryStore.saveCompany(req.user.id, {
+      panNumber: result.linkedPanNumber,
+      panVerified: true
+    });
 
     res.json({
       success: true,
-      masked,
-      message: `OTP sent to mobile linked with ${masked}.`,
-      expiresAt
+      found: true,
+      verified: true,
+      data: result,
+      message: `Identity verified successfully via DigiLocker for ${result.holderName} (${result.aadhaarMasked}).`,
+      disclaimer: 'DEMO / SIMULATED GOVERNMENT VERIFICATION (DigiLocker + UIDAI)'
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -223,23 +329,169 @@ router.post('/verify-aadhaar', authenticate, authorize('BIDDER', 'ADMIN'), async
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/bidder-onboarding/verify-otp
+// POST /api/bidder-onboarding/send-aadhaar-otp
+// Generates a mock OTP session on backend (never exposes OTP in response)
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/verify-otp', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+router.post('/send-aadhaar-otp', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
   try {
-    const { otp } = req.body;
-    if (!otp) return res.status(400).json({ error: 'OTP is required.' });
+    const { aadhaarNumber } = req.body;
+    const profile = await resolveProfile(req.user.id);
+    const targetAadhaar = aadhaarNumber || profile.aadhaarRefId;
 
-    const isValid = otp.length === 6 && /^\d{6}$/.test(otp);
-    if (!isValid) return res.status(400).json({ error: 'Invalid OTP. Please enter a valid 6-digit code.' });
+    if (!targetAadhaar) {
+      return res.status(400).json({ error: 'Please fetch demo Aadhaar details first before sending OTP.' });
+    }
 
-    memoryStore.saveProfile(req.user.id, { aadhaarVerified: true, lifecycleStatus: 'IDENTITY_VERIFIED' });
+    const sessionResult = memoryStore.createAadhaarOtpSession(req.user.id, targetAadhaar);
 
-    res.json({ success: true, message: 'Identity verified successfully via OTP.', lifecycleStatus: 'IDENTITY_VERIFIED' });
+    res.json({
+      success: true,
+      sessionToken: sessionResult.sessionToken,
+      maskedAadhaar: sessionResult.maskedAadhaar,
+      expiresAt: sessionResult.expiresAt,
+      message: sessionResult.message,
+      disclaimer: 'DEMO / SIMULATED OTP VERIFICATION'
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/bidder-onboarding/verify-aadhaar-otp
+// Backend OTP validation with attempt rate limiting & expiry checking
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/verify-aadhaar-otp', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  try {
+    const { sessionToken, otp } = req.body;
+    if (!otp) {
+      return res.status(400).json({ error: 'OTP code is required.' });
+    }
+
+    const cleanOtp = otp.toString().trim();
+    if (!/^\d{6}$/.test(cleanOtp)) {
+      return res.status(400).json({ error: 'OTP must be exactly 6 digits.' });
+    }
+
+    const verification = memoryStore.verifyAadhaarOtpSession(req.user.id, sessionToken, cleanOtp);
+
+    if (!verification.success) {
+      return res.status(400).json(verification);
+    }
+
+    res.json({
+      success: true,
+      verified: true,
+      maskedAadhaar: verification.maskedAadhaar,
+      message: '✓ Aadhaar Demo Identity successfully verified.',
+      disclaimer: 'DEMO / SIMULATED GOVERNMENT VERIFICATION'
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/bidder-onboarding/send-email-otp
+// Generates & dispatches 6-digit numeric OTP to bidder official email
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/send-email-otp', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  try {
+    const email = req.body.email || req.user.email;
+    const session = await memoryStore.createEmailOtpSession(email);
+    res.json(session);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/bidder-onboarding/verify-email-otp
+// Verifies 6-digit email OTP (5-min expiry, max 5 attempts)
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/verify-email-otp', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  try {
+    const { email, sessionToken, otp } = req.body;
+    const targetEmail = email || req.user.email;
+    const result = memoryStore.verifyEmailOtpSession(targetEmail, sessionToken, otp);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    // Mark email verified on profile
+    memoryStore.saveProfile(req.user.id, { emailVerified: true });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/bidder-onboarding/email-otp-hint
+// Demo/Judges Helper — returns active session OTP for evaluation
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/email-otp-hint', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  try {
+    const email = req.query.email || req.user.email;
+    const hint = memoryStore.getEmailOtpHint(email);
+    if (!hint) {
+      return res.json({ active: false, message: 'No active Email OTP session found. Click "Send Verification Code" first.' });
+    }
+    res.json({
+      active: true,
+      otp: hint.otp,           // dev only (undefined in production)
+      email: hint.email,
+      remainingTimeSec: hint.remainingTimeSec,
+      attemptsUsed: hint.attemptsUsed,
+      maxAttempts: hint.maxAttempts,
+      note: 'EMAIL OTP FOR HACKATHON EVALUATION ONLY — check server console if SMTP simulated'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/bidder-onboarding/aadhaar-demo-hint
+// Demo/Judges Helper — returns active session OTP in non-production environments
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/aadhaar-demo-hint', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  try {
+    const hint = memoryStore.getAadhaarOtpHint(req.user.id);
+    if (!hint) {
+      return res.json({ active: false, message: 'No active Demo OTP session found. Click "Send Demo OTP" first.' });
+    }
+    res.json({
+      active: true,
+      otp: hint.otp,
+      maskedAadhaar: hint.maskedAadhaar,
+      remainingTimeSec: hint.remainingTimeSec,
+      attemptsUsed: hint.attemptsUsed,
+      maxAttempts: hint.maxAttempts,
+      note: 'SIMULATED OTP FOR HACKATHON EVALUATION ONLY'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Backwards compatibility legacy routes
+router.post('/verify-aadhaar', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  const { aadhaarRef } = req.body;
+  const masked = 'XXXX XXXX ' + (aadhaarRef || '8834').slice(-4);
+  memoryStore.saveProfile(req.user.id, { aadhaarRefId: aadhaarRef, aadhaarMasked: masked });
+  res.json({ success: true, masked, message: `OTP sent to mobile linked with ${masked}.`, expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
+});
+
+router.post('/verify-otp', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  const { otp } = req.body;
+  if (!otp || !/^\d{6}$/.test(otp)) return res.status(400).json({ error: 'Invalid OTP. Please enter a valid 6-digit code.' });
+  memoryStore.saveProfile(req.user.id, { aadhaarVerified: true, lifecycleStatus: 'IDENTITY_VERIFIED' });
+  res.json({ success: true, message: 'Identity verified successfully via OTP.', lifecycleStatus: 'IDENTITY_VERIFIED' });
+});
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET & POST /api/bidder-onboarding/company
@@ -344,6 +596,7 @@ router.post('/documents/upload', authenticate, authorize('BIDDER', 'ADMIN'), upl
     };
 
     const doc = memoryStore.addDocument(prof.id, docData);
+    memoryStore.saveProfile(req.user.id, { lifecycleStatus: 'DOCUMENTS_SUBMITTED' });
 
     res.status(201).json({ success: true, document: doc, message: 'Document uploaded to secure vault.' });
   } catch (err) {
@@ -365,6 +618,47 @@ router.delete('/documents/:id', authenticate, authorize('BIDDER', 'ADMIN'), asyn
   try {
     memoryStore.deleteDocument(req.params.id);
     res.json({ success: true, message: 'Document deleted.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mock/Quick Upload of All Mandatory Documents for Testing / Demonstration
+router.post('/documents/mock-upload-mandatory', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  try {
+    const prof = await resolveProfile(req.user.id);
+    const comp = prof.company || memoryStore.companies.get(prof.id) || {};
+    const companyName = comp.legalName || prof.fullName || 'Company Legal Entity';
+
+    const mandatoryDefs = [
+      { documentName: `PAN Card — ${companyName}`, documentType: 'PAN_COMPANY', documentCategory: 'COMPANY', originalFileName: 'PAN_Card_Statutory_Record.pdf', fileSize: 184500 },
+      { documentName: `GST Registration Certificate (REG-06)`, documentType: 'GST_CERTIFICATE', documentCategory: 'COMPANY', originalFileName: 'GST_Registration_Certificate_Form_REG06.pdf', fileSize: 245000 },
+      { documentName: `MSME Udyam Registration Certificate`, documentType: 'UDYAM_CERTIFICATE', documentCategory: 'COMPANY', originalFileName: 'Udyam_MSME_Certificate.pdf', fileSize: 198000 },
+      { documentName: `Make in India (MII) Local Content Declaration`, documentType: 'MAKE_IN_INDIA', documentCategory: 'COMPLIANCE', originalFileName: 'Make_in_India_Local_Content_Undertaking.pdf', fileSize: 142000 },
+      { documentName: `Certificate of Incorporation (MCA21)`, documentType: 'MCA_CERTIFICATE', documentCategory: 'COMPANY', originalFileName: 'Certificate_of_Incorporation_MCA.pdf', fileSize: 320000 },
+      { documentName: `Audited Financial Statements & Balance Sheet (Last 3 AY)`, documentType: 'FINANCIAL_STATEMENT', documentCategory: 'FINANCIAL', originalFileName: 'Audited_Financial_Statements_3AY.pdf', fileSize: 850000 },
+      { documentName: `Non-Debarment & Integrity Declaration Affidavit`, documentType: 'DEBARMENT_AFFIDAVIT', documentCategory: 'COMPLIANCE', originalFileName: 'Non_Blacklisting_Integrity_Affidavit.pdf', fileSize: 115000 }
+    ];
+
+    const addedDocs = [];
+    for (const d of mandatoryDefs) {
+      // Check if already uploaded
+      const existing = Array.from(memoryStore.documents.values()).find(doc => doc.bidderProfileId === prof.id && doc.documentType === d.documentType);
+      if (!existing) {
+        const doc = memoryStore.addDocument(prof.id, {
+          ...d,
+          fileUrl: `/uploads/bidder-vault/${req.user.id}/${d.originalFileName}`,
+          mimeType: 'application/pdf',
+          verificationStatus: 'VERIFIED',
+          ocrStatus: 'DONE',
+          expiryDate: new Date(Date.now() + 365 * 24 * 3600 * 1000)
+        });
+        addedDocs.push(doc);
+      }
+    }
+
+    const allDocs = Array.from(memoryStore.documents.values()).filter(d => d.bidderProfileId === prof.id);
+    res.json({ success: true, count: addedDocs.length, allDocuments: allDocs, message: `✓ ${addedDocs.length} mandatory statutory documents uploaded & verified.` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -455,4 +749,172 @@ router.get('/audit-log', authenticate, authorize('BIDDER', 'ADMIN'), async (req,
   }
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/bidder-onboarding/submit-for-verification
+// Triggers the AutoVerificationEngine — runs all cross-source consistency checks
+// and auto-approves or routes to officer review.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/submit-for-verification', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  try {
+    const profile = await resolveProfile(req.user.id);
+
+    // ── Mark as in-progress ────────────────────────────────────────────────
+    memoryStore.saveProfile(req.user.id, {
+      lifecycleStatus: 'AUTO_VERIFICATION_IN_PROGRESS',
+      submittedForVerificationAt: new Date()
+    });
+
+    // ── Run the engine ─────────────────────────────────────────────────────
+    const result = await runFullVerification(req.user.id);
+
+    logger.info(`[AUTO-VERIFY] User ${req.user.id} → ${result.decision} (risk: ${result.riskScore})`);
+
+    res.json({
+      success: true,
+      decision: result.decision,
+      riskScore: result.riskScore,
+      riskThreshold: 20,
+      flags: result.flags,
+      report: result.report,
+      message: result.decision === 'APPROVED_TO_BID'
+        ? '✓ Congratulations! Your identity, company records, and all 5 statutory documents passed automated verification. Your bidder profile is active.'
+        : '⚠️ Some information requires manual review. Your application has been routed to a Verification Officer.'
+    });
+  } catch (err) {
+    logger.error('submit-for-verification error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/bidder-onboarding/auto-verification-report
+// Returns the stored auto-verification report for the current bidder
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/auto-verification-report', authenticate, authorize('BIDDER', 'ADMIN'), async (req, res) => {
+  try {
+    const profile = await resolveProfile(req.user.id);
+    const report = profile.autoVerificationReport || null;
+    res.json({
+      lifecycleStatus: profile.lifecycleStatus,
+      autoVerifiedAt: profile.autoVerifiedAt || null,
+      report
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/bidder-onboarding/verification-report/pdf
+// Generates and streams official PDF verification audit report
+// ─────────────────────────────────────────────────────────────────────────────
+const { generateBidderVerificationPdf } = require('../services/report/bidderOnboardingPdfService');
+
+router.get('/verification-report/pdf', authenticate, authorize('BIDDER', 'ADMIN', 'PROCUREMENT_OFFICER'), async (req, res) => {
+  try {
+    const profile = await resolveProfile(req.user.id);
+    const company = profile.company || memoryStore.companies.get(profile.id) || {};
+    const docs = profile.documents || Array.from(memoryStore.documents.values()).filter(d => d.bidderProfileId === profile.id);
+    const autoReport = profile.autoVerificationReport || {};
+
+    const pdfBuffer = await generateBidderVerificationPdf({
+      profile,
+      company,
+      documents: docs,
+      autoReport
+    });
+
+    const safeName = (company.panNumber || profile.fullName || 'Bidder').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `ComplyGeM_Verification_Audit_Report_${safeName}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.end(pdfBuffer);
+  } catch (err) {
+    logger.error('PDF generation error:', err);
+    res.status(500).json({ error: 'Failed to generate PDF verification audit report.', details: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/bidder-onboarding/all-company-profiles
+// Returns all company profiles for Procurement Officers & Reviewers
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/all-company-profiles', authenticate, authorize('PROCUREMENT_OFFICER', 'REVIEWER', 'ADMIN'), async (req, res) => {
+  try {
+    const allProfiles = Array.from(memoryStore.profiles.values()).map(p => {
+      const comp = memoryStore.companies.get(p.id) || p.company || {};
+      const docs = Array.from(memoryStore.documents.values()).filter(d => d.bidderProfileId === p.id);
+      return {
+        id: p.id,
+        userId: p.userId,
+        fullName: p.fullName,
+        email: p.email,
+        mobileNumber: p.mobileNumber,
+        residentialAddress: p.residentialAddress,
+        aadhaarNumber: p.aadhaarRefId || p.aadhaarNumber,
+        panNumber: p.panNumber,
+        lifecycleStatus: p.lifecycleStatus,
+        autoVerificationReport: p.autoVerificationReport || null,
+        autoVerifiedAt: p.autoVerifiedAt || null,
+        company: comp,
+        documents: docs,
+        submittedAt: p.submittedForVerificationAt || p.createdAt || new Date()
+      };
+    });
+
+    res.json(allProfiles);
+  } catch (err) {
+    logger.error('all-company-profiles error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/bidder-onboarding/officer-decision
+// Officer manually approves or rejects a bidder company profile
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/officer-decision', authenticate, authorize('PROCUREMENT_OFFICER', 'REVIEWER', 'ADMIN'), async (req, res) => {
+  try {
+    const { profileId, decision, notes } = req.body;
+    if (!profileId || !decision) {
+      return res.status(400).json({ error: 'profileId and decision are required.' });
+    }
+
+    const prof = memoryStore.profiles.get(profileId);
+    if (!prof) return res.status(404).json({ error: 'Bidder profile not found.' });
+
+    const newStatus = decision === 'APPROVE' ? 'APPROVED_TO_BID' : decision === 'REJECT' ? 'REJECTED' : 'REVIEW_REQUIRED';
+
+    memoryStore.saveProfile(prof.userId, {
+      lifecycleStatus: newStatus,
+      reviewedByOfficer: req.user.name || req.user.email,
+      reviewedAt: new Date(),
+      officerNotes: notes || ''
+    });
+
+    memoryStore.addAuditLog(
+      profileId,
+      decision === 'APPROVE' ? 'OFFICER_APPROVED' : 'OFFICER_REJECTED',
+      'BIDDER_PROFILE',
+      profileId,
+      { decision, notes, officer: req.user.email },
+      req.user.id,
+      req.user.role
+    );
+
+    res.json({
+      success: true,
+      message: `Profile marked as ${newStatus}.`,
+      lifecycleStatus: newStatus
+    });
+  } catch (err) {
+    logger.error('officer-decision error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+

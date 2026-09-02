@@ -24,6 +24,7 @@ const verificationOfficerRoutes = require('./routes/verificationOfficer');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/requestLogger');
 const logger = require('./utils/logger');
+const { verifySmtpConnection } = require('./services/emailService');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -107,9 +108,11 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   logger.info(`ComplyGeM Backend running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  // Verify SMTP on startup — logs warning if not configured
+  await verifySmtpConnection();
 });
 
 module.exports = app;

@@ -60,6 +60,19 @@ class GovernmentDataClient {
     }
   }
 
+  // 15. Aadhaar Demo Verification (UIDAI Simulation)
+  async fetchAadhaarDetails(aadhaarNumber) {
+    if (!aadhaarNumber) return { found: false, error: 'Aadhaar number is required' };
+    try {
+      const clean = aadhaarNumber.replace(/\s/g, '').trim();
+      const res = await this.client.post('/aadhaar/fetch', { aadhaarNumber: clean });
+      return res.data;
+    } catch (err) {
+      if (err.response?.data) return err.response.data;
+      return { found: false, verification_status: 'NOT_FOUND', error: err.message, is_simulated: true };
+    }
+  }
+
   // 2. GSTIN Verification (GSTN)
   async verifyGST(gstin) {
     if (!gstin) return { found: false, error: 'GSTIN is required' };

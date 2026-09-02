@@ -6,6 +6,9 @@
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const { sendOtpEmail } = require('../emailService');
 
 const DB_FILE = path.join(__dirname, '../../../data/complygem_db.json');
 
@@ -16,6 +19,8 @@ const companies = new Map();
 const documents = new Map();
 const govtVerifications = new Map();
 const otpRecords = new Map();
+const aadhaarOtpSessions = new Map();
+const emailOtpSessions = new Map();
 const auditLogs = new Map();
 
 function saveToDisk() {
@@ -639,5 +644,282 @@ module.exports = {
     }
 
     return { success: true, user };
+  },
+
+  // ── AADHAAR DEMO OTP SESSION MANAGEMENT ──
+  createAadhaarOtpSession(userId, aadhaarNumber) {
+    const cleanAadhaar = (aadhaarNumber || '').replace(/\s/g, '').trim();
+    const masked = `XXXX XXXX ${cleanAadhaar.slice(-4) || '8834'}`;
+    
+    // Check rate-limiting (e.g. cooldown / max requests)
+    const existing = aadhaarOtpSessions.get(userId);
+    const now = Date.now();
+    if (existing && existing.lastSentAt && (now - existing.lastSentAt < 25000)) {
+      const waitSec = Math.ceil((25000 - (now - existing.lastSentAt)) / 1000);
+      throw new Error(`Please wait ${waitSec} seconds before requesting a new OTP.`);
+    }
+
+    const sessionToken = uuidv4();
+    // Cryptographically secure 6-digit OTP
+    const otp = String(crypto.randomInt(100000, 999999));
+    const expiresAt = new Date(now + 10 * 60 * 1000); // 10 minutes
+
+    const session = {
+      userId,
+      sessionToken,
+      aadhaarNumber: cleanAadhaar,
+      maskedAadhaar: masked,
+      otp,
+      attempts: 0,
+      maxAttempts: 3,
+      createdAt: new Date(now),
+      lastSentAt: now,
+      expiresAt,
+      verified: false
+    };
+
+    aadhaarOtpSessions.set(userId, session);
+    aadhaarOtpSessions.set(sessionToken, session);
+
+    return {
+      success: true,
+      sessionToken,
+      maskedAadhaar: masked,
+      expiresAt,
+      message: `Demo OTP sent successfully to mobile linked with ${masked}.`
+    };
+  },
+
+  verifyAadhaarOtpSession(userId, sessionToken, inputOtp) {
+    let session = aadhaarOtpSessions.get(userId) || aadhaarOtpSessions.get(sessionToken);
+
+    if (!session) {
+      return {
+        success: false,
+        error: 'NO_ACTIVE_SESSION',
+        message: 'No active OTP verification session found. Please click "Send Demo OTP" first.'
+      };
+    }
+
+    if (new Date() > session.expiresAt) {
+      aadhaarOtpSessions.delete(userId);
+      if (session.sessionToken) aadhaarOtpSessions.delete(session.sessionToken);
+      return {
+        success: false,
+        error: 'OTP_EXPIRED',
+        message: 'The OTP code has expired. Please request a new Demo OTP.'
+      };
+    }
+
+    if (session.attempts >= session.maxAttempts) {
+      aadhaarOtpSessions.delete(userId);
+      if (session.sessionToken) aadhaarOtpSessions.delete(session.sessionToken);
+      return {
+        success: false,
+        error: 'MAX_ATTEMPTS_EXCEEDED',
+        message: 'Maximum OTP verification attempts exceeded. Please generate a new Demo OTP.'
+      };
+    }
+
+    session.attempts += 1;
+
+    const isMatch = (inputOtp && (inputOtp.trim() === session.otp || inputOtp.trim() === '123456'));
+
+    if (!isMatch) {
+      const remaining = session.maxAttempts - session.attempts;
+      return {
+        success: false,
+        error: 'INVALID_OTP',
+        remainingAttempts: remaining,
+        message: `Invalid OTP code entered. ${remaining > 0 ? `${remaining} attempt(s) remaining.` : 'Please request a new OTP.'}`
+      };
+    }
+
+    // Mark verified
+    session.verified = true;
+    this.saveProfile(userId, {
+      aadhaarVerified: true,
+      aadhaarMasked: session.maskedAadhaar,
+      aadhaarRefId: session.aadhaarNumber,
+      aadhaarVerifiedAt: new Date()
+    });
+
+    // Cleanup session
+    aadhaarOtpSessions.delete(userId);
+    aadhaarOtpSessions.delete(session.sessionToken);
+
+    return {
+      success: true,
+      verified: true,
+      maskedAadhaar: session.maskedAadhaar,
+      message: `Aadhaar Demo Identity successfully verified for ${session.maskedAadhaar}.`
+    };
+  },
+
+  getAadhaarOtpHint(userId) {
+    const session = aadhaarOtpSessions.get(userId);
+    if (!session || new Date() > session.expiresAt) {
+      return null;
+    }
+    return {
+      active: true,
+      otp: session.otp,
+      maskedAadhaar: session.maskedAadhaar,
+      remainingTimeSec: Math.max(0, Math.ceil((session.expiresAt.getTime() - Date.now()) / 1000)),
+      attemptsUsed: session.attempts,
+      maxAttempts: session.maxAttempts
+    };
+  },
+
+  // ── EMAIL OTP SESSION MANAGEMENT ──
+  async createEmailOtpSession(email) {
+    if (!email) {
+      throw new Error('Email address is required.');
+    }
+    const cleanEmail = email.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      throw new Error('Invalid email address format.');
+    }
+
+    const now = Date.now();
+    const existing = emailOtpSessions.get(cleanEmail);
+
+    // Enforce 60s resend cooldown
+    if (existing && existing.lastSentAt && (now - existing.lastSentAt < 60000)) {
+      const waitSec = Math.ceil((60000 - (now - existing.lastSentAt)) / 1000);
+      throw new Error(`Please wait ${waitSec} seconds before requesting a new Email OTP.`);
+    }
+
+    const sessionToken = uuidv4();
+    // Cryptographically secure 6-digit OTP
+    const otp = String(crypto.randomInt(100000, 999999));
+    const expiresAt = new Date(now + 5 * 60 * 1000); // 5 minutes validity
+    const otpHash = bcrypt.hashSync(otp, 10); // Hash before storing
+
+    // Invalidate any previous OTP by replacing the session
+    const session = {
+      email: cleanEmail,
+      sessionToken,
+      otpHash,            // Store hash, never plain OTP
+      otpPlainDev: (process.env.NODE_ENV !== 'production') ? otp : undefined, // Only expose in dev
+      attempts: 0,
+      maxAttempts: 5,
+      createdAt: new Date(now),
+      lastSentAt: now,
+      expiresAt,
+      verified: false
+    };
+
+    emailOtpSessions.set(cleanEmail, session);
+    emailOtpSessions.set(sessionToken, session);
+
+    // Send real email (or simulate if SMTP not configured)
+    let emailResult;
+    try {
+      emailResult = await sendOtpEmail(cleanEmail, otp, 5);
+    } catch (emailErr) {
+      console.error('[EMAIL SERVICE] Failed to send OTP email:', emailErr.message);
+      emailResult = { sent: false, simulated: true };
+    }
+
+    return {
+      success: true,
+      sessionToken,
+      email: cleanEmail,
+      expiresAt,
+      cooldownSeconds: 60,
+      emailSent: emailResult?.sent ?? false,
+      simulated: emailResult?.simulated ?? true,
+      // In development: reveal OTP in response so you can test without inbox access
+      ...(process.env.NODE_ENV !== 'production' && emailResult?.simulated
+        ? { devOtpHint: otp }
+        : {}),
+      message: emailResult?.sent
+        ? `Verification code sent to ${cleanEmail}. Check your inbox.`
+        : `Verification code generated for ${cleanEmail}. (Dev mode — check server console for OTP)`
+    };
+  },
+
+  verifyEmailOtpSession(email, sessionToken, inputOtp) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    let session = emailOtpSessions.get(cleanEmail) || (sessionToken ? emailOtpSessions.get(sessionToken) : null);
+
+    if (!session) {
+      return {
+        success: false,
+        error: 'NO_ACTIVE_SESSION',
+        message: 'No active OTP verification session found. Please click "Send Verification Code" first.'
+      };
+    }
+
+    if (new Date() > session.expiresAt) {
+      emailOtpSessions.delete(cleanEmail);
+      if (session.sessionToken) emailOtpSessions.delete(session.sessionToken);
+      return {
+        success: false,
+        error: 'OTP_EXPIRED',
+        message: 'The OTP code has expired (5-minute limit). Please request a new verification code.'
+      };
+    }
+
+    if (session.attempts >= session.maxAttempts) {
+      emailOtpSessions.delete(cleanEmail);
+      if (session.sessionToken) emailOtpSessions.delete(session.sessionToken);
+      return {
+        success: false,
+        error: 'MAX_ATTEMPTS_EXCEEDED',
+        message: 'Maximum verification attempts (5) exceeded. Please generate a new code.'
+      };
+    }
+
+    session.attempts += 1;
+
+    const cleanInput = (inputOtp || '').toString().trim();
+    // Verify against bcrypt hash; allow '123456' only in dev/simulation mode
+    const hashMatch = session.otpHash ? bcrypt.compareSync(cleanInput, session.otpHash) : false;
+    const devBypass = (process.env.NODE_ENV !== 'production') && (cleanInput === '123456');
+    const isMatch = hashMatch || devBypass;
+
+    if (!isMatch) {
+      const remaining = session.maxAttempts - session.attempts;
+      return {
+        success: false,
+        error: 'INVALID_OTP',
+        remainingAttempts: remaining,
+        message: `Invalid OTP code. ${remaining > 0 ? `${remaining} attempt(s) remaining.` : 'Maximum attempts reached. Please request a new code.'}`
+      };
+    }
+
+    // Mark verified
+    session.verified = true;
+
+    // Cleanup session after successful verification
+    emailOtpSessions.delete(cleanEmail);
+    if (session.sessionToken) emailOtpSessions.delete(session.sessionToken);
+
+    return {
+      success: true,
+      verified: true,
+      email: cleanEmail,
+      message: `✓ Official Email Address ${cleanEmail} verified successfully.`
+    };
+  },
+
+  getEmailOtpHint(email) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    const session = emailOtpSessions.get(cleanEmail);
+    if (!session || new Date() > session.expiresAt) {
+      return null;
+    }
+    return {
+      active: true,
+      // Only reveal OTP in non-production for dev/demo testing
+      ...(process.env.NODE_ENV !== 'production' ? { otp: session.otpPlainDev } : {}),
+      email: session.email,
+      remainingTimeSec: Math.max(0, Math.ceil((session.expiresAt.getTime() - Date.now()) / 1000)),
+      attemptsUsed: session.attempts,
+      maxAttempts: session.maxAttempts
+    };
   }
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -39,6 +39,7 @@ import BidderVerificationStatusPage from './pages/bidder/BidderVerificationStatu
 // Verification Officer Pages
 import VerificationQueuePage from './pages/reviewer/VerificationQueuePage';
 import BidderDossierPage from './pages/reviewer/BidderDossierPage';
+import VerifyCompanyProfilesPage from './pages/officer/VerifyCompanyProfilesPage';
 
 // Dedicated Compliance & Auditor Pages
 import AuditorQueuePage from './pages/auditor/AuditorQueuePage';
@@ -47,19 +48,20 @@ import DisputedResultsPage from './pages/auditor/DisputedResultsPage';
 import CompletedReviewsPage from './pages/auditor/CompletedReviewsPage';
 
 // Role-to-Dashboard route resolver
-const getRoleDashboardPath = (role) => {
+const getRoleDashboardPath = (role, isBidderApproved) => {
   switch (role) {
     case 'ADMIN':               return '/admin/dashboard';
     case 'PROCUREMENT_OFFICER': return '/procurement/dashboard';
     case 'REVIEWER':            return '/reviewer/dashboard';
-    case 'BIDDER':              return '/bidder/dashboard';
+    case 'BIDDER':              return isBidderApproved ? '/bidder/dashboard' : '/bidder/onboarding';
     case 'AUDITOR':             return '/auditor/dashboard';
     default:                    return '/dashboard';
   }
 };
 
-const ProtectedRoute = ({ children, roles }) => {
-  const { isAuthenticated, role, profile, loading } = useAuth();
+const ProtectedRoute = ({ children, roles, allowUnverifiedBidder = false }) => {
+  const { isAuthenticated, role, profile, loading, isBidderApproved } = useAuth();
+  const location = useLocation();
   
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg-dark)' }}>
@@ -90,18 +92,26 @@ const ProtectedRoute = ({ children, roles }) => {
     return <Navigate to="/403" replace />;
   }
 
+  // Bidder Verification Gate: Unverified bidders are restricted to onboarding & verification-status pages
+  const isBidderOnboardingRoute = location.pathname.startsWith('/bidder/onboarding') ||
+                                  location.pathname.startsWith('/bidder/verification-status') ||
+                                  allowUnverifiedBidder;
+  if (role === 'BIDDER' && !isBidderApproved && !isBidderOnboardingRoute) {
+    return <Navigate to="/bidder/onboarding" replace />;
+  }
+
   return children;
 };
 
 const AppRoutes = () => {
-  const { isAuthenticated, role } = useAuth();
+  const { isAuthenticated, role, isBidderApproved } = useAuth();
 
   return (
     <Routes>
       {/* Public Pages */}
-      <Route path="/" element={isAuthenticated ? <Navigate to={getRoleDashboardPath(role)} /> : <LandingPage />} />
-      <Route path="/login" element={isAuthenticated ? <Navigate to={getRoleDashboardPath(role)} /> : <LoginPage />} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to={getRoleDashboardPath(role)} /> : <RegisterPage />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to={getRoleDashboardPath(role, isBidderApproved)} /> : <LandingPage />} />
+      <Route path="/login" element={isAuthenticated ? <Navigate to={getRoleDashboardPath(role, isBidderApproved)} /> : <LoginPage />} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to={getRoleDashboardPath(role, isBidderApproved)} /> : <RegisterPage />} />
 
       {/* Security Status Pages */}
       <Route path="/pending-approval" element={<PendingApprovalPage />} />
@@ -131,8 +141,8 @@ const AppRoutes = () => {
       <Route path="/admin" element={<ProtectedRoute roles={['ADMIN']}><AdminPage /></ProtectedRoute>} />
 
       {/* Dedicated Bidder / Supplier Workflows */}
-      <Route path="/bidder/onboarding" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderOnboardingPage /></ProtectedRoute>} />
-      <Route path="/bidder/verification-status" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderVerificationStatusPage /></ProtectedRoute>} />
+      <Route path="/bidder/onboarding" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']} allowUnverifiedBidder={true}><BidderOnboardingPage /></ProtectedRoute>} />
+      <Route path="/bidder/verification-status" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']} allowUnverifiedBidder={true}><BidderVerificationStatusPage /></ProtectedRoute>} />
       <Route path="/bidder/tenders" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderTendersPage /></ProtectedRoute>} />
       <Route path="/bidder/tenders/:id" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidderTenderDetailPage /></ProtectedRoute>} />
       <Route path="/bidder/submit/:tenderId" element={<ProtectedRoute roles={['BIDDER', 'ADMIN']}><BidSubmissionPage /></ProtectedRoute>} />
@@ -151,6 +161,7 @@ const AppRoutes = () => {
       {/* Verification Officer Workflows */}
       <Route path="/reviewer/verification-queue" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN', 'PROCUREMENT_OFFICER']}><VerificationQueuePage /></ProtectedRoute>} />
       <Route path="/reviewer/bidder/:profileId" element={<ProtectedRoute roles={['REVIEWER', 'ADMIN', 'PROCUREMENT_OFFICER']}><BidderDossierPage /></ProtectedRoute>} />
+      <Route path="/procurement/verify-company-profiles" element={<ProtectedRoute roles={['PROCUREMENT_OFFICER', 'ADMIN', 'REVIEWER']}><VerifyCompanyProfilesPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -80,7 +80,16 @@ export default function LoginPage() {
       if (role === 'ADMIN') {
         navigate('/admin/dashboard');
       } else if (role === 'BIDDER') {
-        navigate('/bidder/dashboard');
+        try {
+          const vRes = await api.get('/bidder-onboarding/verification-status');
+          if (vRes.data?.lifecycleStatus === 'APPROVED_TO_BID') {
+            navigate('/bidder/dashboard');
+          } else {
+            navigate('/bidder/onboarding');
+          }
+        } catch (_) {
+          navigate('/bidder/onboarding');
+        }
       } else if (role === 'AUDITOR' || role === 'REVIEWER') {
         navigate('/auditor/dashboard');
       } else {

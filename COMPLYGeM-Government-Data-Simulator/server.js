@@ -32,6 +32,7 @@ const morgan = require('morgan');
 const { apiKeyAuth } = require('./shared/apiKeyAuth');
 
 // Import Microservice Routers
+const aadhaarService = require('./services/aadhaarService');
 const panService = require('./services/panService');
 const gstService = require('./services/gstService');
 const udyamService = require('./services/udyamService');
@@ -64,6 +65,7 @@ app.use(morgan('dev'));
 app.use('/api', apiKeyAuth);
 
 // Mount Microservice Endpoints
+app.use('/api/aadhaar', aadhaarService);
 app.use('/api/pan', panService);
 app.use('/api/gst', gstService);
 app.use('/api/udyam', udyamService);
@@ -88,7 +90,7 @@ app.get('/health', (req, res) => {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
     is_simulated: true,
-    authoritiesSimulated: 14,
+    authoritiesSimulated: 15,
     totalMasterCompanies: 20,
     timestamp: new Date().toISOString(),
   });
@@ -99,6 +101,7 @@ app.get('/api/catalog', (req, res) => {
     repository: 'COMPLYGeM-Government-Data-Simulator',
     description: 'Autonomous mock government data verification service for ComplyGeM AI',
     endpoints: {
+      aadhaar: { url: 'POST /api/aadhaar/fetch', example: 'POST /api/aadhaar/fetch { aadhaarNumber: "123456789012" }', disclaimer: 'DEMO/SIMULATED — No real Aadhaar data' },
       pan: { url: '/api/pan/:panNumber', example: '/api/pan/SYNPA0001C' },
       gst: { url: '/api/gst/:gstin', example: '/api/gst/29SYNPA0001C1Z5' },
       udyam: { url: '/api/udyam/:udyamNumber', example: '/api/udyam/UDYAM-KR-03-0012345' },

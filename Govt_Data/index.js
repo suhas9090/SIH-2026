@@ -21,11 +21,12 @@
  * - 10 Linked Bidder Test Scenarios
  */
 
+const { SYNTHETIC_AADHAAR_RECORDS, findAadhaarRecord, findAadhaarByPan } = require('./aadhaarDataset');
 const { SYNTHETIC_PAN_RECORDS, findPanRecord } = require('./panDataset');
 const { SYNTHETIC_UDYAM_RECORDS, findUdyamRecord, findUdyamByPan } = require('./udyamDataset');
 const { SYNTHETIC_GST_RECORDS, findGstRecord, findGstByPan } = require('./gstDataset');
 const { SYNTHETIC_INCOME_TAX_RECORDS, findTaxRecord } = require('./incomeTaxDataset');
-const { SYNTHETIC_MCA_RECORDS, findMcaRecord } = require('./mcaDataset');
+const { SYNTHETIC_MCA_RECORDS, findMcaRecord, findMcaByPan } = require('./mcaDataset');
 const { SYNTHETIC_EPFO_RECORDS, findEpfoRecord, findEpfoByPan } = require('./epfoDataset');
 const { SYNTHETIC_ESIC_RECORDS, findEsicRecord } = require('./esicDataset');
 const { SYNTHETIC_BLACKLIST_RECORDS, checkBlacklistStatus } = require('./blacklistDataset');
@@ -41,6 +42,15 @@ const { BIDDER_SCENARIOS, findScenarioById } = require('./bidderScenarios');
 
 // Registry Metadata Dictionary
 const REGISTRIES = {
+  aadhaar: {
+    id: 'aadhaar',
+    name: 'Unique Identification Authority of India (UIDAI) - Aadhaar Demo Identity',
+    authority: 'UIDAI',
+    identifierType: 'Aadhaar (12-digit numeric)',
+    count: SYNTHETIC_AADHAAR_RECORDS.length,
+    dataset: SYNTHETIC_AADHAAR_RECORDS,
+    finder: (id, options = {}) => findAadhaarRecord(id) || (options.pan ? findAadhaarByPan(options.pan) : null),
+  },
   pan: {
     id: 'pan',
     name: 'Income Tax Department (CBDT) - Permanent Account Number',
@@ -402,6 +412,8 @@ module.exports = {
   BIDDER_SCENARIOS,
 
   // Finder Helpers
+  findAadhaarRecord,
+  findAadhaarByPan,
   findPanRecord,
   findUdyamRecord,
   findUdyamByPan,
@@ -409,6 +421,7 @@ module.exports = {
   findGstByPan,
   findTaxRecord,
   findMcaRecord,
+  findMcaByPan,
   findEpfoRecord,
   findEpfoByPan,
   findEsicRecord,

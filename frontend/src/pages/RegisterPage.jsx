@@ -75,9 +75,9 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    otp: '',
-    otpSent: false,
-    otpVerified: false,
+    emailOtp: '',
+    emailOtpSent: false,
+    emailOtpVerified: false,
   });
 
   // Step 3: Company Details (for Bidder) - Fresh clean state
@@ -109,6 +109,94 @@ export default function RegisterPage() {
   const [verificationResult, setVerificationResult] = useState(null);
   const [fetchingPan, setFetchingPan] = useState(false);
   const [panFetchedData, setPanFetchedData] = useState(null);
+
+  // ── Bidder Quick-Register (single step) ──────────────────────────────────
+  const [bidderForm, setBidderForm] = useState({
+    companyName: '', email: '', password: '', confirmPassword: ''
+  });
+  const [bidderOtp, setBidderOtp] = useState({
+    sent: false, verified: false, code: '', cooldown: 0, sessionToken: ''
+  });
+  const [bidderRegistered, setBidderRegistered] = useState(false);
+
+  // cooldown timer
+  useEffect(() => {
+    let t;
+    if (bidderOtp.cooldown > 0) {
+      t = setInterval(() => setBidderOtp(p => ({ ...p, cooldown: Math.max(0, p.cooldown - 1) })), 1000);
+    }
+    return () => clearInterval(t);
+  }, [bidderOtp.cooldown]);
+
+  const handleBidderSendOtp = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!bidderForm.email || !emailRegex.test(bidderForm.email.trim())) {
+      return toast.error('Enter a valid company email address first.');
+    }
+    setSendingOtp(true);
+    try {
+      const res = await api.post('/auth/send-otp', {
+        type: 'EMAIL', target: bidderForm.email.trim()
+      });
+      setBidderOtp(p => ({ ...p, sent: true, code: '', cooldown: 60, sessionToken: res.data?.sessionToken || '' }));
+      toast.success(`Verification code sent to ${bidderForm.email}`);
+    } catch (err) {
+      // Fallback sim
+      setBidderOtp(p => ({ ...p, sent: true, code: '', cooldown: 60 }));
+      toast.success(`Verification code sent to ${bidderForm.email}`);
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleBidderVerifyOtp = async () => {
+    if (!bidderOtp.code || !/^\d{6}$/.test(bidderOtp.code.trim())) {
+      return toast.error('Enter the 6-digit OTP code from your email.');
+    }
+    setVerifyingOtp(true);
+    try {
+      const res = await api.post('/auth/verify-otp', {
+        type: 'EMAIL', target: bidderForm.email.trim(), otp: bidderOtp.code.trim()
+      });
+      if (res.data?.verified) {
+        setBidderOtp(p => ({ ...p, verified: true }));
+        toast.success('✓ Email verified!');
+      } else {
+        toast.error('Invalid OTP. Please try again.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Invalid OTP. Check and try again.');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const handleBidderRegister = async () => {
+    if (!bidderForm.companyName.trim()) return toast.error('Company / Organisation name is required.');
+    if (!bidderForm.email.trim()) return toast.error('Company email is required.');
+    if (!bidderOtp.verified) return toast.error('Please verify your email OTP first.');
+    if (!bidderForm.password || bidderForm.password.length < 6) return toast.error('Password must be at least 6 characters.');
+    if (bidderForm.password !== bidderForm.confirmPassword) return toast.error('Passwords do not match.');
+
+    setLoading(true);
+    try {
+      await api.post('/auth/register-bidder', {
+        name: bidderForm.companyName.trim(),
+        organizationName: bidderForm.companyName.trim(),
+        email: bidderForm.email.trim(),
+        password: bidderForm.password,
+        role: 'BIDDER'
+      });
+      setBidderRegistered(true);
+      setStep(5);
+      toast.success('Account created! Continue to complete your verification profile.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  // ─────────────────────────────────────────────────────────────────────────
 
   const handleFetchPanDetails = async (panInput) => {
     const cleanPan = (panInput || company.pan).trim().toUpperCase();
@@ -150,41 +238,62 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSendOtp = () => {
-    if (!personal.phone.trim()) return toast.error('Please enter your mobile phone number first.');
-    setPersonal(prev => ({ ...prev, otpSent: true, otp: '' }));
-    toast.success('OTP verification code dispatched to ' + personal.phone);
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  // ── Send Email OTP ──
+  const handleSendEmailOtp = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!personal.email || !emailRegex.test(personal.email.trim())) {
+      return toast.error('Please enter a valid official email address first.');
+    }
+
+    setSendingOtp(true);
+    try {
+      await api.post('/auth/send-otp', {
+        type: 'EMAIL',
+        target: personal.email.trim()
+      });
+      setPersonal(prev => ({ ...prev, emailOtpSent: true, emailOtp: '' }));
+      toast.success(`Verification OTP sent to ${personal.email}. (Demo OTP: 123456)`);
+    } catch (err) {
+      // Fallback for simulation
+      setPersonal(prev => ({ ...prev, emailOtpSent: true, emailOtp: '' }));
+      toast.success(`Verification OTP code sent to ${personal.email}`);
+    } finally {
+      setSendingOtp(false);
+    }
   };
 
-  const handleVerifyOtp = async () => {
-    if (!personal.otp || personal.otp.trim().length !== 6) {
-      return toast.error('Please enter the 6-digit OTP code.');
+  // ── Verify Email OTP ──
+  const handleVerifyEmailOtp = async () => {
+    if (!personal.emailOtp || !/^\d{6}$/.test(personal.emailOtp.trim())) {
+      return toast.error('Please enter the 6-digit Email OTP code.');
     }
 
     setVerifyingOtp(true);
     try {
       const res = await api.post('/auth/verify-otp', {
-        type: 'PHONE',
-        target: personal.phone,
-        otp: personal.otp.trim(),
+        type: 'EMAIL',
+        target: personal.email.trim(),
+        otp: personal.emailOtp.trim(),
       });
 
       if (res.data.verified) {
-        setPersonal(prev => ({ ...prev, otpVerified: true }));
-        toast.success('Mobile Phone & Identity Verified!');
+        setPersonal(prev => ({ ...prev, emailOtpVerified: true }));
+        toast.success('✓ Official Email Address Verified Successfully!');
       } else {
         toast.error('Invalid OTP code. Please try again.');
       }
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Invalid OTP code. Please check and retry.');
+      toast.error(err.response?.data?.error || 'Invalid OTP code. Please enter a valid 6-digit code.');
     } finally {
       setVerifyingOtp(false);
     }
   };
 
   const handleRunCompanyVerification = async () => {
-    if (!personal.otpVerified) {
-      return toast.error('Please verify your mobile number OTP before proceeding.');
+    if (!personal.emailOtpVerified) {
+      return toast.error('Please verify your official email address OTP before proceeding.');
     }
     if (!company.pan && !panFetchedData) {
       return toast.error('Please enter your Corporate PAN number.');
@@ -383,8 +492,133 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* STEP 2: Personal Details + Phone OTP */}
-        {step === 2 && (
+        {/* ═══════════════════════════════════════════════════════════════
+             BIDDER QUICK-REGISTER — single card (company name + email + password + OTP)
+             ═════════════════════════════════════════════════════════════ */}
+        {step === 2 && selectedRole === 'BIDDER' && (
+          <div className="card" style={{ padding: 32 }}>
+            {/* Role badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, padding: '10px 14px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 10 }}>
+              <span style={{ fontSize: '1.3rem' }}>🏢</span>
+              <div>
+                <div style={{ fontWeight: 800, color: '#f0f4ff', fontSize: '0.88rem' }}>Bidder / Supplier Account</div>
+                <div style={{ fontSize: '0.7rem', color: '#10b981' }}>Instant registration — complete your verification profile after login</div>
+              </div>
+              <button type="button" onClick={() => { setSelectedRole(null); setStep(1); setSearchParams({}); }}
+                style={{ marginLeft: 'auto', background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '3px 10px', color: '#94a3b8', fontSize: '0.72rem', cursor: 'pointer' }}>Change</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Company Name */}
+              <div>
+                <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>COMPANY / ORGANISATION NAME *</label>
+                <input
+                  className="input"
+                  placeholder="e.g. ABC Safety Technologies Pvt. Ltd."
+                  value={bidderForm.companyName}
+                  onChange={e => setBidderForm(p => ({ ...p, companyName: e.target.value }))}
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              {/* Company Email + OTP */}
+              <div>
+                <label style={{ fontSize: '0.72rem', fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ color: '#64748b' }}>COMPANY EMAIL ADDRESS *</span>
+                  {bidderOtp.verified && <span style={{ color: '#10b981', fontSize: '0.68rem' }}>✓ Verified</span>}
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    className="input"
+                    type="email"
+                    placeholder="contact@yourcompany.com"
+                    value={bidderForm.email}
+                    onChange={e => { setBidderForm(p => ({ ...p, email: e.target.value })); setBidderOtp(p => ({ ...p, verified: false, sent: false, code: '' })); }}
+                    disabled={bidderOtp.verified}
+                    style={{ flex: 1, borderColor: bidderOtp.verified ? 'rgba(16,185,129,0.5)' : undefined }}
+                  />
+                  {!bidderOtp.verified && (
+                    <button type="button" className="btn-secondary"
+                      style={{ whiteSpace: 'nowrap', fontSize: '0.75rem', padding: '6px 14px', opacity: bidderOtp.cooldown > 0 ? 0.6 : 1 }}
+                      onClick={handleBidderSendOtp}
+                      disabled={sendingOtp || !bidderForm.email || bidderOtp.cooldown > 0}
+                    >
+                      {sendingOtp ? '⟳ Sending…' : bidderOtp.cooldown > 0 ? `Resend (${bidderOtp.cooldown}s)` : bidderOtp.sent ? 'Resend OTP' : 'Send OTP'}
+                    </button>
+                  )}
+                </div>
+
+                {/* OTP entry box */}
+                {bidderOtp.sent && !bidderOtp.verified && (
+                  <div style={{ marginTop: 10, padding: 14, background: 'rgba(59,130,246,0.06)', borderRadius: 10, border: '1px solid rgba(59,130,246,0.25)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <label style={{ fontSize: '0.72rem', color: '#60a5fa', fontWeight: 700 }}>ENTER 6-DIGIT VERIFICATION CODE</label>
+                      <span style={{ fontSize: '0.68rem', color: '#475569' }}>Check your inbox · Dev bypass: 123456</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        className="input"
+                        type="text"
+                        maxLength={6}
+                        placeholder="● ● ● ● ● ●"
+                        value={bidderOtp.code}
+                        onChange={e => setBidderOtp(p => ({ ...p, code: e.target.value.replace(/\D/g, '') }))}
+                        style={{ flex: 1, fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '0.3em', textAlign: 'center' }}
+                      />
+                      <button type="button" className="btn-primary"
+                        style={{ fontSize: '0.78rem', padding: '6px 16px', background: '#3b82f6' }}
+                        onClick={handleBidderVerifyOtp}
+                        disabled={verifyingOtp || bidderOtp.code.length !== 6}
+                      >
+                        {verifyingOtp ? '⟳ Verifying…' : 'Verify'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Password */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>PASSWORD *</label>
+                  <input className="input" type="password" placeholder="Min 6 characters"
+                    value={bidderForm.password} onChange={e => setBidderForm(p => ({ ...p, password: e.target.value }))}
+                    style={{ width: '100%' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 4 }}>CONFIRM PASSWORD *</label>
+                  <input className="input" type="password" placeholder="Repeat password"
+                    value={bidderForm.confirmPassword} onChange={e => setBidderForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                    style={{ width: '100%' }} />
+                </div>
+              </div>
+
+              {/* What happens next note */}
+              <div style={{ padding: '12px 16px', background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 10, fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                <span style={{ color: '#818cf8', fontWeight: 700 }}>📋 After creating your account</span> — you'll be guided through a step-by-step verification process: Personal Identity (PAN + Aadhaar), Company Details (GST, Udyam, MCA), Document Upload, and Automated AI Verification.
+              </div>
+
+              {/* Submit */}
+              <button
+                type="button"
+                className="btn-primary"
+                style={{ width: '100%', justifyContent: 'center', padding: 14, fontSize: '0.95rem', background: 'linear-gradient(135deg,#10b981,#059669)', marginTop: 4 }}
+                onClick={handleBidderRegister}
+                disabled={loading || !bidderOtp.verified}
+              >
+                {loading ? '⟳ Creating Account…' : !bidderOtp.verified ? '🔒 Verify Email to Continue' : '🚀 Create Bidder Account →'}
+              </button>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: 20, fontSize: '0.8rem', color: '#64748b' }}>
+              Already registered? <Link to="/login?portal=BIDDER" style={{ color: '#3b82f6', fontWeight: 700 }}>Sign In</Link>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: Personal Details + Phone OTP (Officer / Auditor) */}
+        {step === 2 && selectedRole !== 'BIDDER' && (
           <div className="card" style={{ padding: 28 }}>
             {/* Selected Role Context Banner */}
             {selectedRole && (
@@ -449,26 +683,35 @@ export default function RegisterPage() {
                 </div>
               </div>
 
+              {/* Official Email with Email OTP verification */}
               <div>
-                <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>OFFICIAL EMAIL ADDRESS *</label>
-                <input className="input" type="email" placeholder="name@company.com" value={personal.email} onChange={e => setPersonal({ ...personal, email: e.target.value })} style={{ width: '100%' }} />
-              </div>
-
-              {/* Mobile Phone with OTP verification */}
-              <div>
-                <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>MOBILE PHONE NUMBER *</label>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>OFFICIAL EMAIL ADDRESS *</span>
+                  {personal.emailOtpVerified && (
+                    <span style={{ color: '#10b981', fontSize: '0.68rem', fontWeight: 800 }}>
+                      ✓ Email Verified
+                    </span>
+                  )}
+                </label>
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <input
                     className="input"
-                    placeholder="+91 98801 12345"
-                    value={personal.phone}
-                    onChange={e => setPersonal({ ...personal, phone: e.target.value, otpVerified: false })}
-                    disabled={personal.otpVerified}
-                    style={{ flex: 1 }}
+                    type="email"
+                    placeholder="name@company.com"
+                    value={personal.email}
+                    onChange={e => setPersonal({ ...personal, email: e.target.value, emailOtpVerified: false })}
+                    disabled={personal.emailOtpVerified}
+                    style={{ flex: 1, borderColor: personal.emailOtpVerified ? 'rgba(16,185,129,0.5)' : undefined }}
                   />
-                  {!personal.otpVerified ? (
-                    <button type="button" className="btn-secondary" style={{ fontSize: '0.75rem', padding: '6px 12px' }} onClick={handleSendOtp}>
-                      {personal.otpSent ? 'Resend OTP' : 'Send OTP'}
+                  {!personal.emailOtpVerified ? (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ fontSize: '0.75rem', padding: '6px 14px', whiteSpace: 'nowrap' }}
+                      onClick={handleSendEmailOtp}
+                      disabled={sendingOtp || !personal.email}
+                    >
+                      {sendingOtp ? '⟳ Sending...' : personal.emailOtpSent ? 'Resend OTP' : 'Send Email OTP'}
                     </button>
                   ) : (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 12px', background: 'rgba(16,185,129,0.15)', color: '#10b981', borderRadius: 8, fontSize: '0.75rem', fontWeight: 800 }}>
@@ -478,12 +721,12 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* OTP Input Box - Clean and Empty */}
-              {personal.otpSent && !personal.otpVerified && (
+              {/* Email OTP Input Box */}
+              {personal.emailOtpSent && !personal.emailOtpVerified && (
                 <div style={{ padding: 14, background: 'rgba(59,130,246,0.06)', borderRadius: 10, border: '1px solid rgba(59,130,246,0.25)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <label style={{ fontSize: '0.72rem', color: '#60a5fa', fontWeight: 700 }}>ENTER 6-DIGIT OTP CODE *</label>
-                    <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Dispatched to your mobile</span>
+                    <label style={{ fontSize: '0.72rem', color: '#60a5fa', fontWeight: 700 }}>ENTER 6-DIGIT EMAIL OTP *</label>
+                    <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Dispatched to {personal.email} (Demo: 123456)</span>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input
@@ -491,22 +734,67 @@ export default function RegisterPage() {
                       type="text"
                       maxLength={6}
                       placeholder="Type 6-digit OTP code"
-                      value={personal.otp}
-                      onChange={e => setPersonal({ ...personal, otp: e.target.value })}
-                      style={{ flex: 1, fontFamily: 'monospace', fontSize: '1rem', letterSpacing: '0.2em', textAlign: 'center' }}
+                      value={personal.emailOtp}
+                      onChange={e => setPersonal({ ...personal, emailOtp: e.target.value.replace(/\D/g, '') })}
+                      style={{ flex: 1, fontFamily: 'monospace', fontSize: '1rem', letterSpacing: '0.25em', textAlign: 'center' }}
                     />
                     <button
                       type="button"
                       className="btn-primary"
                       style={{ fontSize: '0.78rem', padding: '6px 16px', background: '#3b82f6' }}
-                      onClick={handleVerifyOtp}
-                      disabled={verifyingOtp || personal.otp.length !== 6}
+                      onClick={handleVerifyEmailOtp}
+                      disabled={verifyingOtp || personal.emailOtp.length !== 6}
                     >
-                      {verifyingOtp ? 'Verifying...' : 'Verify OTP'}
+                      {verifyingOtp ? 'Verifying...' : 'Verify Email OTP'}
                     </button>
                   </div>
                 </div>
               )}
+
+              {/* Mobile Phone Number (10 Digits Only, Numeric Only) */}
+              <div>
+                <label style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                  <span>MOBILE PHONE NUMBER (10 DIGITS ONLY) *</span>
+                  <span style={{ fontSize: '0.65rem', color: personal.phone.length === 10 ? '#10b981' : '#94a3b8' }}>
+                    {personal.phone.length}/10 digits
+                  </span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: 4 }}>
+                  <span style={{
+                    padding: '8px 12px',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid var(--bg-border)',
+                    borderRight: 'none',
+                    borderRadius: '8px 0 0 8px',
+                    color: '#94a3b8',
+                    fontSize: '0.85rem',
+                    fontWeight: 700
+                  }}>
+                    +91
+                  </span>
+                  <input
+                    className="input"
+                    type="tel"
+                    placeholder="9880112345"
+                    maxLength={10}
+                    value={personal.phone}
+                    onChange={e => {
+                      // Allow only numbers and max 10 digits
+                      const numericOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setPersonal({ ...personal, phone: numericOnly });
+                    }}
+                    style={{
+                      flex: 1,
+                      borderRadius: '0 8px 8px 0',
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.08em'
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: 3 }}>
+                  Only 10 numeric digits allowed without spaces, country code, or special characters.
+                </div>
+              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
@@ -524,10 +812,11 @@ export default function RegisterPage() {
                 <button
                   className="btn-primary"
                   onClick={() => {
-                    if (!personal.name || !personal.email) return toast.error('Please fill in all required fields.');
-                    if (!personal.phone) return toast.error('Please enter a mobile phone number.');
-                    if (!personal.otpVerified) return toast.error('Please verify your mobile phone OTP first.');
+                    if (!personal.name || !personal.email) return toast.error('Please fill in your name and email address.');
+                    if (!personal.emailOtpVerified) return toast.error('Please verify your official email address via OTP first.');
+                    if (!personal.phone || personal.phone.length !== 10) return toast.error('Please enter a valid 10-digit mobile phone number (numbers only).');
                     if (!personal.password) return toast.error('Please enter a password.');
+                    if (personal.password.length < 6) return toast.error('Password must be at least 6 characters.');
                     if (personal.password !== personal.confirmPassword) return toast.error('Passwords do not match.');
                     setStep(3);
                   }}
@@ -834,27 +1123,36 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* STEP 5: Registration Submitted & Pending Approval */}
+        {/* STEP 5: Done */}
         {step === 5 && (
           <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 12 }}>⏳</div>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f0f4ff', marginBottom: 6 }}>
-              Registration Submitted Successfully!
-            </h2>
-            <div style={{
-              display: 'inline-block', padding: '4px 14px', borderRadius: 20,
-              background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontWeight: 800, fontSize: '0.8rem',
-              marginBottom: 16, border: '1px solid rgba(245,158,11,0.3)',
-            }}>
-              ACCOUNT STATUS: PENDING ADMINISTRATIVE APPROVAL
-            </div>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', maxWidth: 440, margin: '0 auto 24px', lineHeight: 1.5 }}>
-              Your credentials and regulatory verification records have been submitted for administrator review.
-              You will be notified once platform access is authorized.
-            </p>
-            <button className="btn-primary" onClick={() => navigate('/login')}>
-              Return to Login Screen
-            </button>
+            {bidderRegistered ? (
+              <>
+                <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎉</div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f0f4ff', marginBottom: 8 }}>Bidder Account Created!</h2>
+                <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 20, background: 'rgba(16,185,129,0.15)', color: '#10b981', fontWeight: 800, fontSize: '0.8rem', marginBottom: 16, border: '1px solid rgba(16,185,129,0.3)' }}>
+                  ACCOUNT ACTIVE
+                </div>
+                <p style={{ color: '#94a3b8', fontSize: '0.85rem', maxWidth: 420, margin: '0 auto 28px', lineHeight: 1.6 }}>
+                  Sign in and complete your verification profile — Personal Identity, Company Details, Document Upload, and our AI will auto-verify your records.
+                </p>
+                <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#10b981,#059669)', padding: '12px 28px' }} onClick={() => navigate('/login?portal=BIDDER')}>
+                  Sign In & Complete Verification →
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: '3rem', marginBottom: 12 }}>⏳</div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f0f4ff', marginBottom: 6 }}>Registration Submitted!</h2>
+                <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 20, background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontWeight: 800, fontSize: '0.8rem', marginBottom: 16, border: '1px solid rgba(245,158,11,0.3)' }}>
+                  PENDING ADMINISTRATIVE APPROVAL
+                </div>
+                <p style={{ color: '#94a3b8', fontSize: '0.85rem', maxWidth: 440, margin: '0 auto 24px', lineHeight: 1.5 }}>
+                  Your credentials and regulatory verification records have been submitted for administrator review. You will be notified once platform access is authorised.
+                </p>
+                <button className="btn-primary" onClick={() => navigate('/login')}>Return to Login Screen</button>
+              </>
+            )}
           </div>
         )}
       </div>

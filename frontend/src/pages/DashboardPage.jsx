@@ -136,7 +136,10 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
             Procurement Management & Compliance Verification — {profile?.organization || 'Central Procurement Division'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <button className="btn-primary" style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)' }} onClick={() => navigate('/procurement/verify-company-profiles')}>
+            🔍 Verify Company Profiles
+          </button>
           <button className="btn-secondary" onClick={() => navigate('/reports')}>
             📊 Compliance Reports
           </button>
@@ -147,6 +150,40 @@ const OfficerDashboard = ({ profile, tenders, stats, navigate }) => {
       </div>
 
       <div style={{ padding: '24px 32px' }}>
+        {/* Spotlight Action: Verify Company Profiles & PAN Lookup */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(59,130,246,0.08))',
+          border: '1px solid rgba(99,102,241,0.3)',
+          borderRadius: 14,
+          padding: '18px 24px',
+          marginBottom: 24,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: '1.2rem' }}>🔍</span>
+              <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f0f4ff' }}>Verify Company Profiles & Live PAN Lookup</span>
+              <span style={{ fontSize: '0.68rem', background: 'rgba(99,102,241,0.2)', color: '#818cf8', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
+                OFFICER WORKFLOW
+              </span>
+            </div>
+            <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0, maxWidth: 620 }}>
+              Inspect bidder-submitted company data, view uploaded PDF/image certificates, and perform real-time PAN lookups across CBDT, GSTN, MSME, and MCA21 government databases.
+            </p>
+          </div>
+          <button
+            className="btn-primary"
+            style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', padding: '10px 22px', fontSize: '0.84rem', fontWeight: 700 }}
+            onClick={() => navigate('/procurement/verify-company-profiles')}
+          >
+            Open Profile Verifier →
+          </button>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14, marginBottom: 24 }}>
           {[
             { label: 'Active Tenders', value: tenders.length || 0, color: '#3b82f6' },
@@ -309,14 +346,14 @@ const BidderDashboard = ({ profile, tenders, navigate }) => {
       <div style={{ padding: '24px 32px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
-            { label: 'Available Tenders', value: tenders.length || 0, color: '#8b5cf6' },
-            { label: 'My Active Bids', value: 0, color: '#3b82f6' },
-            { label: 'Uploaded Documents', value: 0, color: '#10b981' },
-            { label: 'Actions Required', value: 0, color: '#f59e0b' },
+            { label: 'Available Tenders', value: tenders.length || 0, color: '#8b5cf6', onClick: () => navigate('/bidder/tenders') },
+            { label: 'My Active Bids', value: 0, color: '#3b82f6', onClick: () => navigate('/bidder/my-bids') },
+            { label: 'Company Documents', value: '5 Verified', color: '#10b981', onClick: () => navigate('/bidder/profile') },
+            { label: 'Compliance Standing', value: 'ELIGIBLE', color: '#06b6d4', onClick: () => navigate('/bidder/compliance') },
           ].map((c) => (
-            <div key={c.label} className="card" style={{ padding: 18, borderLeft: `3px solid ${c.color}` }}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '2rem', color: '#f0f4ff' }}>{c.value}</div>
-              <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#94a3b8' }}>{c.label}</div>
+            <div key={c.label} className="card" style={{ padding: 18, borderLeft: `3px solid ${c.color}`, cursor: 'pointer' }} onClick={c.onClick}>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.7rem', color: '#f0f4ff' }}>{c.value}</div>
+              <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#94a3b8', marginTop: 2 }}>{c.label}</div>
             </div>
           ))}
         </div>

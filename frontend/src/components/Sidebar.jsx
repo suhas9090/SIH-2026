@@ -18,6 +18,7 @@ const ROLE_NAV_ITEMS = {
   ],
   PROCUREMENT_OFFICER: [
     { path: '/dashboard',      icon: '⊞', label: 'Dashboard' },
+    { path: '/procurement/verify-company-profiles', icon: '🔍', label: 'Verify Company Profiles' },
     { path: '/tenders',        icon: '📋', label: 'Tenders (All / Active)' },
     { path: '/tenders/create', icon: '＋', label: 'Create Tender' },
     { path: '/bids',           icon: '📥', label: 'Bids Received' },
@@ -41,15 +42,12 @@ const ROLE_NAV_ITEMS = {
   ],
   BIDDER: [
     { path: '/dashboard',              icon: '⊞',  label: 'Supplier Dashboard' },
-    { path: '/bidder/onboarding',      icon: '🪪',  label: 'Get Verified', badge: 'REQUIRED' },
-    { path: '/bidder/verification-status', icon: '✅', label: 'Verification Status' },
+    { path: '/bidder/profile',         icon: '🏢',  label: 'Company Profile & Documents' },
     { path: '/bidder/tenders',         icon: '🔎',  label: 'Browse Tenders' },
     { path: '/bidder/my-bids',         icon: '📤',  label: 'My Bids & Tracking' },
-    { path: '/bidder/documents',       icon: '📁',  label: 'Document Vault' },
     { path: '/bidder/compliance',      icon: '📊',  label: 'Compliance Status' },
     { path: '/bidder/clarifications',  icon: '✍️',  label: 'Clarification Requests' },
     { path: '/notifications',          icon: '🔔',  label: 'Notifications' },
-    { path: '/bidder/profile',         icon: '🏢',  label: 'Company Profile' },
   ],
   AUDITOR: [
     { path: '/dashboard',             icon: '⊞', label: 'Auditor Overview' },
@@ -188,30 +186,52 @@ const Sidebar = () => {
           </div>
         )}
 
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path + item.label}
-            to={item.path}
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
-              borderRadius: 8, textDecoration: 'none', color: '#94a3b8', fontSize: '0.82rem',
-              fontWeight: 600, marginBottom: 2, transition: 'all 0.15s',
-            }}
-          >
-            <span style={{ fontSize: '1rem', width: 20, textAlign: 'center' }}>{item.icon}</span>
-            <span style={{ flex: 1 }}>{item.label}</span>
-            {item.badge && (
-              <span style={{
-                fontSize: '0.55rem', fontWeight: 900, padding: '2px 5px', borderRadius: 6,
-                color: item.badge === 'REQUIRED' ? '#f59e0b' : '#3b82f6',
-                background: item.badge === 'REQUIRED' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
-                border: `1px solid ${item.badge === 'REQUIRED' ? 'rgba(245,158,11,0.3)' : 'rgba(59,130,246,0.3)'}`,
-                letterSpacing: '0.04em',
-              }}>{item.badge}</span>
-            )}
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const isLocked = role === 'BIDDER' && !isApproved && item.path !== '/bidder/onboarding' && item.path !== '/bidder/verification-status';
+          return (
+            <NavLink
+              key={item.path + item.label}
+              to={isLocked ? '/bidder/onboarding' : item.path}
+              onClick={(e) => {
+                if (isLocked) {
+                  e.preventDefault();
+                  toast.error('🔒 Complete identity & company verification to unlock this feature.');
+                  navigate('/bidder/onboarding');
+                }
+              }}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
+                borderRadius: 8, textDecoration: 'none',
+                color: isLocked ? '#475569' : '#94a3b8',
+                fontSize: '0.82rem',
+                fontWeight: 600, marginBottom: 2, transition: 'all 0.15s',
+                opacity: isLocked ? 0.6 : 1,
+                cursor: isLocked ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <span style={{ fontSize: '1rem', width: 20, textAlign: 'center' }}>
+                {isLocked ? '🔒' : item.icon}
+              </span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {isLocked ? (
+                <span style={{
+                  fontSize: '0.52rem', fontWeight: 900, padding: '2px 5px', borderRadius: 6,
+                  color: '#94a3b8', background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)', letterSpacing: '0.04em'
+                }}>LOCKED</span>
+              ) : item.badge ? (
+                <span style={{
+                  fontSize: '0.55rem', fontWeight: 900, padding: '2px 5px', borderRadius: 6,
+                  color: item.badge === 'REQUIRED' ? '#f59e0b' : '#3b82f6',
+                  background: item.badge === 'REQUIRED' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
+                  border: `1px solid ${item.badge === 'REQUIRED' ? 'rgba(245,158,11,0.3)' : 'rgba(59,130,246,0.3)'}`,
+                  letterSpacing: '0.04em',
+                }}>{item.badge}</span>
+              ) : null}
+            </NavLink>
+          );
+        })}
       </div>
 
       {/* User Profile & Logout */}

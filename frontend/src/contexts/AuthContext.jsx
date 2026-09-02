@@ -59,6 +59,19 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDemoUser, setIsDemoUser] = useState(false);
+  const [bidderLifecycleStatus, setBidderLifecycleStatus] = useState(null);
+
+  const refreshBidderStatus = async () => {
+    try {
+      const res = await api.get('/bidder-onboarding/verification-status');
+      const status = res.data?.lifecycleStatus || 'REGISTERED';
+      setBidderLifecycleStatus(status);
+      return status;
+    } catch {
+      setBidderLifecycleStatus('REGISTERED');
+      return 'REGISTERED';
+    }
+  };
 
   // Restore authenticated session on initial app load
   useEffect(() => {
@@ -72,6 +85,9 @@ export const AuthProvider = ({ children }) => {
             setUser(res.data);
             setProfile(res.data);
             setIsDemoUser(false);
+            if (res.data.role === 'BIDDER') {
+              await refreshBidderStatus();
+            }
           } else {
             throw new Error('Session invalid');
           }
@@ -81,10 +97,12 @@ export const AuthProvider = ({ children }) => {
           delete api.defaults.headers.common['Authorization'];
           setUser(null);
           setProfile(null);
+          setBidderLifecycleStatus(null);
         }
       } else {
         setUser(null);
         setProfile(null);
+        setBidderLifecycleStatus(null);
       }
       setLoading(false);
     };
@@ -108,6 +126,9 @@ export const AuthProvider = ({ children }) => {
         setUser(loggedInUser);
         setProfile(loggedInUser);
         setIsDemoUser(false);
+        if (loggedInUser.role === 'BIDDER') {
+          await refreshBidderStatus();
+        }
         return loggedInUser;
       } else {
         throw new Error(res.data.error || 'Authentication failed.');
@@ -149,6 +170,9 @@ export const AuthProvider = ({ children }) => {
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           setUser(newUser);
           setProfile(newUser);
+          if (newUser.role === 'BIDDER') {
+            await refreshBidderStatus();
+          }
         }
         return newUser;
       } else {
@@ -171,6 +195,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setProfile(null);
     setIsDemoUser(false);
+    setBidderLifecycleStatus(null);
     toast.success('Signed out successfully.');
   };
 
@@ -180,6 +205,7 @@ export const AuthProvider = ({ children }) => {
 
   const role = profile?.role || user?.role || null;
   const isAuthenticated = !!user;
+  const isBidderApproved = role === 'BIDDER' ? (bidderLifecycleStatus === 'APPROVED_TO_BID') : true;
 
   const value = {
     user,
@@ -188,6 +214,9 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     role,
     isDemoUser,
+    bidderLifecycleStatus,
+    refreshBidderStatus,
+    isBidderApproved,
     login,
     register,
     logout,

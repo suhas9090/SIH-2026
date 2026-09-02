@@ -178,53 +178,105 @@ router.post('/verify-token', authenticate, (req, res) => {
   res.json({ user: req.user, valid: true });
 });
 
-// ── POST /api/auth/verify-otp (Email / Mobile OTP Verification Simulation) ────
-router.post('/verify-otp', loginLimiter, (req, res) => {
-  const { type, target, otp } = req.body; // type: 'PHONE' | 'EMAIL', otp: string
+// ── POST /api/auth/send-otp (Email / Mobile OTP Dispatch) ────────────────────
+router.post('/send-otp', loginLimiter, (req, res) => {
+  const { type = 'EMAIL', target } = req.body; // type: 'EMAIL' | 'PHONE'
 
-  // Firebase test phone numbers or demo verification
-  if (otp && (otp.length === 6 || otp === '123456' || otp === '654321')) {
+  if (!target) {
+    return res.status(400).json({ error: `${type === 'EMAIL' ? 'Email address' : 'Mobile number'} is required.` });
+  }
+
+  if (type === 'EMAIL') {
+    try {
+      const result = memoryStore.createEmailOtpSession(target);
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  } else if (type === 'PHONE') {
+    const cleanDigits = target.replace(/\D/g, '');
+    if (cleanDigits.length !== 10) {
+      return res.status(400).json({ error: 'Phone number must be exactly 10 digits.' });
+    }
     return res.json({
-      verified: true,
-      type,
-      target,
-      message: `${type === 'PHONE' ? 'Mobile number' : 'Email address'} verified successfully via authentication gateway.`,
-      verifiedAt: new Date().toISOString(),
+      success: true,
+      type: 'PHONE',
+      target: cleanDigits,
+      message: `Verification code sent to +91 ${cleanDigits}. (Demo OTP: 123456)`,
+      sentAt: new Date().toISOString()
     });
   }
 
-  return res.status(400).json({
-    verified: false,
-    error: 'Invalid or expired OTP code. For testing, use valid 6-digit code.',
-  });
+  return res.status(400).json({ error: 'Invalid verification type.' });
+});
+
+// ── POST /api/auth/verify-otp (Email / Mobile OTP Verification) ───────────────
+router.post('/verify-otp', loginLimiter, (req, res) => {
+  const { type = 'EMAIL', target, sessionToken, otp } = req.body;
+
+  if (!otp || !/^\d{6}$/.test(otp.toString().trim())) {
+    return res.status(400).json({
+      verified: false,
+      error: 'Please enter a valid 6-digit numeric OTP code.',
+    });
+  }
+
+  if (type === 'EMAIL') {
+    const result = memoryStore.verifyEmailOtpSession(target, sessionToken, otp);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    return res.json(result);
+  } else {
+    // Phone verification
+    return res.json({
+      verified: true,
+      type: 'PHONE',
+      target,
+      message: 'Mobile number verified successfully.',
+      verifiedAt: new Date().toISOString(),
+    });
+  }
+});
+
+// ── GET /api/auth/email-otp-hint (Hackathon Evaluation Helper) ────────────────
+router.get('/email-otp-hint', (req, res) => {
+  const { email } = req.query;
+  if (!email) {
+    return res.status(400).json({ error: 'Email parameter is required.' });
+  }
+  const hint = memoryStore.getEmailOtpHint(email);
+  if (!hint) {
+    return res.status(404).json({ error: 'No active OTP session for this email.' });
+  }
+  res.json(hint);
 });
 
 // ── POST /api/auth/register-bidder ───────────────────────────────────────────
 router.post('/register-bidder', registerLimiter, async (req, res) => {
   try {
     const {
-      name, designation, email, phone, password,
-      organizationName, tradeName, entityType, pan, gstin, udyamNo, cinNo,
-      address, state, district, pincode, businessCategory, yearOfEstablishment
+      name, email, password,
+      // Optional — collected later in the Onboarding flow
+      organizationName, tradeName, entityType, pan, gstin,
+      udyamNo, cinNo, address, state, district, pincode,
+      businessCategory, yearOfEstablishment, phone, designation
     } = req.body;
 
-    if (!name || !email || !organizationName || !pan || !gstin) {
-      return res.status(400).json({ error: 'Name, email, organization name, PAN, and GSTIN are mandatory.' });
+    const companyName = (organizationName || name || '').trim();
+
+    // ── Only 3 fields required at account-creation time ──────────────────────
+    if (!companyName) {
+      return res.status(400).json({ error: 'Company / organisation name is required.' });
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ error: 'A valid email address is required.' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
     }
 
-    // 1. Run Server-Side Triangulation against Synthetic Government Data
-    const verificationResult = await entityTriangulationService.verifyBidderFull({
-      organizationName,
-      pan,
-      gstin,
-      udyamNo,
-      cinNo,
-    });
-
-    const isClearOfDebarment = verificationResult.riskLevel !== 'CRITICAL';
-    const approvalStatus = 'PENDING'; // Always requires review/approval or active
-
-    // 2. Create User in PostgreSQL or MemoryStore
+    // ── Create User — active immediately, full verification done in onboarding ─
     const firebaseUid = `uid-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     let user = null;
 
@@ -232,67 +284,60 @@ router.post('/register-bidder', registerLimiter, async (req, res) => {
       user = await prisma.user.create({
         data: {
           firebaseUid,
-          email: email.toLowerCase().trim(),
-          name: name.trim(),
-          phone: phone || null,
-          role: 'BIDDER',
-          organization: organizationName.trim(),
-          organizationId: gstin.trim(),
-          isActive: false, // Pending admin approval
-          approvalStatus: 'PENDING',
-          emailVerified: true,
+          email:        email.toLowerCase().trim(),
+          name:         companyName,
+          phone:        phone || null,
+          role:         'BIDDER',
+          organization: companyName,
+          organizationId: gstin?.trim() || pan?.trim() || firebaseUid,
+          isActive:     true,          // Can log in right away
+          approvalStatus: 'ACTIVE',
+          emailVerified:  true,
         }
       });
     } catch (dbErr) {
       user = memoryStore.createUser({
-        email: email.toLowerCase().trim(),
-        password: password || 'Admin@123456',
-        name: name.trim(),
-        role: 'BIDDER',
-        organization: organizationName.trim(),
-        organizationId: gstin.trim(),
-        phone: phone || null,
-        isActive: false,
-        approvalStatus: 'PENDING'
+        email:        email.toLowerCase().trim(),
+        password:     password,
+        name:         companyName,
+        role:         'BIDDER',
+        organization: companyName,
+        organizationId: gstin?.trim() || pan?.trim() || firebaseUid,
+        phone:        phone || null,
+        isActive:     true,
+        approvalStatus: 'ACTIVE'
       });
     }
 
-    // 3. Log Audit Trail
+    // ── Audit log ─────────────────────────────────────────────────────────────
     try {
       await prisma.auditLog.create({
         data: {
-          userId: user.id,
-          action: 'BIDDER_REGISTRATION_SUBMITTED',
+          userId:     user.id,
+          action:     'BIDDER_ACCOUNT_CREATED',
           entityType: 'BIDDER',
-          entityId: user.id,
-          details: {
-            organizationName,
-            pan,
-            gstin,
-            verificationScore: verificationResult.overallScore,
-            riskLevel: verificationResult.riskLevel,
-            discrepancies: verificationResult.entityDiscrepancies?.length || 0,
-          }
+          entityId:   user.id,
+          details:    { organizationName: companyName, registrationSource: 'QUICK_REGISTER' }
         }
       });
-    } catch (auditErr) {}
+    } catch (_) {}
 
-    logger.info(`New Bidder Registered: ${organizationName} (${email}) | Score: ${verificationResult.overallScore}%`);
+    logger.info(`New Bidder Account Created: ${companyName} (${email})`);
 
     res.status(201).json({
       user,
-      accountStatus: 'PENDING_APPROVAL',
-      verificationResult,
-      message: 'Bidder company registration submitted successfully. Awaiting administrative verification.',
+      accountStatus: 'ACTIVE',
+      message: 'Bidder account created successfully. Sign in to complete your verification profile.',
     });
   } catch (error) {
     logger.error('Register bidder error:', error.message);
     if (error.code === 'P2002' || error.message?.includes('already exists')) {
-      return res.status(409).json({ error: 'An account with this email or organization identifier already exists.' });
+      return res.status(409).json({ error: 'An account with this email already exists. Please sign in instead.' });
     }
-    res.status(500).json({ error: 'Bidder registration failed: ' + error.message });
+    res.status(500).json({ error: 'Account creation failed: ' + error.message });
   }
 });
+
 
 // ── POST /api/auth/register-officer ──────────────────────────────────────────
 router.post('/register-officer', registerLimiter, async (req, res) => {
