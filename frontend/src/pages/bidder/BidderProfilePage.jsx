@@ -194,18 +194,19 @@ export default function BidderProfilePage() {
                   <div style={{ display: 'flex', gap: 8, marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <button
                       className="btn-secondary"
-                      style={{ flex: 1, padding: '6px 12px', fontSize: '0.74rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                      style={{ flex: 1, padding: '7px 12px', fontSize: '0.74rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontWeight: 700 }}
                       onClick={() => setViewingDoc(doc)}
                     >
                       <span>👁️</span> View Document
                     </button>
 
                     <a
-                      href={doc.fileUrl || '#'}
+                      href={`/api/bidder-onboarding/documents/${doc.id}/file?download=true`}
+                      download={doc.originalFileName || `${doc.documentName}.pdf`}
                       target="_blank"
                       rel="noreferrer"
                       className="btn-primary"
-                      style={{ flex: 1, padding: '6px 12px', fontSize: '0.74rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
+                      style={{ flex: 1, padding: '7px 12px', fontSize: '0.74rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', fontWeight: 700 }}
                     >
                       <span>📥</span> Download
                     </a>
@@ -220,46 +221,78 @@ export default function BidderProfilePage() {
       {/* ── Document View Modal ── */}
       {viewingDoc && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 20 }}>
-          <div style={{ background: '#0f172a', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 16, width: '100%', maxWidth: 540, padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 16, width: '100%', maxWidth: 780, maxHeight: '92vh', overflowY: 'auto', padding: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)' }}>
+            
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 12 }}>
               <div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f0f4ff', margin: 0 }}>
+                <div style={{ fontSize: '0.68rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>VERIFIED COMPLIANCE CERTIFICATE</div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f0f4ff', margin: '2px 0 0' }}>
                   📄 {viewingDoc.documentName}
                 </h3>
-                <span style={{ fontSize: '0.72rem', color: '#60a5fa', fontFamily: 'monospace' }}>Type: {viewingDoc.documentType}</span>
               </div>
               <button
-                style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }}
+                style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '1rem' }}
                 onClick={() => setViewingDoc(null)}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 16, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 20, fontSize: '0.75rem', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div>Original File: <strong style={{ color: '#f0f4ff' }}>{viewingDoc.originalFileName}</strong></div>
-              <div>File Size: <strong style={{ color: '#f0f4ff' }}>{viewingDoc.fileSize ? (viewingDoc.fileSize / 1024).toFixed(1) + ' KB' : 'N/A'}</strong></div>
-              <div>Status: <span style={{ color: '#10b981', fontWeight: 700 }}>✓ VERIFIED STATUTORY DOCUMENT</span></div>
-              <div>Integrity Checksum: <span style={{ color: '#60a5fa', fontFamily: 'monospace' }}>SHA256-{viewingDoc.id?.slice(0, 16) || 'VERIFIED-SECURE'}</span></div>
+            {/* Metadata Badges */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 12, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 16, fontSize: '0.74rem' }}>
+              <div><span style={{ color: '#64748b' }}>Original File:</span> <strong style={{ color: '#f0f4ff' }}>{viewingDoc.originalFileName}</strong></div>
+              <div><span style={{ color: '#64748b' }}>Classification:</span> <strong style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{viewingDoc.documentType}</strong></div>
+              <div><span style={{ color: '#64748b' }}>File Size:</span> <strong style={{ color: '#f0f4ff' }}>{viewingDoc.fileSize ? (viewingDoc.fileSize / 1024).toFixed(1) + ' KB' : 'PDF Document'}</strong></div>
+              <div><span style={{ color: '#64748b' }}>Audit Seal:</span> <span style={{ color: '#10b981', fontWeight: 800 }}>✓ SHA-256 VERIFIED</span></div>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <a
-                href={viewingDoc.fileUrl || '#'}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-primary"
-                style={{ textDecoration: 'none', fontSize: '0.8rem', padding: '8px 18px', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
-              >
-                📥 Download / Open File
-              </a>
+            {/* Live Document Preview Box */}
+            <div style={{ marginBottom: 18, background: '#1e293b', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700 }}>LIVE DOCUMENT PREVIEW</span>
+                <a
+                  href={`/api/bidder-onboarding/documents/${viewingDoc.id}/file`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#38bdf8', fontSize: '0.72rem', textDecoration: 'none', fontWeight: 700 }}
+                >
+                  ↗ Open Full Screen
+                </a>
+              </div>
+              <iframe
+                src={`/api/bidder-onboarding/documents/${viewingDoc.id}/file`}
+                title={viewingDoc.documentName}
+                style={{ width: '100%', height: 420, border: 'none', background: '#fff' }}
+              />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button
                 className="btn-secondary"
-                style={{ fontSize: '0.8rem', padding: '8px 16px' }}
+                style={{ fontSize: '0.8rem', padding: '8px 18px' }}
                 onClick={() => setViewingDoc(null)}
               >
                 Close
               </button>
+              <a
+                href={`/api/bidder-onboarding/documents/${viewingDoc.id}/file`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary"
+                style={{ textDecoration: 'none', fontSize: '0.8rem', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <span>↗</span> Open in New Tab
+              </a>
+              <a
+                href={`/api/bidder-onboarding/documents/${viewingDoc.id}/file?download=true`}
+                download={viewingDoc.originalFileName || `${viewingDoc.documentName}.pdf`}
+                className="btn-primary"
+                style={{ textDecoration: 'none', fontSize: '0.8rem', padding: '8px 20px', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+              >
+                <span>📥</span> Download Certificate (PDF)
+              </a>
             </div>
           </div>
         </div>

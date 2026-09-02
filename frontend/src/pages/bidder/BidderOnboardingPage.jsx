@@ -1985,64 +1985,53 @@ export default function BidderOnboardingPage() {
               </div>
             </div>
 
-            {/* Official Document Certificate Visual Container */}
-            <div style={{
-              background: 'rgba(15,23,42,0.85)',
-              border: '1px solid rgba(16,185,129,0.3)',
-              borderRadius: 14,
-              padding: 24,
-              marginBottom: 20,
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 10 }}>
-                <span style={{ fontSize: '0.72rem', color: '#93c5fd', fontWeight: 800, letterSpacing: '0.05em' }}>
-                  GOVERNMENT OF INDIA • GeM STATUTORY COMPLIANCE VAULT
-                </span>
-                <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 800, background: 'rgba(16,185,129,0.15)', padding: '2px 8px', borderRadius: 6 }}>
-                  SECURE RECORD
-                </span>
+            {/* Live Document Preview Box */}
+            <div style={{ marginBottom: 18, background: '#1e293b', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700 }}>LIVE DOCUMENT PREVIEW</span>
+                <a
+                  href={`/api/bidder-onboarding/documents/${viewingDoc.id}/file`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#38bdf8', fontSize: '0.72rem', textDecoration: 'none', fontWeight: 700 }}
+                >
+                  ↗ Open Full Screen
+                </a>
               </div>
-
-              <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>{viewingDoc.reqMeta?.icon || '📜'}</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#f0fdf4' }}>
-                  {viewingDoc.documentName || viewingDoc.reqMeta?.label}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8', maxWidth: 440, margin: '6px auto 0' }}>
-                  {viewingDoc.reqMeta?.desc || 'Official statutory compliance certificate registered and verified for procurement tenders.'}
-                </div>
-              </div>
-
-              <div style={{ background: 'rgba(0,0,0,0.35)', borderRadius: 8, padding: '10px 14px', marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                  DIGITAL INTEGRITY CHECKSUM: <strong style={{ color: '#38bdf8', fontFamily: 'monospace' }}>SHA256-{viewingDoc.id?.slice(0,12) || 'a89f2c19e34b'}</strong>
-                </div>
-                <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 700 }}>✓ TAMPER PROOF</span>
-              </div>
+              <iframe
+                src={`/api/bidder-onboarding/documents/${viewingDoc.id}/file`}
+                title={viewingDoc.documentName}
+                style={{ width: '100%', height: 380, border: 'none', background: '#fff' }}
+              />
             </div>
 
             {/* Modal Actions */}
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ flex: 1 }}
+                style={{ fontSize: '0.8rem', padding: '8px 18px' }}
                 onClick={() => setViewingDoc(null)}
               >
                 Close
               </button>
-              {viewingDoc.fileUrl && (
-                <a
-                  href={viewingDoc.fileUrl.startsWith('http') ? viewingDoc.fileUrl : `http://localhost:5000${viewingDoc.fileUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary"
-                  style={{ flex: 1.5, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
-                >
-                  Download / Open File ↗
-                </a>
-              )}
+              <a
+                href={`/api/bidder-onboarding/documents/${viewingDoc.id}/file`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary"
+                style={{ textDecoration: 'none', fontSize: '0.8rem', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <span>↗</span> Open in New Tab
+              </a>
+              <a
+                href={`/api/bidder-onboarding/documents/${viewingDoc.id}/file?download=true`}
+                download={viewingDoc.originalFileName || `${viewingDoc.documentName}.pdf`}
+                className="btn-primary"
+                style={{ textDecoration: 'none', fontSize: '0.8rem', padding: '8px 20px', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+              >
+                <span>📥</span> Download Certificate (PDF)
+              </a>
             </div>
           </div>
         </div>
