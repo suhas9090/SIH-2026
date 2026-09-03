@@ -19,12 +19,58 @@ const ROLE_LABELS = {
   BIDDER: 'Registered Supplier / Bidder',
 };
 
+// ── Password specifications validator (min 6 chars, 1 uppercase, 1 number, 1 special char) ──
+export const validatePasswordCriteria = (pwd = '') => {
+  const hasMinLength = pwd.length >= 6;
+  const hasCaps = /[A-Z]/.test(pwd);
+  const hasNumber = /[0-9]/.test(pwd);
+  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(pwd);
+  const isValid = hasMinLength && hasCaps && hasNumber && hasSpecial;
+  return { hasMinLength, hasCaps, hasNumber, hasSpecial, isValid };
+};
+
+// ── Live Password Specifications Checklist Component ──
+const PasswordRequirements = ({ pwd = '', confirmPwd = '' }) => {
+  const { hasMinLength, hasCaps, hasNumber, hasSpecial } = validatePasswordCriteria(pwd);
+  const passwordsMatch = Boolean(confirmPwd && pwd === confirmPwd);
+
+  return (
+    <div style={{ marginTop: 8, padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        Password Security Specifications
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: '0.74rem' }}>
+        <span style={{ color: hasMinLength ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: hasMinLength ? 800 : 500 }}>
+          <span style={{ fontSize: '0.8rem' }}>{hasMinLength ? '✓' : '○'}</span> At least 6 characters
+        </span>
+        <span style={{ color: hasCaps ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: hasCaps ? 800 : 500 }}>
+          <span style={{ fontSize: '0.8rem' }}>{hasCaps ? '✓' : '○'}</span> One uppercase letter (A-Z)
+        </span>
+        <span style={{ color: hasNumber ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: hasNumber ? 800 : 500 }}>
+          <span style={{ fontSize: '0.8rem' }}>{hasNumber ? '✓' : '○'}</span> One number (0-9)
+        </span>
+        <span style={{ color: hasSpecial ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: hasSpecial ? 800 : 500 }}>
+          <span style={{ fontSize: '0.8rem' }}>{hasSpecial ? '✓' : '○'}</span> One special character (!@#$...)
+        </span>
+      </div>
+      {confirmPwd && (
+        <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid #e2e8f0', fontSize: '0.74rem', fontWeight: 800, color: passwordsMatch ? '#059669' : '#dc2626' }}>
+          {passwordsMatch ? '✓ Passwords match' : '✕ Passwords do not match'}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'companies' ? 'companies' : 'gem_users';
 
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // ── Password Visibility Toggle ──
+  const [showNewUserPass, setShowNewUserPass] = useState(false);
 
   // ── GeM Users State ──
   const [users, setUsers] = useState([]);
@@ -148,6 +194,17 @@ export default function AdminPage() {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     if (!newUser.name || !newUser.email) return toast.error('Please enter name and email');
+    const pwd = newUser.password || 'Admin@123456';
+    const pwdSpecs = validatePasswordCriteria(pwd);
+    if (!pwdSpecs.isValid) {
+      const missing = [];
+      if (!pwdSpecs.hasMinLength) missing.push('at least 6 characters');
+      if (!pwdSpecs.hasCaps) missing.push('one uppercase letter (A-Z)');
+      if (!pwdSpecs.hasNumber) missing.push('one number (0-9)');
+      if (!pwdSpecs.hasSpecial) missing.push('one special character (!@#$%^&*...)');
+      return toast.error(`Password requires: ${missing.join(', ')}`);
+    }
+
     try {
       await api.post('/auth/register', {
         name: newUser.name,
@@ -155,7 +212,7 @@ export default function AdminPage() {
         role: newUser.role,
         organization: newUser.organization || 'GeM Administration Authority',
         phone: newUser.phone,
-        password: newUser.password || 'Admin@123456'
+        password: pwd
       });
       toast.success(`GeM account for ${newUser.name} provisioned successfully!`);
       setShowCreateUser(false);
@@ -649,6 +706,47 @@ export default function AdminPage() {
               <div>
                 <label style={{ fontSize: '0.74rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>CONTACT PHONE NUMBER</label>
                 <input className="input" placeholder="e.g. +91 98450 12345" value={newUser.phone} onChange={e => setNewUser({ ...newUser, phone: e.target.value })} style={{ width: '100%' }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.74rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>
+                  INITIAL ACCOUNT PASSWORD *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="input"
+                    type={showNewUserPass ? 'text' : 'password'}
+                    placeholder="Min 6 chars (caps, num & special)"
+                    value={newUser.password}
+                    onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                    required
+                    style={{ width: '100%', paddingRight: 40 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewUserPass(s => !s)}
+                    title={showNewUserPass ? 'Hide password' : 'View password'}
+                    style={{
+                      position: 'absolute',
+                      right: 10,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      fontSize: '1.05rem',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1
+                    }}
+                  >
+                    {showNewUserPass ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                <PasswordRequirements pwd={newUser.password} />
               </div>
 
               <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>

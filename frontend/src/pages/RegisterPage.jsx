@@ -32,6 +32,49 @@ const ACCOUNT_TYPES = [
   },
 ];
 
+// ── Password specifications validator (at least 6 chars, 1 uppercase, 1 number, 1 special char) ──
+export const validatePasswordCriteria = (pwd = '') => {
+  const hasMinLength = pwd.length >= 6;
+  const hasCaps = /[A-Z]/.test(pwd);
+  const hasNumber = /[0-9]/.test(pwd);
+  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(pwd);
+  const isValid = hasMinLength && hasCaps && hasNumber && hasSpecial;
+  return { hasMinLength, hasCaps, hasNumber, hasSpecial, isValid };
+};
+
+// ── Live Password Specifications Checklist Component ──
+const PasswordRequirements = ({ pwd = '', confirmPwd = '' }) => {
+  const { hasMinLength, hasCaps, hasNumber, hasSpecial } = validatePasswordCriteria(pwd);
+  const passwordsMatch = Boolean(confirmPwd && pwd === confirmPwd);
+
+  return (
+    <div style={{ marginTop: 10, padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        Password Security Specifications
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: '0.74rem' }}>
+        <span style={{ color: hasMinLength ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: hasMinLength ? 800 : 500 }}>
+          <span style={{ fontSize: '0.8rem' }}>{hasMinLength ? '✓' : '○'}</span> At least 6 characters
+        </span>
+        <span style={{ color: hasCaps ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: hasCaps ? 800 : 500 }}>
+          <span style={{ fontSize: '0.8rem' }}>{hasCaps ? '✓' : '○'}</span> One uppercase letter (A-Z)
+        </span>
+        <span style={{ color: hasNumber ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: hasNumber ? 800 : 500 }}>
+          <span style={{ fontSize: '0.8rem' }}>{hasNumber ? '✓' : '○'}</span> One number (0-9)
+        </span>
+        <span style={{ color: hasSpecial ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: 6, fontWeight: hasSpecial ? 800 : 500 }}>
+          <span style={{ fontSize: '0.8rem' }}>{hasSpecial ? '✓' : '○'}</span> One special character (!@#$...)
+        </span>
+      </div>
+      {confirmPwd && (
+        <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid #e2e8f0', fontSize: '0.74rem', fontWeight: 800, color: passwordsMatch ? '#059669' : '#dc2626' }}>
+          {passwordsMatch ? '✓ Passwords match' : '✕ Passwords do not match'}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -45,6 +88,12 @@ export default function RegisterPage() {
 
   const [selectedRole, setSelectedRole] = useState(initialRole);
   const [loading, setLoading] = useState(false);
+
+  // ── Password Visibility Toggles ──
+  const [showBidderPass, setShowBidderPass] = useState(false);
+  const [showBidderConfirmPass, setShowBidderConfirmPass] = useState(false);
+  const [showOfficerPass, setShowOfficerPass] = useState(false);
+  const [showOfficerConfirmPass, setShowOfficerConfirmPass] = useState(false);
 
   // ── BIDDER FORM STATE ───────────────────────────────────────────────────
   const [bidderForm, setBidderForm] = useState({
@@ -212,7 +261,15 @@ export default function RegisterPage() {
     if (!bidderEmailOtp.verified) return toast.error('Please verify your official company email OTP.');
     if (!bidderForm.phone.trim()) return toast.error('Mobile phone number is required.');
     if (!bidderPhoneOtp.verified) return toast.error('Please verify your mobile phone OTP.');
-    if (!bidderForm.password || bidderForm.password.length < 6) return toast.error('Password must be at least 6 characters.');
+    const bidderPwdSpecs = validatePasswordCriteria(bidderForm.password);
+    if (!bidderPwdSpecs.isValid) {
+      const missing = [];
+      if (!bidderPwdSpecs.hasMinLength) missing.push('at least 6 characters');
+      if (!bidderPwdSpecs.hasCaps) missing.push('one uppercase letter (A-Z)');
+      if (!bidderPwdSpecs.hasNumber) missing.push('one number (0-9)');
+      if (!bidderPwdSpecs.hasSpecial) missing.push('one special character (!@#$%^&*...)');
+      return toast.error(`Password requires: ${missing.join(', ')}`);
+    }
     if (bidderForm.password !== bidderForm.confirmPassword) return toast.error('Passwords do not match.');
 
     setLoading(true);
@@ -326,7 +383,15 @@ export default function RegisterPage() {
     if (!officerEmailOtp.verified) return toast.error('Please verify your official Email address OTP.');
     if (!officerForm.phone.trim()) return toast.error('Mobile phone number is required.');
     if (!officerPhoneOtp.verified) return toast.error('Please verify your Mobile phone number OTP.');
-    if (!officerForm.password || officerForm.password.length < 6) return toast.error('Password must be at least 6 characters.');
+    const officerPwdSpecs = validatePasswordCriteria(officerForm.password);
+    if (!officerPwdSpecs.isValid) {
+      const missing = [];
+      if (!officerPwdSpecs.hasMinLength) missing.push('at least 6 characters');
+      if (!officerPwdSpecs.hasCaps) missing.push('one uppercase letter (A-Z)');
+      if (!officerPwdSpecs.hasNumber) missing.push('one number (0-9)');
+      if (!officerPwdSpecs.hasSpecial) missing.push('one special character (!@#$%^&*...)');
+      return toast.error(`Password requires: ${missing.join(', ')}`);
+    }
     if (officerForm.password !== officerForm.confirmPassword) return toast.error('Passwords do not match.');
 
     setLoading(true);
@@ -615,20 +680,85 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {/* Password */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>PASSWORD *</label>
-                  <input className="input" type="password" placeholder="Min 6 characters"
-                    value={bidderForm.password} onChange={e => setBidderForm(p => ({ ...p, password: e.target.value }))}
-                    style={{ width: '100%' }} />
+              {/* Password & Confirm Password */}
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>PASSWORD *</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        className="input"
+                        type={showBidderPass ? 'text' : 'password'}
+                        placeholder="Min 6 chars (caps, num & special)"
+                        value={bidderForm.password}
+                        onChange={e => setBidderForm(p => ({ ...p, password: e.target.value }))}
+                        style={{ width: '100%', paddingRight: 40 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowBidderPass(s => !s)}
+                        title={showBidderPass ? 'Hide password' : 'View password'}
+                        style={{
+                          position: 'absolute',
+                          right: 10,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#64748b',
+                          fontSize: '1.05rem',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          lineHeight: 1
+                        }}
+                      >
+                        {showBidderPass ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>CONFIRM PASSWORD *</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        className="input"
+                        type={showBidderConfirmPass ? 'text' : 'password'}
+                        placeholder="Repeat password"
+                        value={bidderForm.confirmPassword}
+                        onChange={e => setBidderForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                        style={{ width: '100%', paddingRight: 40 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowBidderConfirmPass(s => !s)}
+                        title={showBidderConfirmPass ? 'Hide password' : 'View password'}
+                        style={{
+                          position: 'absolute',
+                          right: 10,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#64748b',
+                          fontSize: '1.05rem',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          lineHeight: 1
+                        }}
+                      >
+                        {showBidderConfirmPass ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>CONFIRM PASSWORD *</label>
-                  <input className="input" type="password" placeholder="Repeat password"
-                    value={bidderForm.confirmPassword} onChange={e => setBidderForm(p => ({ ...p, confirmPassword: e.target.value }))}
-                    style={{ width: '100%' }} />
-                </div>
+
+                {/* Password Specifications Checklist */}
+                <PasswordRequirements pwd={bidderForm.password} confirmPwd={bidderForm.confirmPassword} />
               </div>
 
               {/* Verification Checklist */}
@@ -895,29 +1025,84 @@ export default function RegisterPage() {
               </div>
 
               {/* Row 3: Password & Confirm Password */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>PASSWORD *</label>
-                  <input
-                    className="input"
-                    type="password"
-                    placeholder="Min 6 characters"
-                    value={officerForm.password}
-                    onChange={e => setOfficerForm({ ...officerForm, password: e.target.value })}
-                    style={{ width: '100%' }}
-                  />
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>PASSWORD *</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        className="input"
+                        type={showOfficerPass ? 'text' : 'password'}
+                        placeholder="Min 6 chars (caps, num & special)"
+                        value={officerForm.password}
+                        onChange={e => setOfficerForm({ ...officerForm, password: e.target.value })}
+                        style={{ width: '100%', paddingRight: 40 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOfficerPass(s => !s)}
+                        title={showOfficerPass ? 'Hide password' : 'View password'}
+                        style={{
+                          position: 'absolute',
+                          right: 10,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#64748b',
+                          fontSize: '1.05rem',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          lineHeight: 1
+                        }}
+                      >
+                        {showOfficerPass ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>CONFIRM PASSWORD *</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        className="input"
+                        type={showOfficerConfirmPass ? 'text' : 'password'}
+                        placeholder="Repeat password"
+                        value={officerForm.confirmPassword}
+                        onChange={e => setOfficerForm({ ...officerForm, confirmPassword: e.target.value })}
+                        style={{ width: '100%', paddingRight: 40 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOfficerConfirmPass(s => !s)}
+                        title={showOfficerConfirmPass ? 'Hide password' : 'View password'}
+                        style={{
+                          position: 'absolute',
+                          right: 10,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#64748b',
+                          fontSize: '1.05rem',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          lineHeight: 1
+                        }}
+                      >
+                        {showOfficerConfirmPass ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, display: 'block', marginBottom: 4 }}>CONFIRM PASSWORD *</label>
-                  <input
-                    className="input"
-                    type="password"
-                    placeholder="Repeat password"
-                    value={officerForm.confirmPassword}
-                    onChange={e => setOfficerForm({ ...officerForm, confirmPassword: e.target.value })}
-                    style={{ width: '100%' }}
-                  />
-                </div>
+
+                {/* Password Specifications Checklist */}
+                <PasswordRequirements pwd={officerForm.password} confirmPwd={officerForm.confirmPassword} />
               </div>
 
               {/* Verification Checklist */}

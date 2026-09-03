@@ -46,6 +46,11 @@ router.post('/register', registerLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
+    const pwdValidation = validatePasswordStrength(password);
+    if (!pwdValidation.valid) {
+      return res.status(400).json({ error: `Password specification required: ${pwdValidation.errors.join(' ')}` });
+    }
+
     const cleanEmail = email.toLowerCase().trim();
 
     // Check if user already exists in persistent store
@@ -272,8 +277,9 @@ router.post('/register-bidder', registerLimiter, async (req, res) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return res.status(400).json({ error: 'A valid email address is required.' });
     }
-    if (!password || password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    const pwdValidation = validatePasswordStrength(password);
+    if (!pwdValidation.valid) {
+      return res.status(400).json({ error: `Password specification required: ${pwdValidation.errors.join(' ')}` });
     }
 
     // ── Create User — active immediately, full verification done in onboarding ─
@@ -346,6 +352,13 @@ router.post('/register-officer', registerLimiter, async (req, res) => {
 
     if (!name || !email || !employeeId) {
       return res.status(400).json({ error: 'Name, email, and Employee / Officer ID are required.' });
+    }
+
+    if (password) {
+      const pwdValidation = validatePasswordStrength(password);
+      if (!pwdValidation.valid) {
+        return res.status(400).json({ error: `Password specification required: ${pwdValidation.errors.join(' ')}` });
+      }
     }
 
     // 1. Check against Synthetic Officer Directory

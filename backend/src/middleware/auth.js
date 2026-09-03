@@ -216,16 +216,15 @@ const requirePermission = (permission) => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// Password strength validator (used in backend, not just frontend)
+// Password strength validator (min 6 chars, 1 uppercase, 1 number, 1 special char)
 // ─────────────────────────────────────────────────────────────
 const validatePasswordStrength = (password) => {
   const errors = [];
-  if (!password || password.length < 8) errors.push('At least 8 characters required.');
-  if (!/[A-Z]/.test(password)) errors.push('At least one uppercase letter required.');
-  if (!/[a-z]/.test(password)) errors.push('At least one lowercase letter required.');
-  if (!/[0-9]/.test(password)) errors.push('At least one number required.');
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) errors.push('At least one special character required.');
-  if (password.length > 128) errors.push('Password must not exceed 128 characters.');
+  if (!password || password.length < 6) errors.push('At least 6 characters required.');
+  if (!/[A-Z]/.test(password)) errors.push('At least one uppercase letter (A-Z) required.');
+  if (!/[0-9]/.test(password)) errors.push('At least one number (0-9) required.');
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) errors.push('At least one special character required.');
+  if (password && password.length > 128) errors.push('Password must not exceed 128 characters.');
   return { valid: errors.length === 0, errors };
 };
 
